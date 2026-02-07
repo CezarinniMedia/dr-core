@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { LogOut, User, Settings } from "lucide-react";
 
 export function AppHeader() {
@@ -24,10 +25,13 @@ export function AppHeader() {
   };
 
   return (
-    <header className="h-14 bg-card border-b flex items-center justify-between px-4">
+    <header className="h-14 bg-card border-b flex items-center justify-between px-4 transition-colors duration-200">
       <div className="flex items-center gap-3">
         <SidebarTrigger />
       </div>
+
+      <div className="flex items-center gap-2">
+        <ThemeToggle />
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -61,6 +65,7 @@ export function AppHeader() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      </div>
     </header>
   );
 }
