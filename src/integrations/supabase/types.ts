@@ -62,6 +62,87 @@ export type Database = {
           },
         ]
       }
+      ad_creatives: {
+        Row: {
+          angulo: string | null
+          comments: number | null
+          competitor_id: string | null
+          copy_body: string | null
+          copy_headline: string | null
+          created_at: string | null
+          cta_text: string | null
+          file_url: string
+          first_seen: string
+          id: string
+          last_seen: string | null
+          likes: number | null
+          platform: string
+          shares: number | null
+          status: string | null
+          tags: Json | null
+          thumbnail_url: string | null
+          tipo: string
+          workspace_id: string
+        }
+        Insert: {
+          angulo?: string | null
+          comments?: number | null
+          competitor_id?: string | null
+          copy_body?: string | null
+          copy_headline?: string | null
+          created_at?: string | null
+          cta_text?: string | null
+          file_url: string
+          first_seen: string
+          id?: string
+          last_seen?: string | null
+          likes?: number | null
+          platform: string
+          shares?: number | null
+          status?: string | null
+          tags?: Json | null
+          thumbnail_url?: string | null
+          tipo: string
+          workspace_id: string
+        }
+        Update: {
+          angulo?: string | null
+          comments?: number | null
+          competitor_id?: string | null
+          copy_body?: string | null
+          copy_headline?: string | null
+          created_at?: string | null
+          cta_text?: string | null
+          file_url?: string
+          first_seen?: string
+          id?: string
+          last_seen?: string | null
+          likes?: number | null
+          platform?: string
+          shares?: number | null
+          status?: string | null
+          tags?: Json | null
+          thumbnail_url?: string | null
+          tipo?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_creatives_competitor_id_fkey"
+            columns: ["competitor_id"]
+            isOneToOne: false
+            referencedRelation: "competitors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_creatives_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       analytics_events: {
         Row: {
           created_at: string | null
@@ -213,6 +294,132 @@ export type Database = {
           },
           {
             foreignKeyName: "avatares_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      competitors: {
+        Row: {
+          created_at: string | null
+          dominio: string | null
+          estimated_monthly_revenue: number | null
+          fb_page_url: string | null
+          id: string
+          ig_handle: string | null
+          last_active_date: string | null
+          nome: string
+          notas: string | null
+          oferta_id: string | null
+          status_tracking: string | null
+          tiktok_handle: string | null
+          traffic_score: number | null
+          updated_at: string | null
+          vertical: string | null
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          dominio?: string | null
+          estimated_monthly_revenue?: number | null
+          fb_page_url?: string | null
+          id?: string
+          ig_handle?: string | null
+          last_active_date?: string | null
+          nome: string
+          notas?: string | null
+          oferta_id?: string | null
+          status_tracking?: string | null
+          tiktok_handle?: string | null
+          traffic_score?: number | null
+          updated_at?: string | null
+          vertical?: string | null
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string | null
+          dominio?: string | null
+          estimated_monthly_revenue?: number | null
+          fb_page_url?: string | null
+          id?: string
+          ig_handle?: string | null
+          last_active_date?: string | null
+          nome?: string
+          notas?: string | null
+          oferta_id?: string | null
+          status_tracking?: string | null
+          tiktok_handle?: string | null
+          traffic_score?: number | null
+          updated_at?: string | null
+          vertical?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competitors_oferta_id_fkey"
+            columns: ["oferta_id"]
+            isOneToOne: false
+            referencedRelation: "ofertas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "competitors_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      funnel_maps: {
+        Row: {
+          aov_estimate: number | null
+          checkout_provider: string | null
+          competitor_id: string | null
+          created_at: string | null
+          id: string
+          nome: string
+          notas: string | null
+          steps: Json
+          updated_at: string | null
+          workspace_id: string
+        }
+        Insert: {
+          aov_estimate?: number | null
+          checkout_provider?: string | null
+          competitor_id?: string | null
+          created_at?: string | null
+          id?: string
+          nome: string
+          notas?: string | null
+          steps?: Json
+          updated_at?: string | null
+          workspace_id: string
+        }
+        Update: {
+          aov_estimate?: number | null
+          checkout_provider?: string | null
+          competitor_id?: string | null
+          created_at?: string | null
+          id?: string
+          nome?: string
+          notas?: string | null
+          steps?: Json
+          updated_at?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnel_maps_competitor_id_fkey"
+            columns: ["competitor_id"]
+            isOneToOne: false
+            referencedRelation: "competitors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funnel_maps_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
