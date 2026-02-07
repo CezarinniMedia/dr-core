@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { LogOut, User, Settings } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function AppHeader() {
   const { user, signOut } = useAuth();
@@ -28,6 +29,9 @@ export function AppHeader() {
       <div className="flex items-center gap-3">
         <SidebarTrigger />
       </div>
+
+      <div className="flex items-center gap-2">
+        <ThemeToggle />
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -61,6 +65,7 @@ export function AppHeader() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      </div>
     </header>
   );
 }
