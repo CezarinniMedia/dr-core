@@ -373,6 +373,84 @@ export type Database = {
           },
         ]
       }
+      criativos: {
+        Row: {
+          angulo: string | null
+          copy_body: string | null
+          created_at: string | null
+          cta: string | null
+          file_url: string | null
+          hook_text: string
+          id: string
+          nome: string
+          oferta_id: string | null
+          performance_metrics: Json | null
+          plataforma: string | null
+          shot_list: Json | null
+          status: string | null
+          tags: Json | null
+          thumbnail_url: string | null
+          tipo: string
+          updated_at: string | null
+          workspace_id: string
+        }
+        Insert: {
+          angulo?: string | null
+          copy_body?: string | null
+          created_at?: string | null
+          cta?: string | null
+          file_url?: string | null
+          hook_text: string
+          id?: string
+          nome: string
+          oferta_id?: string | null
+          performance_metrics?: Json | null
+          plataforma?: string | null
+          shot_list?: Json | null
+          status?: string | null
+          tags?: Json | null
+          thumbnail_url?: string | null
+          tipo: string
+          updated_at?: string | null
+          workspace_id: string
+        }
+        Update: {
+          angulo?: string | null
+          copy_body?: string | null
+          created_at?: string | null
+          cta?: string | null
+          file_url?: string | null
+          hook_text?: string
+          id?: string
+          nome?: string
+          oferta_id?: string | null
+          performance_metrics?: Json | null
+          plataforma?: string | null
+          shot_list?: Json | null
+          status?: string | null
+          tags?: Json | null
+          thumbnail_url?: string | null
+          tipo?: string
+          updated_at?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "criativos_oferta_id_fkey"
+            columns: ["oferta_id"]
+            isOneToOne: false
+            referencedRelation: "ofertas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "criativos_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       funnel_maps: {
         Row: {
           aov_estimate: number | null
@@ -467,6 +545,64 @@ export type Database = {
             columns: ["oferta_id"]
             isOneToOne: false
             referencedRelation: "ofertas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hooks: {
+        Row: {
+          angulo: string | null
+          created_at: string | null
+          id: string
+          oferta_id: string | null
+          performance_score: number | null
+          status: string | null
+          texto: string
+          used_in_creative_id: string | null
+          workspace_id: string
+        }
+        Insert: {
+          angulo?: string | null
+          created_at?: string | null
+          id?: string
+          oferta_id?: string | null
+          performance_score?: number | null
+          status?: string | null
+          texto: string
+          used_in_creative_id?: string | null
+          workspace_id: string
+        }
+        Update: {
+          angulo?: string | null
+          created_at?: string | null
+          id?: string
+          oferta_id?: string | null
+          performance_score?: number | null
+          status?: string | null
+          texto?: string
+          used_in_creative_id?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hooks_oferta_id_fkey"
+            columns: ["oferta_id"]
+            isOneToOne: false
+            referencedRelation: "ofertas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hooks_used_in_creative_id_fkey"
+            columns: ["used_in_creative_id"]
+            isOneToOne: false
+            referencedRelation: "criativos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hooks_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
         ]
