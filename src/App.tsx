@@ -2,25 +2,49 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "@/hooks/useAuth";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route element={<DashboardLayout />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/ofertas" element={<PlaceholderPage title="Ofertas" description="Gerencie suas ofertas de Direct Response" />} />
+              <Route path="/avatar" element={<PlaceholderPage title="Avatar & Research" description="Pesquisa de avatar e mercado" />} />
+              <Route path="/spy" element={<PlaceholderPage title="Espionagem" description="Monitore concorrentes e tendências" />} />
+              <Route path="/criativos" element={<PlaceholderPage title="Criativos" description="Gerencie seus criativos de campanha" />} />
+              <Route path="/paginas" element={<PlaceholderPage title="Páginas" description="Landing pages e funis" />} />
+              <Route path="/analytics" element={<PlaceholderPage title="Analytics" description="Métricas e performance" />} />
+              <Route path="/prompts" element={<PlaceholderPage title="Prompts & Agents" description="Seus prompts e agentes de IA" />} />
+              <Route path="/settings" element={<PlaceholderPage title="Configurações" description="Configurações do workspace" />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
