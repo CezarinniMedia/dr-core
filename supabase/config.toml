@@ -2,3 +2,6 @@ project_id = "iaffbkzmckgvrfmlybsr"
 
 [functions.extract-avatar]
 verify_jwt = false
+
+[functions.generate-hooks]
+verify_jwt = false

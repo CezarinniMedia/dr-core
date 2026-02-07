@@ -15,6 +15,7 @@ import AvatarList from "./pages/AvatarList";
 import AvatarDetail from "./pages/AvatarDetail";
 import SpyList from "./pages/SpyList";
 import SpyDetail from "./pages/SpyDetail";
+import CriativosPage from "./pages/CriativosPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
@@ -47,7 +48,7 @@ const App = () => (
               <Route path="/avatar/:id" element={<AvatarDetail />} />
               <Route path="/spy" element={<SpyList />} />
               <Route path="/spy/:id" element={<SpyDetail />} />
-              <Route path="/criativos" element={<PlaceholderPage title="Criativos" description="Gerencie seus criativos de campanha" />} />
+              <Route path="/criativos" element={<CriativosPage />} />
               <Route path="/paginas" element={<PlaceholderPage title="Páginas" description="Landing pages e funis" />} />
               <Route path="/analytics" element={<PlaceholderPage title="Analytics" description="Métricas e performance" />} />
               <Route path="/prompts" element={<PlaceholderPage title="Prompts & Agents" description="Seus prompts e agentes de IA" />} />
