@@ -145,6 +145,81 @@ export type Database = {
           },
         ]
       }
+      avatares: {
+        Row: {
+          created_at: string | null
+          demographics: Json | null
+          desire_matrix: Json
+          estado_atual: string | null
+          estado_desejado: string | null
+          gatilhos_emocionais: Json | null
+          id: string
+          linguagem_avatar: string | null
+          nome: string
+          notas: string | null
+          objecoes: Json | null
+          oferta_id: string | null
+          pain_matrix: Json
+          search_1_framework: Json | null
+          updated_at: string | null
+          versao: number | null
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          demographics?: Json | null
+          desire_matrix?: Json
+          estado_atual?: string | null
+          estado_desejado?: string | null
+          gatilhos_emocionais?: Json | null
+          id?: string
+          linguagem_avatar?: string | null
+          nome: string
+          notas?: string | null
+          objecoes?: Json | null
+          oferta_id?: string | null
+          pain_matrix?: Json
+          search_1_framework?: Json | null
+          updated_at?: string | null
+          versao?: number | null
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string | null
+          demographics?: Json | null
+          desire_matrix?: Json
+          estado_atual?: string | null
+          estado_desejado?: string | null
+          gatilhos_emocionais?: Json | null
+          id?: string
+          linguagem_avatar?: string | null
+          nome?: string
+          notas?: string | null
+          objecoes?: Json | null
+          oferta_id?: string | null
+          pain_matrix?: Json
+          search_1_framework?: Json | null
+          updated_at?: string | null
+          versao?: number | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "avatares_oferta_id_fkey"
+            columns: ["oferta_id"]
+            isOneToOne: false
+            referencedRelation: "ofertas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "avatares_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       funnel_steps: {
         Row: {
           created_at: string | null
@@ -330,6 +405,60 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      research_notes: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          insights: Json | null
+          oferta_id: string | null
+          relevance_score: number | null
+          source_url: string | null
+          tags: Json | null
+          tipo: string | null
+          workspace_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          insights?: Json | null
+          oferta_id?: string | null
+          relevance_score?: number | null
+          source_url?: string | null
+          tags?: Json | null
+          tipo?: string | null
+          workspace_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          insights?: Json | null
+          oferta_id?: string | null
+          relevance_score?: number | null
+          source_url?: string | null
+          tags?: Json | null
+          tipo?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "research_notes_oferta_id_fkey"
+            columns: ["oferta_id"]
+            isOneToOne: false
+            referencedRelation: "ofertas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "research_notes_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       workspace_members: {
         Row: {

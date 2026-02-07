@@ -11,6 +11,8 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Ofertas from "./pages/Ofertas";
 import OfertaDetail from "./pages/OfertaDetail";
+import AvatarList from "./pages/AvatarList";
+import AvatarDetail from "./pages/AvatarDetail";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
@@ -39,7 +41,8 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/ofertas" element={<Ofertas />} />
               <Route path="/ofertas/:id" element={<OfertaDetail />} />
-              <Route path="/avatar" element={<PlaceholderPage title="Avatar & Research" description="Pesquisa de avatar e mercado" />} />
+              <Route path="/avatar" element={<AvatarList />} />
+              <Route path="/avatar/:id" element={<AvatarDetail />} />
               <Route path="/spy" element={<PlaceholderPage title="Espionagem" description="Monitore concorrentes e tendências" />} />
               <Route path="/criativos" element={<PlaceholderPage title="Criativos" description="Gerencie seus criativos de campanha" />} />
               <Route path="/paginas" element={<PlaceholderPage title="Páginas" description="Landing pages e funis" />} />
