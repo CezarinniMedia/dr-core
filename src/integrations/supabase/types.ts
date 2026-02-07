@@ -145,6 +145,159 @@ export type Database = {
           },
         ]
       }
+      funnel_steps: {
+        Row: {
+          created_at: string | null
+          descricao: string | null
+          id: string
+          nome: string | null
+          oferta_id: string
+          preco: number | null
+          step_order: number
+          step_type: string | null
+          url_page: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string | null
+          oferta_id: string
+          preco?: number | null
+          step_order: number
+          step_type?: string | null
+          url_page?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string | null
+          oferta_id?: string
+          preco?: number | null
+          step_order?: number
+          step_type?: string | null
+          url_page?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnel_steps_oferta_id_fkey"
+            columns: ["oferta_id"]
+            isOneToOne: false
+            referencedRelation: "ofertas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ofertas: {
+        Row: {
+          aov_target: number | null
+          cpa_target: number | null
+          created_at: string | null
+          data_lancamento: string | null
+          id: string
+          mecanismo_unico: string | null
+          mercado: string | null
+          nome: string
+          promessa_principal: string | null
+          roas_target: number | null
+          slug: string
+          status: string | null
+          ticket_front: number | null
+          updated_at: string | null
+          vertical: string | null
+          workspace_id: string
+        }
+        Insert: {
+          aov_target?: number | null
+          cpa_target?: number | null
+          created_at?: string | null
+          data_lancamento?: string | null
+          id?: string
+          mecanismo_unico?: string | null
+          mercado?: string | null
+          nome: string
+          promessa_principal?: string | null
+          roas_target?: number | null
+          slug: string
+          status?: string | null
+          ticket_front?: number | null
+          updated_at?: string | null
+          vertical?: string | null
+          workspace_id: string
+        }
+        Update: {
+          aov_target?: number | null
+          cpa_target?: number | null
+          created_at?: string | null
+          data_lancamento?: string | null
+          id?: string
+          mecanismo_unico?: string | null
+          mercado?: string | null
+          nome?: string
+          promessa_principal?: string | null
+          roas_target?: number | null
+          slug?: string
+          status?: string | null
+          ticket_front?: number | null
+          updated_at?: string | null
+          vertical?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ofertas_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ofertas_brief: {
+        Row: {
+          angulos_testados: Json | null
+          created_at: string | null
+          desejos_principais: Json | null
+          dores_principais: Json | null
+          id: string
+          notas: string | null
+          objecoes_principais: Json | null
+          oferta_id: string
+          publico_alvo: string | null
+        }
+        Insert: {
+          angulos_testados?: Json | null
+          created_at?: string | null
+          desejos_principais?: Json | null
+          dores_principais?: Json | null
+          id?: string
+          notas?: string | null
+          objecoes_principais?: Json | null
+          oferta_id: string
+          publico_alvo?: string | null
+        }
+        Update: {
+          angulos_testados?: Json | null
+          created_at?: string | null
+          desejos_principais?: Json | null
+          dores_principais?: Json | null
+          id?: string
+          notas?: string | null
+          objecoes_principais?: Json | null
+          oferta_id?: string
+          publico_alvo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ofertas_brief_oferta_id_fkey"
+            columns: ["oferta_id"]
+            isOneToOne: true
+            referencedRelation: "ofertas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -260,6 +413,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      is_oferta_workspace_member: {
+        Args: { _oferta_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_workspace_member: {
         Args: { _user_id: string; _workspace_id: string }
         Returns: boolean

@@ -9,6 +9,8 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import Ofertas from "./pages/Ofertas";
+import OfertaDetail from "./pages/OfertaDetail";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
@@ -35,7 +37,8 @@ const App = () => (
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route element={<DashboardLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/ofertas" element={<PlaceholderPage title="Ofertas" description="Gerencie suas ofertas de Direct Response" />} />
+              <Route path="/ofertas" element={<Ofertas />} />
+              <Route path="/ofertas/:id" element={<OfertaDetail />} />
               <Route path="/avatar" element={<PlaceholderPage title="Avatar & Research" description="Pesquisa de avatar e mercado" />} />
               <Route path="/spy" element={<PlaceholderPage title="Espionagem" description="Monitore concorrentes e tendências" />} />
               <Route path="/criativos" element={<PlaceholderPage title="Criativos" description="Gerencie seus criativos de campanha" />} />
