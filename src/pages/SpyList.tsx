@@ -4,6 +4,7 @@ import { QuickAddOferta } from '@/components/spy/QuickAddOferta';
 import { CsvImportDialog } from '@/components/spy/CsvImportDialog';
 import { ImportHistoryPanel } from '@/components/spy/ImportHistoryPanel';
 import { ArsenalPanel } from '@/components/spy/ArsenalPanel';
+import { TrafficChartWithControls } from '@/components/traffic/TrafficChartWithControls';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Crosshair, LayoutGrid, Table, BarChart3, Upload, History } from 'lucide-react';
@@ -101,9 +102,7 @@ export default function SpyPage() {
         </div>
       )}
       {view === 'analytics' && (
-        <div className="border border-dashed rounded-lg p-12 text-center text-muted-foreground">
-          📈 Analytics view — será implementado com recharts (próxima versão)
-        </div>
+        <TrafficChartWithControls height={400} />
       )}
     </div>
   );
