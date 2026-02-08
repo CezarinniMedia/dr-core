@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { TrafficMiniChart } from '@/components/traffic/TrafficMiniChart';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger
@@ -140,6 +141,11 @@ export function OfertaSpyCard({ oferta, onStatusChange, onDelete, compact = fals
           <span className="text-[10px]">⭐ {oferta.score_potencial}/10</span>
         )}
       </div>
+
+      {/* Sparkline */}
+      {oferta.dominio_principal && (
+        <TrafficMiniChart dominio={oferta.dominio_principal} />
+      )}
 
       {/* Stack Icons */}
       {!compact && (
