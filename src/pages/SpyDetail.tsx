@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, ExternalLink, Globe, TrendingUp } from "lucide-react";
+import { TrafficChartWithControls } from "@/components/traffic/TrafficChartWithControls";
 
 const statusSpyConfig: Record<string, { label: string; icon: string }> = {
   RADAR: { label: 'Radar', icon: '🔍' },
@@ -103,10 +104,21 @@ export default function SpyDetail() {
       <Tabs defaultValue="dominios">
         <TabsList>
           <TabsTrigger value="dominios">🌐 Domínios</TabsTrigger>
+          <TabsTrigger value="trafego">📈 Tráfego</TabsTrigger>
           <TabsTrigger value="funil">🔄 Funil</TabsTrigger>
           <TabsTrigger value="fontes">📡 Fontes</TabsTrigger>
           <TabsTrigger value="info">ℹ️ Info</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="trafego" className="mt-4">
+          <TrafficChartWithControls
+            initialDomains={
+              oferta.oferta_dominios
+                ?.map((d: any) => d.dominio)
+                .filter(Boolean) || (oferta.dominio_principal ? [oferta.dominio_principal] : [])
+            }
+          />
+        </TabsContent>
 
         <TabsContent value="dominios" className="mt-4 space-y-2">
           {!oferta.oferta_dominios?.length ? (
