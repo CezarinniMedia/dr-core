@@ -3,8 +3,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { AppHeader } from "./AppHeader";
-import { ArsenalSidebarProvider } from "@/components/spy/ArsenalSidebarContext";
-import { ArsenalSidebar } from "@/components/spy/ArsenalSidebar";
 import { Loader2 } from "lucide-react";
 
 export function DashboardLayout() {
@@ -23,19 +21,16 @@ export function DashboardLayout() {
   }
 
   return (
-    <ArsenalSidebarProvider>
-      <SidebarProvider>
-        <div className="min-h-screen flex w-full">
-          <AppSidebar />
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <AppHeader />
-            <main className="flex-1 overflow-y-auto p-6 bg-background">
-              <Outlet />
-            </main>
-          </div>
-          <ArsenalSidebar />
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <AppSidebar />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <AppHeader />
+          <main className="flex-1 overflow-y-auto p-6 bg-background">
+            <Outlet />
+          </main>
         </div>
-      </SidebarProvider>
-    </ArsenalSidebarProvider>
+      </div>
+    </SidebarProvider>
   );
 }

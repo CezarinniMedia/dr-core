@@ -32,7 +32,7 @@ export function useOfertas(status?: string) {
   return useQuery({
     queryKey: ["ofertas", status],
     queryFn: async () => {
-      let query = supabase
+      let query = (supabase as any)
         .from("ofertas")
         .select("*")
         .order("created_at", { ascending: false });
@@ -51,10 +51,10 @@ export function useOferta(id: string | undefined) {
     queryKey: ["oferta", id],
     enabled: !!id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("ofertas")
         .select("*")
-        .eq("id", id!)
+        .eq("id", id)
         .maybeSingle();
 
       if (error) throw error;
@@ -89,13 +89,13 @@ export function useCreateOferta() {
       const workspaceId = await getUserWorkspaceId();
       const slug = oferta.slug || slugify(oferta.nome);
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("ofertas")
         .insert({
           ...oferta,
           slug,
           workspace_id: workspaceId,
-        } as any)
+        })
         .select()
         .single();
 
@@ -119,9 +119,9 @@ export function useUpdateOferta() {
 
   return useMutation({
     mutationFn: async ({ id, data: updates }: { id: string; data: Partial<OfertaInsert> }) => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("ofertas")
-        .update(updates as any)
+        .update(updates)
         .eq("id", id)
         .select()
         .single();
@@ -146,7 +146,7 @@ export function useDeleteOferta() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("ofertas").delete().eq("id", id);
+      const { error } = await (supabase as any).from("ofertas").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -156,69 +156,5 @@ export function useDeleteOferta() {
     onError: (error: Error) => {
       toast({ title: "Erro ao deletar", description: error.message, variant: "destructive" });
     },
-  });
-}
-
-// ===== SPY HOOKS =====
-
-export function useOfertasSpy(filters?: {
-  status_spy?: string;
-  nicho?: string;
-  prioridade?: string;
-  minTrafego?: number;
-}) {
-  return useQuery({
-    queryKey: ['ofertas', 'spy', filters],
-    queryFn: async () => {
-      let query = supabase
-        .from('ofertas')
-        .select(`
-          *,
-          oferta_dominios(count),
-          fontes_captura(count),
-          ad_bibliotecas(count)
-        `)
-        .neq('status_spy', 'ARQUIVADA')
-        .order('updated_at', { ascending: false });
-
-      if (filters?.status_spy) query = query.eq('status_spy', filters.status_spy);
-      if (filters?.nicho) query = query.eq('nicho', filters.nicho);
-      if (filters?.prioridade) query = query.eq('prioridade', filters.prioridade);
-      if (filters?.minTrafego) query = query.gte('trafego_atual', filters.minTrafego);
-
-      const { data, error } = await query;
-      if (error) throw error;
-
-      return data?.map(o => ({
-        ...o,
-        _count_dominios: (o.oferta_dominios as any)?.[0]?.count || 0,
-        _count_fontes: (o.fontes_captura as any)?.[0]?.count || 0,
-        _count_bibliotecas: (o.ad_bibliotecas as any)?.[0]?.count || 0,
-      }));
-    },
-  });
-}
-
-export function useOfertaSpyDetail(id: string) {
-  return useQuery({
-    queryKey: ['oferta', 'spy-detail', id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('ofertas')
-        .select(`
-          *,
-          oferta_dominios(*),
-          trafego_historico(*),
-          fontes_captura(*),
-          ad_bibliotecas(*),
-          funil_paginas(*)
-        `)
-        .eq('id', id)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!id,
   });
 }
