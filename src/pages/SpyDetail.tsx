@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useOfertaSpyDetail } from "@/hooks/useOfertas";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
@@ -40,7 +40,7 @@ export default function SpyDetail() {
     );
   }
 
-  const status = statusSpyConfig[(oferta as any).status_spy] || statusSpyConfig.RADAR;
+  const status = statusSpyConfig[oferta.status_spy || 'RADAR'] || statusSpyConfig.RADAR;
 
   return (
     <div className="max-w-5xl space-y-6">
@@ -51,17 +51,17 @@ export default function SpyDetail() {
         </Button>
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight">{(oferta as any).nome}</h1>
+            <h1 className="text-2xl font-bold tracking-tight">{oferta.nome}</h1>
             <Badge variant="outline">{status.icon} {status.label}</Badge>
           </div>
-          {(oferta as any).dominio_principal && (
+          {oferta.dominio_principal && (
             <a
-              href={`https://${(oferta as any).dominio_principal}`}
+              href={`https://${oferta.dominio_principal}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm text-primary hover:underline flex items-center gap-1"
             >
-              {(oferta as any).dominio_principal} <ExternalLink className="h-3 w-3" />
+              {oferta.dominio_principal} <ExternalLink className="h-3 w-3" />
             </a>
           )}
         </div>
@@ -72,21 +72,21 @@ export default function SpyDetail() {
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-xs text-muted-foreground">Nicho</p>
-            <p className="text-sm font-semibold">{(oferta as any).nicho || "—"}</p>
+            <p className="text-sm font-semibold">{oferta.nicho || "—"}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-xs text-muted-foreground">Tráfego 30d</p>
-            <p className="text-sm font-semibold">{formatTraffic((oferta as any).trafego_atual)}</p>
+            <p className="text-sm font-semibold">{formatTraffic(oferta.trafego_atual)}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-xs text-muted-foreground">Tendência</p>
             <p className="text-sm font-semibold">
-              {(oferta as any).trafego_tendencia != null
-                ? `${(oferta as any).trafego_tendencia > 0 ? '+' : ''}${(oferta as any).trafego_tendencia}%`
+              {oferta.trafego_tendencia != null
+                ? `${Number(oferta.trafego_tendencia) > 0 ? '+' : ''}${oferta.trafego_tendencia}%`
                 : '—'}
             </p>
           </CardContent>
@@ -94,7 +94,7 @@ export default function SpyDetail() {
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-xs text-muted-foreground">Domínios</p>
-            <p className="text-sm font-semibold">{(oferta as any).oferta_dominios?.length || 0}</p>
+            <p className="text-sm font-semibold">{oferta.oferta_dominios?.length || 0}</p>
           </CardContent>
         </Card>
       </div>
@@ -109,12 +109,12 @@ export default function SpyDetail() {
         </TabsList>
 
         <TabsContent value="dominios" className="mt-4 space-y-2">
-          {!(oferta as any).oferta_dominios?.length ? (
+          {!oferta.oferta_dominios?.length ? (
             <div className="border border-dashed rounded-lg p-8 text-center">
               <p className="text-muted-foreground text-sm">Nenhum domínio registrado.</p>
             </div>
           ) : (
-            (oferta as any).oferta_dominios.map((d: any) => (
+            oferta.oferta_dominios.map((d) => (
               <Card key={d.id} className="p-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -134,15 +134,15 @@ export default function SpyDetail() {
         </TabsContent>
 
         <TabsContent value="funil" className="mt-4 space-y-2">
-          {!(oferta as any).funil_paginas?.length ? (
+          {!oferta.funil_paginas?.length ? (
             <div className="border border-dashed rounded-lg p-8 text-center">
               <p className="text-muted-foreground text-sm">Nenhuma página de funil mapeada.</p>
             </div>
           ) : (
             <div className="flex gap-2 overflow-x-auto pb-2">
-              {(oferta as any).funil_paginas
-                .sort((a: any, b: any) => a.ordem - b.ordem)
-                .map((pg: any) => (
+              {[...oferta.funil_paginas]
+                .sort((a, b) => a.ordem - b.ordem)
+                .map((pg) => (
                   <div key={pg.id} className="min-w-[160px] border rounded-lg p-3 text-center shrink-0">
                     <Badge variant="outline" className="text-xs mb-1">{pg.tipo_pagina}</Badge>
                     {pg.nome && <p className="text-sm font-medium">{pg.nome}</p>}
@@ -154,12 +154,12 @@ export default function SpyDetail() {
         </TabsContent>
 
         <TabsContent value="fontes" className="mt-4 space-y-2">
-          {!(oferta as any).fontes_captura?.length ? (
+          {!oferta.fontes_captura?.length ? (
             <div className="border border-dashed rounded-lg p-8 text-center">
               <p className="text-muted-foreground text-sm">Nenhuma fonte de captura registrada.</p>
             </div>
           ) : (
-            (oferta as any).fontes_captura.map((f: any) => (
+            oferta.fontes_captura.map((f) => (
               <Card key={f.id} className="p-3">
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className="text-xs">{f.metodo}</Badge>
@@ -175,29 +175,29 @@ export default function SpyDetail() {
           <Card>
             <CardContent className="p-4 space-y-3">
               <div className="grid grid-cols-3 gap-4 text-sm">
-                {(oferta as any).checkout_provider && (
+                {oferta.checkout_provider && (
                   <div>
                     <Label className="text-xs">Checkout</Label>
-                    <p className="text-xs">{(oferta as any).checkout_provider}</p>
+                    <p className="text-xs">{oferta.checkout_provider}</p>
                   </div>
                 )}
-                {(oferta as any).vsl_player && (
+                {oferta.vsl_player && (
                   <div>
                     <Label className="text-xs">VSL Player</Label>
-                    <p className="text-xs">{(oferta as any).vsl_player}</p>
+                    <p className="text-xs">{oferta.vsl_player}</p>
                   </div>
                 )}
-                {(oferta as any).ticket_front && (
+                {oferta.ticket_front && (
                   <div>
                     <Label className="text-xs">Ticket Front</Label>
-                    <p className="text-xs">R$ {(oferta as any).ticket_front}</p>
+                    <p className="text-xs">R$ {oferta.ticket_front}</p>
                   </div>
                 )}
               </div>
-              {(oferta as any).notas_spy && (
+              {oferta.notas_spy && (
                 <div>
                   <Label className="text-xs">Notas</Label>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-1">{(oferta as any).notas_spy}</p>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-1">{oferta.notas_spy}</p>
                 </div>
               )}
             </CardContent>

@@ -21,10 +21,11 @@ interface ParsedRow {
   snippet?: string;
 }
 
+// Define parsers for each import type
 const parsers: Record<ImportType, (text: string) => ParsedRow[]> = {
   PUBLICWWW_EXPORT: (text) => {
     return text.split('\n').slice(1).filter(Boolean).map(line => {
-      const [url, snippet] = line.split(',').map(s => s?.trim().replace(/"/g, ''));
+      const [url, snippet] = line.split(',').map(s => s?.trim().replace(/\"/g, ''));
       let dominio = '';
       try {
         dominio = url ? new URL(url.startsWith('http') ? url : `https://${url}`).hostname : '';
@@ -35,14 +36,14 @@ const parsers: Record<ImportType, (text: string) => ParsedRow[]> = {
 
   SEMRUSH_BULK: (text) => {
     return text.split('\n').slice(1).filter(Boolean).map(line => {
-      const cols = line.split(/[,;\t]/).map(s => s?.trim().replace(/"/g, ''));
+      const cols = line.split(/[,;\t]/).map(s => s?.trim().replace(/\"/g, ''));
       return { dominio: cols[0] || '', trafego: parseInt(cols[1]) || 0 };
     }).filter(r => r.dominio);
   },
 
   SEMRUSH_COMPARISON: (text) => {
     return text.split('\n').slice(1).filter(Boolean).map(line => {
-      const cols = line.split(/[,;\t]/).map(s => s?.trim().replace(/"/g, ''));
+      const cols = line.split(/[,;\t]/).map(s => s?.trim().replace(/\"/g, ''));
       return {
         dominio: cols[0] || '',
         trafego: parseInt(cols[1]) || 0,
@@ -55,7 +56,7 @@ const parsers: Record<ImportType, (text: string) => ParsedRow[]> = {
 
   MANUAL_CSV: (text) => {
     return text.split('\n').slice(1).filter(Boolean).map(line => {
-      const cols = line.split(/[,;\t]/).map(s => s?.trim().replace(/"/g, ''));
+      const cols = line.split(/[,;\t]/).map(s => s?.trim().replace(/\"/g, ''));
       return { dominio: cols[0] || '' };
     }).filter(r => r.dominio);
   },
@@ -118,13 +119,13 @@ export function CsvImporter() {
       if (!member) throw new Error('Workspace não encontrado');
 
       const dominios = deduped.map(r => r.dominio.toLowerCase().replace(/^www\./, ''));
-      const { data: existentes } = await (supabase as any)
+      const { data: existentes } = await supabase
         .from('ofertas')
         .select('id, dominio_principal')
         .eq('workspace_id', member.workspace_id)
         .in('dominio_principal', dominios);
 
-      const existentesMap = new Map((existentes || []).map((e: any) => [e.dominio_principal, e.id]));
+      const existentesMap = new Map((existentes || []).map(e => [e.dominio_principal, e.id]));
 
       let created = 0, updated = 0, skipped = 0;
 
@@ -134,7 +135,7 @@ export function CsvImporter() {
 
         if (existingId) {
           if (row.trafego) {
-            await (supabase as any).from('ofertas').update({
+            await supabase.from('ofertas').update({
               trafego_atual: row.trafego,
               trafego_atualizado_em: new Date().toISOString(),
             }).eq('id', existingId);
@@ -145,7 +146,7 @@ export function CsvImporter() {
         } else {
           if (row.trafego && row.trafego < 100) { skipped++; continue; }
 
-          const { error } = await (supabase as any).from('ofertas').insert({
+          const { error } = await supabase.from('ofertas').insert({
             workspace_id: member.workspace_id,
             nome: domClean.split('.')[0],
             slug: domClean.replace(/[^a-z0-9]/gi, '-'),
@@ -162,7 +163,7 @@ export function CsvImporter() {
       }
 
       // Registrar batch
-      await (supabase as any).from('import_batches').insert({
+      await supabase.from('import_batches').insert({
         workspace_id: member.workspace_id,
         tipo: importType,
         arquivo_nome: file.name,
