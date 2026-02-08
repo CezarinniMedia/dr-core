@@ -151,6 +151,7 @@ export type Database = {
           id: string
           last_seen: string | null
           likes: number | null
+          oferta_id: string | null
           platform: string
           shares: number | null
           status: string | null
@@ -172,6 +173,7 @@ export type Database = {
           id?: string
           last_seen?: string | null
           likes?: number | null
+          oferta_id?: string | null
           platform: string
           shares?: number | null
           status?: string | null
@@ -193,6 +195,7 @@ export type Database = {
           id?: string
           last_seen?: string | null
           likes?: number | null
+          oferta_id?: string | null
           platform?: string
           shares?: number | null
           status?: string | null
@@ -207,6 +210,13 @@ export type Database = {
             columns: ["competitor_id"]
             isOneToOne: false
             referencedRelation: "competitors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_creatives_oferta_id_fkey"
+            columns: ["oferta_id"]
+            isOneToOne: false
+            referencedRelation: "ofertas"
             referencedColumns: ["id"]
           },
           {
