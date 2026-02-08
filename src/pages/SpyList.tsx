@@ -1,14 +1,17 @@
 import { useState } from 'react';
 import { RadarKanban } from '@/components/spy/RadarKanban';
 import { QuickAddOferta } from '@/components/spy/QuickAddOferta';
-import { CsvImporter } from '@/components/spy/CsvImporter';
+import { CsvImportDialog } from '@/components/spy/CsvImportDialog';
+import { ImportHistoryPanel } from '@/components/spy/ImportHistoryPanel';
 import { ArsenalPanel } from '@/components/spy/ArsenalPanel';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Crosshair, LayoutGrid, Table, BarChart3 } from 'lucide-react';
+import { Crosshair, LayoutGrid, Table, BarChart3, Upload, History } from 'lucide-react';
 
 export default function SpyPage() {
   const [view, setView] = useState<'kanban' | 'table' | 'analytics'>('kanban');
+  const [csvOpen, setCsvOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -33,7 +36,34 @@ export default function SpyPage() {
             </SheetContent>
           </Sheet>
 
-          <CsvImporter />
+          {/* Import History Drawer */}
+          <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="sm">
+                <History className="h-4 w-4 mr-1" /> Histórico
+              </Button>
+            </SheetTrigger>
+            <SheetContent className="w-[400px] sm:max-w-[480px] overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle>📋 Histórico de Imports</SheetTitle>
+              </SheetHeader>
+              <div className="mt-4">
+                <ImportHistoryPanel
+                  onReimport={() => {
+                    setHistoryOpen(false);
+                    setCsvOpen(true);
+                  }}
+                />
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          {/* CSV Import */}
+          <Button size="sm" variant="outline" onClick={() => setCsvOpen(true)}>
+            <Upload className="h-4 w-4 mr-1" /> Import CSV
+          </Button>
+          <CsvImportDialog open={csvOpen} onOpenChange={setCsvOpen} />
+
           <QuickAddOferta />
         </div>
       </div>
