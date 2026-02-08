@@ -1,39 +1,37 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useOfertaSpyDetail } from "@/hooks/useOfertas";
+import { useCompetitor, useUpdateCompetitor } from "@/hooks/useCompetitors";
+import { AdCreativeGallery } from "@/components/spy/AdCreativeGallery";
+import { AdCreativeFormDialog } from "@/components/spy/AdCreativeFormDialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, ExternalLink, Globe, TrendingUp } from "lucide-react";
-import { TrafficChartWithControls } from "@/components/traffic/TrafficChartWithControls";
-
-const statusSpyConfig: Record<string, { label: string; icon: string }> = {
-  RADAR: { label: 'Radar', icon: '🔍' },
-  TRIAGEM: { label: 'Triagem', icon: '⚡' },
-  DEEP_DIVE: { label: 'Deep Dive', icon: '🎯' },
-  MONITORANDO: { label: 'Monitorando', icon: '👁️' },
-  PRODUCAO: { label: 'Produção', icon: '🚀' },
-  ARQUIVADA: { label: 'Arquivada', icon: '📦' },
-};
-
-const formatTraffic = (n?: number | null) => {
-  if (!n) return '—';
-  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
-  return n.toString();
-};
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ArrowLeft, Plus, Save, ExternalLink } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 export default function SpyDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { data: oferta, isLoading } = useOfertaSpyDetail(id!);
+  const { data: competitor, isLoading } = useCompetitor(id!);
+  const updateMutation = useUpdateCompetitor();
+  const [showAdForm, setShowAdForm] = useState(false);
 
   if (isLoading) return <p className="text-muted-foreground p-6">Carregando...</p>;
-  if (!oferta) {
+  if (!competitor) {
     return (
       <div className="p-6 space-y-4">
-        <p className="text-muted-foreground">Oferta não encontrada.</p>
+        <p className="text-muted-foreground">Competitor não encontrado.</p>
         <Button variant="outline" onClick={() => navigate("/spy")}>
           <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
         </Button>
@@ -41,181 +39,189 @@ export default function SpyDetail() {
     );
   }
 
-  const status = statusSpyConfig[oferta.status_spy || 'RADAR'] || statusSpyConfig.RADAR;
+  const statusConfig: Record<string, { label: string; variant: "default" | "destructive" | "secondary" }> = {
+    HOT: { label: "🔥 HOT", variant: "destructive" },
+    WARM: { label: "⚡ WARM", variant: "default" },
+    COLD: { label: "❄️ COLD", variant: "secondary" },
+  };
+  const status = statusConfig[competitor.status_tracking || "WARM"] || statusConfig.WARM;
+
+  const handleStatusChange = (newStatus: string) => {
+    updateMutation.mutate({ id: id!, data: { status_tracking: newStatus } });
+  };
 
   return (
     <div className="max-w-5xl space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/spy")}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight">{oferta.nome}</h1>
-            <Badge variant="outline">{status.icon} {status.label}</Badge>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/spy")}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold tracking-tight">{competitor.nome}</h1>
+              <Badge variant={status.variant}>{status.label}</Badge>
+            </div>
+            {competitor.dominio && (
+              <a
+                href={`https://${competitor.dominio}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-primary hover:underline flex items-center gap-1"
+              >
+                {competitor.dominio} <ExternalLink className="h-3 w-3" />
+              </a>
+            )}
           </div>
-          {oferta.dominio_principal && (
-            <a
-              href={`https://${oferta.dominio_principal}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-primary hover:underline flex items-center gap-1"
-            >
-              {oferta.dominio_principal} <ExternalLink className="h-3 w-3" />
-            </a>
-          )}
         </div>
+
+        <Select value={competitor.status_tracking || "WARM"} onValueChange={handleStatusChange}>
+          <SelectTrigger className="w-36">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="HOT">🔥 HOT</SelectItem>
+            <SelectItem value="WARM">⚡ WARM</SelectItem>
+            <SelectItem value="COLD">❄️ COLD</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-xs text-muted-foreground">Nicho</p>
-            <p className="text-sm font-semibold">{oferta.nicho || "—"}</p>
+            <p className="text-xs text-muted-foreground">Vertical</p>
+            <p className="text-sm font-semibold">{competitor.vertical || "—"}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-xs text-muted-foreground">Tráfego 30d</p>
-            <p className="text-sm font-semibold">{formatTraffic(oferta.trafego_atual)}</p>
+            <p className="text-xs text-muted-foreground">Traffic Score</p>
+            <p className="text-sm font-semibold">{competitor.traffic_score ? `${competitor.traffic_score}/10` : "—"}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-xs text-muted-foreground">Tendência</p>
+            <p className="text-xs text-muted-foreground">Revenue Est.</p>
             <p className="text-sm font-semibold">
-              {oferta.trafego_tendencia != null
-                ? `${Number(oferta.trafego_tendencia) > 0 ? '+' : ''}${oferta.trafego_tendencia}%`
-                : '—'}
+              {competitor.estimated_monthly_revenue
+                ? formatCurrency(Number(competitor.estimated_monthly_revenue))
+                : "—"}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-xs text-muted-foreground">Domínios</p>
-            <p className="text-sm font-semibold">{oferta.oferta_dominios?.length || 0}</p>
+            <p className="text-xs text-muted-foreground">Ads Salvos</p>
+            <p className="text-sm font-semibold">{competitor.ad_creatives?.length || 0}</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="dominios">
+      <Tabs defaultValue="ads">
         <TabsList>
-          <TabsTrigger value="dominios">🌐 Domínios</TabsTrigger>
-          <TabsTrigger value="trafego">📈 Tráfego</TabsTrigger>
-          <TabsTrigger value="funil">🔄 Funil</TabsTrigger>
-          <TabsTrigger value="fontes">📡 Fontes</TabsTrigger>
+          <TabsTrigger value="ads">📸 Ad Creatives</TabsTrigger>
+          <TabsTrigger value="funnels">🔄 Funnel Maps</TabsTrigger>
           <TabsTrigger value="info">ℹ️ Info</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="trafego" className="mt-4">
-          <TrafficChartWithControls
-            initialDomains={
-              oferta.oferta_dominios
-                ?.map((d: any) => d.dominio)
-                .filter(Boolean) || (oferta.dominio_principal ? [oferta.dominio_principal] : [])
-            }
-          />
+        <TabsContent value="ads" className="mt-4 space-y-4">
+          <div className="flex justify-end">
+            <Button size="sm" onClick={() => setShowAdForm(true)}>
+              <Plus className="h-3.5 w-3.5 mr-1" /> Salvar Ad
+            </Button>
+          </div>
+          <AdCreativeGallery adCreatives={competitor.ad_creatives || []} />
         </TabsContent>
 
-        <TabsContent value="dominios" className="mt-4 space-y-2">
-          {!oferta.oferta_dominios?.length ? (
+        <TabsContent value="funnels" className="mt-4">
+          {!competitor.funnel_maps || competitor.funnel_maps.length === 0 ? (
             <div className="border border-dashed rounded-lg p-8 text-center">
-              <p className="text-muted-foreground text-sm">Nenhum domínio registrado.</p>
+              <p className="text-muted-foreground text-sm">Nenhum funnel map criado.</p>
             </div>
           ) : (
-            oferta.oferta_dominios.map((d) => (
-              <Card key={d.id} className="p-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Globe className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-mono text-sm">{d.dominio}</span>
-                    {d.is_principal && <Badge variant="default" className="text-xs">Principal</Badge>}
-                  </div>
-                  {d.trafego_ultimo && (
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <TrendingUp className="h-3 w-3" /> {formatTraffic(d.trafego_ultimo)}
-                    </span>
-                  )}
-                </div>
-              </Card>
-            ))
-          )}
-        </TabsContent>
-
-        <TabsContent value="funil" className="mt-4 space-y-2">
-          {!oferta.funil_paginas?.length ? (
-            <div className="border border-dashed rounded-lg p-8 text-center">
-              <p className="text-muted-foreground text-sm">Nenhuma página de funil mapeada.</p>
+            <div className="space-y-4">
+              {competitor.funnel_maps.map((fm: any) => (
+                <Card key={fm.id}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">{fm.nome}</CardTitle>
+                    <div className="flex gap-3 text-xs text-muted-foreground">
+                      {fm.aov_estimate && <span>AOV: {formatCurrency(Number(fm.aov_estimate))}</span>}
+                      {fm.checkout_provider && <span>Checkout: {fm.checkout_provider}</span>}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex gap-2 overflow-x-auto pb-2">
+                      {(fm.steps as any[])?.map((step: any, i: number) => (
+                        <div
+                          key={i}
+                          className="min-w-[140px] border rounded-lg p-3 text-center shrink-0"
+                        >
+                          <Badge variant="outline" className="text-xs mb-1">
+                            {step.type}
+                          </Badge>
+                          {step.price && (
+                            <p className="text-sm font-semibold">{formatCurrency(step.price)}</p>
+                          )}
+                          {step.notes && (
+                            <p className="text-[10px] text-muted-foreground mt-1 line-clamp-2">
+                              {step.notes}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-          ) : (
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {[...oferta.funil_paginas]
-                .sort((a, b) => a.ordem - b.ordem)
-                .map((pg) => (
-                  <div key={pg.id} className="min-w-[160px] border rounded-lg p-3 text-center shrink-0">
-                    <Badge variant="outline" className="text-xs mb-1">{pg.tipo_pagina}</Badge>
-                    {pg.nome && <p className="text-sm font-medium">{pg.nome}</p>}
-                    {pg.preco && <p className="text-xs text-muted-foreground">R$ {pg.preco}</p>}
-                  </div>
-                ))}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="fontes" className="mt-4 space-y-2">
-          {!oferta.fontes_captura?.length ? (
-            <div className="border border-dashed rounded-lg p-8 text-center">
-              <p className="text-muted-foreground text-sm">Nenhuma fonte de captura registrada.</p>
-            </div>
-          ) : (
-            oferta.fontes_captura.map((f) => (
-              <Card key={f.id} className="p-3">
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-xs">{f.metodo}</Badge>
-                  {f.query_usada && <code className="text-xs text-muted-foreground truncate">{f.query_usada}</code>}
-                  {f.quantidade_resultados && <span className="text-xs text-muted-foreground ml-auto">{f.quantidade_resultados} resultados</span>}
-                </div>
-              </Card>
-            ))
           )}
         </TabsContent>
 
         <TabsContent value="info" className="mt-4">
           <Card>
-            <CardContent className="p-4 space-y-3">
+            <CardContent className="p-4 space-y-4">
               <div className="grid grid-cols-3 gap-4 text-sm">
-                {oferta.checkout_provider && (
+                {competitor.fb_page_url && (
                   <div>
-                    <Label className="text-xs">Checkout</Label>
-                    <p className="text-xs">{oferta.checkout_provider}</p>
+                    <Label className="text-xs">Facebook</Label>
+                    <a href={competitor.fb_page_url} target="_blank" rel="noopener noreferrer" className="text-primary text-xs hover:underline block truncate">
+                      {competitor.fb_page_url}
+                    </a>
                   </div>
                 )}
-                {oferta.vsl_player && (
+                {competitor.ig_handle && (
                   <div>
-                    <Label className="text-xs">VSL Player</Label>
-                    <p className="text-xs">{oferta.vsl_player}</p>
+                    <Label className="text-xs">Instagram</Label>
+                    <p className="text-xs">{competitor.ig_handle}</p>
                   </div>
                 )}
-                {oferta.ticket_front && (
+                {competitor.tiktok_handle && (
                   <div>
-                    <Label className="text-xs">Ticket Front</Label>
-                    <p className="text-xs">R$ {oferta.ticket_front}</p>
+                    <Label className="text-xs">TikTok</Label>
+                    <p className="text-xs">{competitor.tiktok_handle}</p>
                   </div>
                 )}
               </div>
-              {oferta.notas_spy && (
+              {competitor.notas && (
                 <div>
                   <Label className="text-xs">Notas</Label>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-1">{oferta.notas_spy}</p>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-1">{competitor.notas}</p>
                 </div>
               )}
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      <AdCreativeFormDialog
+        open={showAdForm}
+        onClose={() => setShowAdForm(false)}
+        competitorId={id!}
+      />
     </div>
   );
 }
