@@ -13,7 +13,7 @@ import {
   Library, Link2, StickyNote, Zap, Trash2, GripVertical, AlertTriangle,
 } from 'lucide-react';
 import { useQuickAdd, cleanDomain, type FonteCaptura, type DominioExtra, type BibliotecaAnuncio, type FunilPagina } from '@/hooks/useQuickAdd';
-import { useArsenalFootprints, useArsenalKeywords } from '@/hooks/useArsenal';
+import { ArsenalQuickCopy } from './ArsenalQuickCopy';
 import { useNavigate } from 'react-router-dom';
 
 // ===== CONSTANTS =====
@@ -70,12 +70,10 @@ function Section({
 
 // ===== DYNAMIC FONTE FIELD =====
 
-function FonteFields({ fonte, onChange, onRemove, footprints, keywords }: {
+function FonteFields({ fonte, onChange, onRemove }: {
   fonte: FonteCaptura;
   onChange: (f: FonteCaptura) => void;
   onRemove: () => void;
-  footprints: any[];
-  keywords: any[];
 }) {
   return (
     <div className="border border-border rounded-md p-3 space-y-2 bg-muted/20">
@@ -99,35 +97,25 @@ function FonteFields({ fonte, onChange, onRemove, footprints, keywords }: {
       {fonte.metodo === 'PUBLICWWW' && (
         <div>
           <Label className="text-xs">Footprint usado</Label>
-          <Input
+          <ArsenalQuickCopy
+            type="footprint"
             value={fonte.footprint_usado || ''}
-            onChange={(e) => onChange({ ...fonte, footprint_usado: e.target.value })}
-            placeholder="Ex: vturb.com.br/player"
+            onChange={(v) => onChange({ ...fonte, footprint_usado: v })}
+            placeholder="Buscar footprint no arsenal..."
             className="h-8 text-xs"
-            list="footprint-list"
           />
-          <datalist id="footprint-list">
-            {footprints.map((fp: any) => (
-              <option key={fp.id} value={fp.footprint}>{fp.nome}</option>
-            ))}
-          </datalist>
         </div>
       )}
       {fonte.metodo === 'FB_ADS_LIBRARY' && (
         <div>
           <Label className="text-xs">Keyword usada</Label>
-          <Input
+          <ArsenalQuickCopy
+            type="keyword"
             value={fonte.keyword_usada || ''}
-            onChange={(e) => onChange({ ...fonte, keyword_usada: e.target.value })}
-            placeholder="Ex: emagrecer rápido"
+            onChange={(v) => onChange({ ...fonte, keyword_usada: v })}
+            placeholder="Buscar keyword no arsenal..."
             className="h-8 text-xs"
-            list="keyword-list"
           />
-          <datalist id="keyword-list">
-            {keywords.map((kw: any) => (
-              <option key={kw.id} value={kw.keyword} />
-            ))}
-          </datalist>
         </div>
       )}
       {fonte.metodo === 'GOOGLE_DORKS' && (
@@ -192,8 +180,6 @@ export function QuickAddOferta({ open, onOpenChange }: QuickAddOfertaProps) {
     draft, updateDraft, setDomainAndSuggestName, save, saving, clearDraft, duplicateWarning,
   } = useQuickAdd();
   const navigate = useNavigate();
-  const { data: footprints } = useArsenalFootprints();
-  const { data: keywords } = useArsenalKeywords();
   const [tagInput, setTagInput] = useState('');
 
   // Keyboard shortcut
@@ -403,8 +389,6 @@ export function QuickAddOferta({ open, onOpenChange }: QuickAddOfertaProps) {
                   fonte={f}
                   onChange={(updated) => updateFonte(i, updated)}
                   onRemove={() => removeFonte(i)}
-                  footprints={(footprints as any[]) || []}
-                  keywords={(keywords as any[]) || []}
                 />
               ))}
               <Button variant="outline" size="sm" className="w-full h-8 text-xs" onClick={addFonte}>

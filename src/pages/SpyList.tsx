@@ -3,8 +3,8 @@ import { RadarKanban } from '@/components/spy/RadarKanban';
 import { QuickAddFloatingButton } from '@/components/spy/QuickAddFloatingButton';
 import { CsvImportDialog } from '@/components/spy/CsvImportDialog';
 import { ImportHistoryPanel } from '@/components/spy/ImportHistoryPanel';
-import { ArsenalPanel } from '@/components/spy/ArsenalPanel';
 import { TrafficChartWithControls } from '@/components/traffic/TrafficChartWithControls';
+import { useArsenalSidebar } from '@/components/spy/ArsenalSidebarContext';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Crosshair, LayoutGrid, Table, BarChart3, Upload, History } from 'lucide-react';
@@ -13,6 +13,7 @@ export default function SpyPage() {
   const [view, setView] = useState<'kanban' | 'table' | 'analytics'>('kanban');
   const [csvOpen, setCsvOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const { toggle: toggleArsenal, isOpen: arsenalOpen } = useArsenalSidebar();
 
   return (
     <div className="space-y-6">
@@ -20,22 +21,14 @@ export default function SpyPage() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-2xl font-bold tracking-tight">🔍 Radar de Ofertas</h1>
         <div className="flex items-center gap-2">
-          {/* Arsenal Drawer */}
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Crosshair className="h-4 w-4 mr-1" /> Arsenal
-              </Button>
-            </SheetTrigger>
-            <SheetContent className="w-[400px] sm:max-w-[480px] overflow-y-auto">
-              <SheetHeader>
-                <SheetTitle>⚔️ Arsenal</SheetTitle>
-              </SheetHeader>
-              <div className="mt-4">
-                <ArsenalPanel />
-              </div>
-            </SheetContent>
-          </Sheet>
+          {/* Arsenal Toggle */}
+          <Button
+            variant={arsenalOpen ? 'default' : 'outline'}
+            size="sm"
+            onClick={toggleArsenal}
+          >
+            <Crosshair className="h-4 w-4 mr-1" /> Arsenal
+          </Button>
 
           {/* Import History Drawer */}
           <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
