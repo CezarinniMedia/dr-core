@@ -5,7 +5,7 @@ export function useImportBatches(limit: number = 10) {
   return useQuery({
     queryKey: ['import-batches', limit],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('import_batches')
         .select('*')
         .order('created_at', { ascending: false })

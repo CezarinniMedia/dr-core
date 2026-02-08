@@ -6,7 +6,7 @@ export function useArsenalFootprints(categoria?: string) {
   return useQuery({
     queryKey: ['arsenal', 'footprints', categoria],
     queryFn: async () => {
-      let query = (supabase as any)
+      let query = supabase
         .from('arsenal_footprints')
         .select('*')
         .order('eficacia', { ascending: true })
@@ -26,13 +26,13 @@ export function useIncrementFootprintUsage() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { data: current } = await (supabase as any)
+      const { data: current } = await supabase
         .from('arsenal_footprints')
         .select('vezes_usado')
         .eq('id', id)
         .single();
 
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('arsenal_footprints')
         .update({
           vezes_usado: (current?.vezes_usado || 0) + 1,
@@ -53,7 +53,7 @@ export function useArsenalKeywords(tipo?: string) {
   return useQuery({
     queryKey: ['arsenal', 'keywords', tipo],
     queryFn: async () => {
-      let query = (supabase as any)
+      let query = supabase
         .from('arsenal_keywords')
         .select('*')
         .order('vezes_usado', { ascending: false });
@@ -72,7 +72,7 @@ export function useArsenalDorks(tipo?: string) {
   return useQuery({
     queryKey: ['arsenal', 'dorks', tipo],
     queryFn: async () => {
-      let query = (supabase as any)
+      let query = supabase
         .from('arsenal_dorks')
         .select('*')
         .order('vezes_usado', { ascending: false });

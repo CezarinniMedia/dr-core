@@ -6,7 +6,7 @@ export function useTrafegoHistorico(dominio: string, periodoTipo: string = 'MENS
   return useQuery({
     queryKey: ['trafego', dominio, periodoTipo],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('trafego_historico')
         .select('*')
         .eq('dominio', dominio)
@@ -26,7 +26,7 @@ export function useTrafegoComparacao(dominios: string[]) {
   return useQuery({
     queryKey: ['trafego', 'comparacao', dominios],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('trafego_historico')
         .select('*')
         .in('dominio', dominios)
@@ -36,8 +36,8 @@ export function useTrafegoComparacao(dominios: string[]) {
       if (error) throw error;
 
       // Agrupar por domínio para charts
-      const grouped: Record<string, any[]> = {};
-      (data as any[])?.forEach(row => {
+      const grouped: Record<string, typeof data> = {};
+      data?.forEach(row => {
         if (!grouped[row.dominio]) grouped[row.dominio] = [];
         grouped[row.dominio].push(row);
       });
