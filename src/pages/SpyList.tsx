@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { RadarKanban } from '@/components/spy/RadarKanban';
-import { QuickAddOferta } from '@/components/spy/QuickAddOferta';
+import { QuickAddFloatingButton } from '@/components/spy/QuickAddFloatingButton';
 import { CsvImportDialog } from '@/components/spy/CsvImportDialog';
 import { ImportHistoryPanel } from '@/components/spy/ImportHistoryPanel';
 import { ArsenalPanel } from '@/components/spy/ArsenalPanel';
@@ -64,10 +64,11 @@ export default function SpyPage() {
             <Upload className="h-4 w-4 mr-1" /> Import CSV
           </Button>
           <CsvImportDialog open={csvOpen} onOpenChange={setCsvOpen} />
-
-          <QuickAddOferta />
         </div>
       </div>
+
+      {/* Floating Quick Add Button */}
+      <QuickAddFloatingButton />
 
       {/* View Switcher */}
       <div className="flex gap-1">
