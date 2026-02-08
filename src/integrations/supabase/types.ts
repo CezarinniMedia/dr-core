@@ -593,6 +593,41 @@ export type Database = {
           },
         ]
       }
+      comparacao_batches: {
+        Row: {
+          data_criacao: string | null
+          dominios: string[]
+          id: string
+          nome: string | null
+          notas: string | null
+          workspace_id: string | null
+        }
+        Insert: {
+          data_criacao?: string | null
+          dominios: string[]
+          id?: string
+          nome?: string | null
+          notas?: string | null
+          workspace_id?: string | null
+        }
+        Update: {
+          data_criacao?: string | null
+          dominios?: string[]
+          id?: string
+          nome?: string | null
+          notas?: string | null
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comparacao_batches_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       competitors: {
         Row: {
           created_at: string | null
@@ -1437,6 +1472,7 @@ export type Database = {
         Row: {
           avg_visit_duration: number | null
           bounce_rate: number | null
+          comparacao_batch_id: string | null
           created_at: string | null
           dominio: string
           fonte_dados: string
@@ -1456,6 +1492,7 @@ export type Database = {
           pct_social: number | null
           periodo_data: string
           periodo_tipo: string
+          rank_no_batch: number | null
           visitas: number | null
           visitas_unicas: number | null
           workspace_id: string | null
@@ -1463,6 +1500,7 @@ export type Database = {
         Insert: {
           avg_visit_duration?: number | null
           bounce_rate?: number | null
+          comparacao_batch_id?: string | null
           created_at?: string | null
           dominio: string
           fonte_dados: string
@@ -1482,6 +1520,7 @@ export type Database = {
           pct_social?: number | null
           periodo_data: string
           periodo_tipo: string
+          rank_no_batch?: number | null
           visitas?: number | null
           visitas_unicas?: number | null
           workspace_id?: string | null
@@ -1489,6 +1528,7 @@ export type Database = {
         Update: {
           avg_visit_duration?: number | null
           bounce_rate?: number | null
+          comparacao_batch_id?: string | null
           created_at?: string | null
           dominio?: string
           fonte_dados?: string
@@ -1508,6 +1548,7 @@ export type Database = {
           pct_social?: number | null
           periodo_data?: string
           periodo_tipo?: string
+          rank_no_batch?: number | null
           visitas?: number | null
           visitas_unicas?: number | null
           workspace_id?: string | null
