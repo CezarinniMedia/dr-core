@@ -32,7 +32,7 @@ export function useOfertas(status?: string) {
   return useQuery({
     queryKey: ["ofertas", status],
     queryFn: async () => {
-      let query = (supabase as any)
+      let query = supabase
         .from("ofertas")
         .select("*")
         .order("created_at", { ascending: false });
@@ -51,10 +51,10 @@ export function useOferta(id: string | undefined) {
     queryKey: ["oferta", id],
     enabled: !!id,
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("ofertas")
         .select("*")
-        .eq("id", id)
+        .eq("id", id!)
         .maybeSingle();
 
       if (error) throw error;
@@ -89,13 +89,13 @@ export function useCreateOferta() {
       const workspaceId = await getUserWorkspaceId();
       const slug = oferta.slug || slugify(oferta.nome);
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("ofertas")
         .insert({
           ...oferta,
           slug,
           workspace_id: workspaceId,
-        })
+        } as any)
         .select()
         .single();
 
@@ -119,9 +119,9 @@ export function useUpdateOferta() {
 
   return useMutation({
     mutationFn: async ({ id, data: updates }: { id: string; data: Partial<OfertaInsert> }) => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("ofertas")
-        .update(updates)
+        .update(updates as any)
         .eq("id", id)
         .select()
         .single();
@@ -146,7 +146,7 @@ export function useDeleteOferta() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any).from("ofertas").delete().eq("id", id);
+      const { error } = await supabase.from("ofertas").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -170,7 +170,7 @@ export function useOfertasSpy(filters?: {
   return useQuery({
     queryKey: ['ofertas', 'spy', filters],
     queryFn: async () => {
-      let query = (supabase as any)
+      let query = supabase
         .from('ofertas')
         .select(`
           *,
@@ -189,11 +189,11 @@ export function useOfertasSpy(filters?: {
       const { data, error } = await query;
       if (error) throw error;
 
-      return (data as any[])?.map(o => ({
+      return data?.map(o => ({
         ...o,
-        _count_dominios: o.oferta_dominios?.[0]?.count || 0,
-        _count_fontes: o.fontes_captura?.[0]?.count || 0,
-        _count_bibliotecas: o.ad_bibliotecas?.[0]?.count || 0,
+        _count_dominios: (o.oferta_dominios as any)?.[0]?.count || 0,
+        _count_fontes: (o.fontes_captura as any)?.[0]?.count || 0,
+        _count_bibliotecas: (o.ad_bibliotecas as any)?.[0]?.count || 0,
       }));
     },
   });
@@ -203,7 +203,7 @@ export function useOfertaSpyDetail(id: string) {
   return useQuery({
     queryKey: ['oferta', 'spy-detail', id],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('ofertas')
         .select(`
           *,
