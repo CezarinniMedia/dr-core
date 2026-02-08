@@ -158,3 +158,67 @@ export function useDeleteOferta() {
     },
   });
 }
+
+// ===== SPY HOOKS =====
+
+export function useOfertasSpy(filters?: {
+  status_spy?: string;
+  nicho?: string;
+  prioridade?: string;
+  minTrafego?: number;
+}) {
+  return useQuery({
+    queryKey: ['ofertas', 'spy', filters],
+    queryFn: async () => {
+      let query = (supabase as any)
+        .from('ofertas')
+        .select(`
+          *,
+          oferta_dominios(count),
+          fontes_captura(count),
+          ad_bibliotecas(count)
+        `)
+        .neq('status_spy', 'ARQUIVADA')
+        .order('updated_at', { ascending: false });
+
+      if (filters?.status_spy) query = query.eq('status_spy', filters.status_spy);
+      if (filters?.nicho) query = query.eq('nicho', filters.nicho);
+      if (filters?.prioridade) query = query.eq('prioridade', filters.prioridade);
+      if (filters?.minTrafego) query = query.gte('trafego_atual', filters.minTrafego);
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      return (data as any[])?.map(o => ({
+        ...o,
+        _count_dominios: o.oferta_dominios?.[0]?.count || 0,
+        _count_fontes: o.fontes_captura?.[0]?.count || 0,
+        _count_bibliotecas: o.ad_bibliotecas?.[0]?.count || 0,
+      }));
+    },
+  });
+}
+
+export function useOfertaSpyDetail(id: string) {
+  return useQuery({
+    queryKey: ['oferta', 'spy-detail', id],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('ofertas')
+        .select(`
+          *,
+          oferta_dominios(*),
+          trafego_historico(*),
+          fontes_captura(*),
+          ad_bibliotecas(*),
+          funil_paginas(*)
+        `)
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+}
