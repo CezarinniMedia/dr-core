@@ -1083,13 +1083,19 @@ export type Database = {
           arquivo_nome: string | null
           arquivo_url: string | null
           completed_at: string | null
+          config: Json | null
           contexto: Json | null
           created_at: string | null
+          dominios_novos: number | null
+          erro_mensagem: string | null
           erro_msg: string | null
           id: string
           linhas_erro: number | null
           linhas_ignoradas: number | null
           linhas_importadas: number | null
+          linhas_processadas: number | null
+          ofertas_atualizadas: number | null
+          ofertas_criadas: number | null
           ofertas_existentes_atualizadas: number | null
           ofertas_novas_criadas: number | null
           status: string | null
@@ -1101,13 +1107,19 @@ export type Database = {
           arquivo_nome?: string | null
           arquivo_url?: string | null
           completed_at?: string | null
+          config?: Json | null
           contexto?: Json | null
           created_at?: string | null
+          dominios_novos?: number | null
+          erro_mensagem?: string | null
           erro_msg?: string | null
           id?: string
           linhas_erro?: number | null
           linhas_ignoradas?: number | null
           linhas_importadas?: number | null
+          linhas_processadas?: number | null
+          ofertas_atualizadas?: number | null
+          ofertas_criadas?: number | null
           ofertas_existentes_atualizadas?: number | null
           ofertas_novas_criadas?: number | null
           status?: string | null
@@ -1119,13 +1131,19 @@ export type Database = {
           arquivo_nome?: string | null
           arquivo_url?: string | null
           completed_at?: string | null
+          config?: Json | null
           contexto?: Json | null
           created_at?: string | null
+          dominios_novos?: number | null
+          erro_mensagem?: string | null
           erro_msg?: string | null
           id?: string
           linhas_erro?: number | null
           linhas_ignoradas?: number | null
           linhas_importadas?: number | null
+          linhas_processadas?: number | null
+          ofertas_atualizadas?: number | null
+          ofertas_criadas?: number | null
           ofertas_existentes_atualizadas?: number | null
           ofertas_novas_criadas?: number | null
           status?: string | null
@@ -1226,6 +1244,8 @@ export type Database = {
           created_at: string | null
           data_lancamento: string | null
           dominio_principal: string | null
+          escalada: boolean | null
+          fb_pages: Json | null
           id: string
           idioma: string | null
           mecanismo_unico: string | null
@@ -1237,6 +1257,7 @@ export type Database = {
           plataforma_quiz: string | null
           prioridade: string | null
           promessa_principal: string | null
+          reclame_aqui_termo: string | null
           roas_target: number | null
           score_potencial: number | null
           slug: string
@@ -1251,6 +1272,7 @@ export type Database = {
           trafego_atualizado_em: string | null
           trafego_tendencia: number | null
           updated_at: string | null
+          urls_sites: Json | null
           vertical: string | null
           vsl_player: string | null
           workspace_id: string
@@ -1262,6 +1284,8 @@ export type Database = {
           created_at?: string | null
           data_lancamento?: string | null
           dominio_principal?: string | null
+          escalada?: boolean | null
+          fb_pages?: Json | null
           id?: string
           idioma?: string | null
           mecanismo_unico?: string | null
@@ -1273,6 +1297,7 @@ export type Database = {
           plataforma_quiz?: string | null
           prioridade?: string | null
           promessa_principal?: string | null
+          reclame_aqui_termo?: string | null
           roas_target?: number | null
           score_potencial?: number | null
           slug: string
@@ -1287,6 +1312,7 @@ export type Database = {
           trafego_atualizado_em?: string | null
           trafego_tendencia?: number | null
           updated_at?: string | null
+          urls_sites?: Json | null
           vertical?: string | null
           vsl_player?: string | null
           workspace_id: string
@@ -1298,6 +1324,8 @@ export type Database = {
           created_at?: string | null
           data_lancamento?: string | null
           dominio_principal?: string | null
+          escalada?: boolean | null
+          fb_pages?: Json | null
           id?: string
           idioma?: string | null
           mecanismo_unico?: string | null
@@ -1309,6 +1337,7 @@ export type Database = {
           plataforma_quiz?: string | null
           prioridade?: string | null
           promessa_principal?: string | null
+          reclame_aqui_termo?: string | null
           roas_target?: number | null
           score_potencial?: number | null
           slug?: string
@@ -1323,6 +1352,7 @@ export type Database = {
           trafego_atualizado_em?: string | null
           trafego_tendencia?: number | null
           updated_at?: string | null
+          urls_sites?: Json | null
           vertical?: string | null
           vsl_player?: string | null
           workspace_id?: string
