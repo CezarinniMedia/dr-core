@@ -17,20 +17,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useCreateAdCreative } from "@/hooks/useCompetitors";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface AdCreativeFormDialogProps {
   open: boolean;
   onClose: () => void;
-  competitorId: string;
+  ofertaId: string;
 }
 
-export function AdCreativeFormDialog({ open, onClose, competitorId }: AdCreativeFormDialogProps) {
-  const createMutation = useCreateAdCreative();
+export function AdCreativeFormDialog({ open, onClose, ofertaId }: AdCreativeFormDialogProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({
     tipo: "IMAGE",
@@ -53,7 +54,7 @@ export function AdCreativeFormDialog({ open, onClose, competitorId }: AdCreative
     setUploading(true);
     try {
       const ext = file.name.split(".").pop();
-      const path = `${competitorId}/${Date.now()}.${ext}`;
+      const path = `${ofertaId}/${Date.now()}.${ext}`;
       const { error } = await supabase.storage.from("spy-assets").upload(path, file);
       if (error) throw error;
 
@@ -66,28 +67,42 @@ export function AdCreativeFormDialog({ open, onClose, competitorId }: AdCreative
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!form.file_url || !form.tipo || !form.platform) return;
-    createMutation.mutate(
-      {
-        competitor_id: competitorId,
+    setSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: member } = await supabase
+        .from("workspace_members")
+        .select("workspace_id")
+        .eq("user_id", user?.id as string)
+        .single();
+
+      if (!member) throw new Error("Workspace não encontrado");
+
+      const { error } = await (supabase as any).from("ad_creatives").insert({
+        workspace_id: member.workspace_id,
         tipo: form.tipo,
         platform: form.platform,
         first_seen: form.first_seen,
         file_url: form.file_url,
-        copy_headline: form.copy_headline || undefined,
-        copy_body: form.copy_body || undefined,
-        cta_text: form.cta_text || undefined,
-        angulo: form.angulo || undefined,
-        tags: form.tags ? form.tags.split(",").map((t) => t.trim()) : undefined,
-      },
-      {
-        onSuccess: () => {
-          onClose();
-          setForm({ tipo: "IMAGE", platform: "FACEBOOK", first_seen: new Date().toISOString().split("T")[0], file_url: "", copy_headline: "", copy_body: "", cta_text: "", angulo: "", tags: "" });
-        },
-      }
-    );
+        copy_headline: form.copy_headline || null,
+        copy_body: form.copy_body || null,
+        cta_text: form.cta_text || null,
+        angulo: form.angulo || null,
+        tags: form.tags ? form.tags.split(",").map((t) => t.trim()) : null,
+      });
+
+      if (error) throw error;
+      toast({ title: "Ad creative salvo!" });
+      queryClient.invalidateQueries({ queryKey: ["oferta"] });
+      onClose();
+      setForm({ tipo: "IMAGE", platform: "FACEBOOK", first_seen: new Date().toISOString().split("T")[0], file_url: "", copy_headline: "", copy_body: "", cta_text: "", angulo: "", tags: "" });
+    } catch (err: any) {
+      toast({ title: "Erro ao salvar", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -193,8 +208,8 @@ export function AdCreativeFormDialog({ open, onClose, competitorId }: AdCreative
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={handleSubmit} disabled={!form.file_url || createMutation.isPending}>
-            {createMutation.isPending ? "Salvando..." : "Salvar Ad"}
+          <Button onClick={handleSubmit} disabled={!form.file_url || saving}>
+            {saving ? "Salvando..." : "Salvar Ad"}
           </Button>
         </DialogFooter>
       </DialogContent>
