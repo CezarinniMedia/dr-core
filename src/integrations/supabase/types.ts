@@ -139,6 +139,7 @@ export type Database = {
       }
       ad_creatives: {
         Row: {
+          ad_library_id_external: string | null
           angulo: string | null
           comments: number | null
           competitor_id: string | null
@@ -146,14 +147,18 @@ export type Database = {
           copy_headline: string | null
           created_at: string | null
           cta_text: string | null
+          discovery_query: string | null
+          discovery_source: string | null
           file_url: string
           first_seen: string
           id: string
           last_seen: string | null
+          library_id: string | null
           likes: number | null
           oferta_id: string | null
           platform: string
           shares: number | null
+          spied_offer_id: string | null
           status: string | null
           tags: Json | null
           thumbnail_url: string | null
@@ -161,6 +166,7 @@ export type Database = {
           workspace_id: string
         }
         Insert: {
+          ad_library_id_external?: string | null
           angulo?: string | null
           comments?: number | null
           competitor_id?: string | null
@@ -168,14 +174,18 @@ export type Database = {
           copy_headline?: string | null
           created_at?: string | null
           cta_text?: string | null
+          discovery_query?: string | null
+          discovery_source?: string | null
           file_url: string
           first_seen: string
           id?: string
           last_seen?: string | null
+          library_id?: string | null
           likes?: number | null
           oferta_id?: string | null
           platform: string
           shares?: number | null
+          spied_offer_id?: string | null
           status?: string | null
           tags?: Json | null
           thumbnail_url?: string | null
@@ -183,6 +193,7 @@ export type Database = {
           workspace_id: string
         }
         Update: {
+          ad_library_id_external?: string | null
           angulo?: string | null
           comments?: number | null
           competitor_id?: string | null
@@ -190,14 +201,18 @@ export type Database = {
           copy_headline?: string | null
           created_at?: string | null
           cta_text?: string | null
+          discovery_query?: string | null
+          discovery_source?: string | null
           file_url?: string
           first_seen?: string
           id?: string
           last_seen?: string | null
+          library_id?: string | null
           likes?: number | null
           oferta_id?: string | null
           platform?: string
           shares?: number | null
+          spied_offer_id?: string | null
           status?: string | null
           tags?: Json | null
           thumbnail_url?: string | null
@@ -213,10 +228,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "ad_creatives_library_id_fkey"
+            columns: ["library_id"]
+            isOneToOne: false
+            referencedRelation: "offer_ad_libraries"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "ad_creatives_oferta_id_fkey"
             columns: ["oferta_id"]
             isOneToOne: false
             referencedRelation: "ofertas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_creatives_spied_offer_id_fkey"
+            columns: ["spied_offer_id"]
+            isOneToOne: false
+            referencedRelation: "spied_offers"
             referencedColumns: ["id"]
           },
           {
@@ -1411,6 +1440,261 @@ export type Database = {
           },
         ]
       }
+      offer_ad_libraries: {
+        Row: {
+          ad_count: number | null
+          created_at: string | null
+          discovered_at: string | null
+          id: string
+          is_scaled: boolean | null
+          library_url: string | null
+          notas: string | null
+          page_id: string | null
+          page_name: string | null
+          platform: string
+          sites_found: Json | null
+          spied_offer_id: string
+          workspace_id: string
+        }
+        Insert: {
+          ad_count?: number | null
+          created_at?: string | null
+          discovered_at?: string | null
+          id?: string
+          is_scaled?: boolean | null
+          library_url?: string | null
+          notas?: string | null
+          page_id?: string | null
+          page_name?: string | null
+          platform?: string
+          sites_found?: Json | null
+          spied_offer_id: string
+          workspace_id: string
+        }
+        Update: {
+          ad_count?: number | null
+          created_at?: string | null
+          discovered_at?: string | null
+          id?: string
+          is_scaled?: boolean | null
+          library_url?: string | null
+          notas?: string | null
+          page_id?: string | null
+          page_name?: string | null
+          platform?: string
+          sites_found?: Json | null
+          spied_offer_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_ad_libraries_spied_offer_id_fkey"
+            columns: ["spied_offer_id"]
+            isOneToOne: false
+            referencedRelation: "spied_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offer_ad_libraries_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      offer_domains: {
+        Row: {
+          created_at: string | null
+          domain: string
+          domain_type: string | null
+          id: string
+          is_main: boolean | null
+          notas: string | null
+          spied_offer_id: string
+          tech_stack: Json | null
+          url: string | null
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          domain: string
+          domain_type?: string | null
+          id?: string
+          is_main?: boolean | null
+          notas?: string | null
+          spied_offer_id: string
+          tech_stack?: Json | null
+          url?: string | null
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string | null
+          domain?: string
+          domain_type?: string | null
+          id?: string
+          is_main?: boolean | null
+          notas?: string | null
+          spied_offer_id?: string
+          tech_stack?: Json | null
+          url?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_domains_spied_offer_id_fkey"
+            columns: ["spied_offer_id"]
+            isOneToOne: false
+            referencedRelation: "spied_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offer_domains_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      offer_funnel_steps: {
+        Row: {
+          cloaker_type: string | null
+          created_at: string | null
+          currency: string | null
+          html_source: string | null
+          id: string
+          is_cloaker: boolean | null
+          notas: string | null
+          page_title: string | null
+          page_url: string | null
+          price: number | null
+          product_name: string | null
+          product_promise: string | null
+          screenshot_url: string | null
+          spied_offer_id: string
+          step_order: number
+          step_type: string
+          workspace_id: string
+        }
+        Insert: {
+          cloaker_type?: string | null
+          created_at?: string | null
+          currency?: string | null
+          html_source?: string | null
+          id?: string
+          is_cloaker?: boolean | null
+          notas?: string | null
+          page_title?: string | null
+          page_url?: string | null
+          price?: number | null
+          product_name?: string | null
+          product_promise?: string | null
+          screenshot_url?: string | null
+          spied_offer_id: string
+          step_order: number
+          step_type: string
+          workspace_id: string
+        }
+        Update: {
+          cloaker_type?: string | null
+          created_at?: string | null
+          currency?: string | null
+          html_source?: string | null
+          id?: string
+          is_cloaker?: boolean | null
+          notas?: string | null
+          page_title?: string | null
+          page_url?: string | null
+          price?: number | null
+          product_name?: string | null
+          product_promise?: string | null
+          screenshot_url?: string | null
+          spied_offer_id?: string
+          step_order?: number
+          step_type?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_funnel_steps_spied_offer_id_fkey"
+            columns: ["spied_offer_id"]
+            isOneToOne: false
+            referencedRelation: "spied_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offer_funnel_steps_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      offer_traffic_data: {
+        Row: {
+          avg_visit_duration: number | null
+          bounce_rate: number | null
+          created_at: string | null
+          domain: string
+          id: string
+          pages_per_visit: number | null
+          period_date: string
+          period_type: string | null
+          source: string | null
+          spied_offer_id: string
+          unique_visitors: number | null
+          visits: number | null
+          workspace_id: string
+        }
+        Insert: {
+          avg_visit_duration?: number | null
+          bounce_rate?: number | null
+          created_at?: string | null
+          domain: string
+          id?: string
+          pages_per_visit?: number | null
+          period_date: string
+          period_type?: string | null
+          source?: string | null
+          spied_offer_id: string
+          unique_visitors?: number | null
+          visits?: number | null
+          workspace_id: string
+        }
+        Update: {
+          avg_visit_duration?: number | null
+          bounce_rate?: number | null
+          created_at?: string | null
+          domain?: string
+          id?: string
+          pages_per_visit?: number | null
+          period_date?: string
+          period_type?: string | null
+          source?: string | null
+          spied_offer_id?: string
+          unique_visitors?: number | null
+          visits?: number | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_traffic_data_spied_offer_id_fkey"
+            columns: ["spied_offer_id"]
+            isOneToOne: false
+            referencedRelation: "spied_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offer_traffic_data_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1491,6 +1775,123 @@ export type Database = {
           },
           {
             foreignKeyName: "research_notes_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spied_offers: {
+        Row: {
+          checkout_provider: string | null
+          checkout_url: string | null
+          created_at: string | null
+          discovered_at: string | null
+          discovery_query: string | null
+          discovery_source: string | null
+          discovery_tool_detail: string | null
+          estimated_monthly_revenue: number | null
+          estimated_monthly_traffic: number | null
+          geo: string | null
+          id: string
+          main_domain: string | null
+          nome: string
+          notas: string | null
+          oferta_id: string | null
+          operator_name: string | null
+          operator_network: string | null
+          priority: number | null
+          product_currency: string | null
+          product_name: string | null
+          product_promise: string | null
+          product_ticket: number | null
+          status: string | null
+          subnicho: string | null
+          traffic_trend: string | null
+          updated_at: string | null
+          vertical: string | null
+          vsl_duration: string | null
+          vsl_player: string | null
+          vsl_url: string | null
+          workspace_id: string
+        }
+        Insert: {
+          checkout_provider?: string | null
+          checkout_url?: string | null
+          created_at?: string | null
+          discovered_at?: string | null
+          discovery_query?: string | null
+          discovery_source?: string | null
+          discovery_tool_detail?: string | null
+          estimated_monthly_revenue?: number | null
+          estimated_monthly_traffic?: number | null
+          geo?: string | null
+          id?: string
+          main_domain?: string | null
+          nome: string
+          notas?: string | null
+          oferta_id?: string | null
+          operator_name?: string | null
+          operator_network?: string | null
+          priority?: number | null
+          product_currency?: string | null
+          product_name?: string | null
+          product_promise?: string | null
+          product_ticket?: number | null
+          status?: string | null
+          subnicho?: string | null
+          traffic_trend?: string | null
+          updated_at?: string | null
+          vertical?: string | null
+          vsl_duration?: string | null
+          vsl_player?: string | null
+          vsl_url?: string | null
+          workspace_id: string
+        }
+        Update: {
+          checkout_provider?: string | null
+          checkout_url?: string | null
+          created_at?: string | null
+          discovered_at?: string | null
+          discovery_query?: string | null
+          discovery_source?: string | null
+          discovery_tool_detail?: string | null
+          estimated_monthly_revenue?: number | null
+          estimated_monthly_traffic?: number | null
+          geo?: string | null
+          id?: string
+          main_domain?: string | null
+          nome?: string
+          notas?: string | null
+          oferta_id?: string | null
+          operator_name?: string | null
+          operator_network?: string | null
+          priority?: number | null
+          product_currency?: string | null
+          product_name?: string | null
+          product_promise?: string | null
+          product_ticket?: number | null
+          status?: string | null
+          subnicho?: string | null
+          traffic_trend?: string | null
+          updated_at?: string | null
+          vertical?: string | null
+          vsl_duration?: string | null
+          vsl_player?: string | null
+          vsl_url?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spied_offers_oferta_id_fkey"
+            columns: ["oferta_id"]
+            isOneToOne: false
+            referencedRelation: "ofertas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spied_offers_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
