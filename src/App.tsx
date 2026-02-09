@@ -13,8 +13,8 @@ import Ofertas from "./pages/Ofertas";
 import OfertaDetail from "./pages/OfertaDetail";
 import AvatarList from "./pages/AvatarList";
 import AvatarDetail from "./pages/AvatarDetail";
-import SpyList from "./pages/SpyList";
-import SpyDetail from "./pages/SpyDetail";
+import SpyRadar from "./pages/SpyRadar";
+import SpyOfferDetail from "./pages/SpyOfferDetail";
 import CriativosPage from "./pages/CriativosPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
@@ -46,8 +46,8 @@ const App = () => (
               <Route path="/ofertas/:id" element={<OfertaDetail />} />
               <Route path="/avatar" element={<AvatarList />} />
               <Route path="/avatar/:id" element={<AvatarDetail />} />
-              <Route path="/spy" element={<SpyList />} />
-              <Route path="/spy/:id" element={<SpyDetail />} />
+              <Route path="/spy" element={<SpyRadar />} />
+              <Route path="/spy/:id" element={<SpyOfferDetail />} />
               <Route path="/criativos" element={<CriativosPage />} />
               <Route path="/paginas" element={<PlaceholderPage title="Páginas" description="Landing pages e funis" />} />
               <Route path="/analytics" element={<PlaceholderPage title="Analytics" description="Métricas e performance" />} />
