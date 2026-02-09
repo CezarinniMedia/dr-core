@@ -8,6 +8,7 @@ import { SpyLibrariesTab } from "@/components/spy/tabs/SpyLibrariesTab";
 import { SpyCreativesTab } from "@/components/spy/tabs/SpyCreativesTab";
 import { SpyFunnelTab } from "@/components/spy/tabs/SpyFunnelTab";
 import { SpyNotesTab } from "@/components/spy/tabs/SpyNotesTab";
+import { SpyTrafficTab } from "@/components/spy/tabs/SpyTrafficTab";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -159,9 +160,11 @@ export default function SpyOfferDetail() {
           <SpyFunnelTab offerId={id!} />
         </TabsContent>
         <TabsContent value="traffic" className="mt-4">
-          <div className="border border-dashed rounded-lg p-12 text-center">
-            <p className="text-muted-foreground">📊 Dados de tráfego — Em breve (PART 3)</p>
-          </div>
+          <SpyTrafficTab
+            offerId={id!}
+            offerDomains={offer.offer_domains}
+            mainDomain={offer.main_domain}
+          />
         </TabsContent>
         <TabsContent value="notes" className="mt-4">
           <SpyNotesTab offerId={id!} currentNotes={offer.notas} />
