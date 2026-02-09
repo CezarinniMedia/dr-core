@@ -26,7 +26,7 @@ const mainNav = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { title: "Ofertas", href: "/ofertas", icon: Package },
   { title: "Avatar & Research", href: "/avatar", icon: Users },
-  { title: "Espionagem", href: "/spy", icon: Search },
+  { title: "Radar de Ofertas", href: "/spy", icon: Search },
   { title: "Criativos", href: "/criativos", icon: Sparkles },
   { title: "Páginas", href: "/paginas", icon: FileText },
   { title: "Analytics", href: "/analytics", icon: BarChart3 },
