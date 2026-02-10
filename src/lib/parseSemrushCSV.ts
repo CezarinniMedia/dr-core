@@ -48,17 +48,26 @@ function parseDateHeader(header: string): string | null {
 
 function parseNumber(val: string): number {
   if (!val) return 0;
-  // Remove quotes, spaces, then handle separators
   const cleaned = val.replace(/["'\s]/g, "").replace(/\./g, "").replace(/,/g, "");
   const n = parseInt(cleaned, 10);
   return isNaN(n) ? 0 : n;
 }
 
-export function parseSemrushCSV(csvText: string): SemrushTrafficRow[] {
+export function detectDelimiter(csvText: string): string {
+  const firstLine = csvText.trim().split(/\r?\n/)[0] || "";
+  const counts: Record<string, number> = { ",": 0, ";": 0, "\t": 0, "|": 0 };
+  for (const char of Object.keys(counts)) {
+    counts[char] = (firstLine.match(new RegExp(char === "|" ? "\\|" : char === "\t" ? "\t" : char, "g")) || []).length;
+  }
+  const best = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  return best && best[1] > 0 ? best[0] : ",";
+}
+
+export function parseSemrushCSV(csvText: string, delimiter?: string): SemrushTrafficRow[] {
   const result = Papa.parse(csvText.trim(), {
     header: true,
     skipEmptyLines: true,
-    delimiter: "", // auto-detect
+    delimiter: delimiter || "", // empty = auto-detect by papaparse
   });
 
   if (!result.data || result.data.length === 0) return [];
