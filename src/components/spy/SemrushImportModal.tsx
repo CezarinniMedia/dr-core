@@ -208,7 +208,7 @@ export function SemrushImportModal({ open, onClose }: SemrushImportModalProps) {
           <DialogTitle className="flex items-center gap-2">
             <FileSpreadsheet className="h-5 w-5" /> Importar Dados de Tráfego
           </DialogTitle>
-          <DialogDescription>Cole o CSV exportado do Semrush (Bulk Analysis)</DialogDescription>
+          <DialogDescription>Cole o CSV do Semrush (Bulk Analysis) ou PublicWWW (domínio;visitas;footprint)</DialogDescription>
         </DialogHeader>
 
         {step === 1 && (
@@ -231,7 +231,7 @@ export function SemrushImportModal({ open, onClose }: SemrushImportModalProps) {
               <Textarea
                 value={csvText}
                 onChange={(e) => setCsvText(e.target.value)}
-                placeholder={"Domain,Oct 2024,Nov 2024,Dec 2024\nchabariatrico.fun,12500,15800,22300\n..."}
+                placeholder={"Domain,Oct 2024,Nov 2024,Dec 2024\nchabariatrico.fun,12500,15800,22300\n\nOu formato PublicWWW:\nhttps://site.com.br/;745100;footprint..."}
                 className="min-h-[150px] font-mono text-xs"
               />
             </div>
