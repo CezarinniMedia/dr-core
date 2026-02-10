@@ -1,11 +1,12 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { parseSemrushCSV, SemrushTrafficRow } from "@/lib/parseSemrushCSV";
+import { parseSemrushCSV, detectDelimiter, SemrushTrafficRow } from "@/lib/parseSemrushCSV";
 import { useCreateSpiedOffer, useBulkInsertTrafficData } from "@/hooks/useSpiedOffers";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload, FileSpreadsheet, CheckCircle, AlertTriangle } from "lucide-react";
@@ -31,6 +32,8 @@ export function SemrushImportModal({ open, onClose }: SemrushImportModalProps) {
   const [parsedRows, setParsedRows] = useState<SemrushTrafficRow[]>([]);
   const [domainMatches, setDomainMatches] = useState<DomainMatch[]>([]);
   const [importing, setImporting] = useState(false);
+  const [detectedDelimiter, setDetectedDelimiter] = useState<string>("");
+  const [selectedDelimiter, setSelectedDelimiter] = useState<string>("auto");
   const { toast } = useToast();
   const createOffer = useCreateSpiedOffer();
   const bulkInsert = useBulkInsertTrafficData();
@@ -49,9 +52,24 @@ export function SemrushImportModal({ open, onClose }: SemrushImportModalProps) {
     maxFiles: 1,
   });
 
+  // Auto-detect delimiter when csvText changes
+  useEffect(() => {
+    if (csvText.trim()) {
+      const detected = detectDelimiter(csvText);
+      setDetectedDelimiter(detected);
+    } else {
+      setDetectedDelimiter("");
+    }
+  }, [csvText]);
+
+  const getEffectiveDelimiter = () => {
+    if (selectedDelimiter === "auto") return detectedDelimiter || undefined;
+    return selectedDelimiter;
+  };
+
   const handleParse = async () => {
     if (!csvText.trim()) return;
-    const rows = parseSemrushCSV(csvText);
+    const rows = parseSemrushCSV(csvText, getEffectiveDelimiter());
     if (rows.length === 0) {
       toast({ title: "Nenhum dado encontrado", description: "Verifique o formato do CSV.", variant: "destructive" });
       return;
@@ -169,6 +187,8 @@ export function SemrushImportModal({ open, onClose }: SemrushImportModalProps) {
     setCsvText("");
     setParsedRows([]);
     setDomainMatches([]);
+    setDetectedDelimiter("");
+    setSelectedDelimiter("auto");
   };
 
   const formatDateRange = (months: string[]) => {
@@ -215,6 +235,26 @@ export function SemrushImportModal({ open, onClose }: SemrushImportModalProps) {
                 className="min-h-[150px] font-mono text-xs"
               />
             </div>
+
+            {csvText.trim() && (
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground whitespace-nowrap">Separador:</span>
+                <Select value={selectedDelimiter} onValueChange={setSelectedDelimiter}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="auto">
+                      Auto-detectado: {detectedDelimiter === "," ? "Vírgula (,)" : detectedDelimiter === ";" ? "Ponto e vírgula (;)" : detectedDelimiter === "\t" ? "Tab" : detectedDelimiter === "|" ? "Pipe (|)" : "..."}
+                    </SelectItem>
+                    <SelectItem value=",">Vírgula (,)</SelectItem>
+                    <SelectItem value=";">Ponto e vírgula (;)</SelectItem>
+                    <SelectItem value="&#9;">Tab</SelectItem>
+                    <SelectItem value="|">Pipe (|)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="flex justify-end gap-2">
               <Button variant="ghost" onClick={onClose}>Cancelar</Button>
