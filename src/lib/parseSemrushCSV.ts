@@ -63,43 +63,89 @@ export function detectDelimiter(csvText: string): string {
   return best && best[1] > 0 ? best[0] : ",";
 }
 
-export function parseSemrushCSV(csvText: string, delimiter?: string): SemrushTrafficRow[] {
+function extractDomain(raw: string): string {
+  return raw.trim().toLowerCase().replace(/^["'\s]+|["'\s]+$/g, "").replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/:\d+$/, "");
+}
+
+function tryParseHeaderless(csvText: string, delimiter?: string): SemrushTrafficRow[] {
+  // Handles PublicWWW-style CSVs: URL;visits;footprint (no header row)
+  const effectiveDelimiter = delimiter || detectDelimiter(csvText);
   const result = Papa.parse(csvText.trim(), {
-    header: true,
+    header: false,
     skipEmptyLines: true,
-    delimiter: delimiter || "", // empty = auto-detect by papaparse
+    delimiter: effectiveDelimiter,
   });
 
   if (!result.data || result.data.length === 0) return [];
 
-  const headers = result.meta.fields || [];
-  // First column is domain, rest are date columns
-  const domainKey = headers[0];
-  const dateHeaders = headers.slice(1).map((h) => ({
-    original: h,
-    parsed: parseDateHeader(h),
-  })).filter((d) => d.parsed !== null);
-
-  if (dateHeaders.length === 0) return [];
-
   const rows: SemrushTrafficRow[] = [];
+  const today = new Date().toISOString().slice(0, 7) + "-01"; // current month
 
-  for (const row of result.data as Record<string, string>[]) {
-    const domain = (row[domainKey] || "").trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
-    if (!domain) continue;
+  for (const line of result.data as string[][]) {
+    if (!line || line.length < 1) continue;
 
-    for (const dh of dateHeaders) {
-      const visits = parseNumber(row[dh.original]);
-      rows.push({
-        domain,
-        period_date: dh.parsed!,
-        visits,
-        period_type: "monthly",
-      });
+    // Find the column that looks like a domain/URL
+    const domainCol = line[0] || "";
+    const domain = extractDomain(domainCol);
+    if (!domain || !domain.includes(".")) continue;
+
+    // Find a numeric column for visits (check columns 1, 2, etc.)
+    let visits = 0;
+    for (let i = 1; i < line.length; i++) {
+      const num = parseNumber(line[i]);
+      if (num > 0) { visits = num; break; }
     }
+
+    rows.push({
+      domain,
+      period_date: today,
+      visits,
+      period_type: "monthly",
+    });
   }
 
   return rows;
+}
+
+export function parseSemrushCSV(csvText: string, delimiter?: string): SemrushTrafficRow[] {
+  // First try with headers (Semrush format)
+  const result = Papa.parse(csvText.trim(), {
+    header: true,
+    skipEmptyLines: true,
+    delimiter: delimiter || "",
+  });
+
+  if (result.data && result.data.length > 0) {
+    const headers = result.meta.fields || [];
+    const domainKey = headers[0];
+    const dateHeaders = headers.slice(1).map((h) => ({
+      original: h,
+      parsed: parseDateHeader(h),
+    })).filter((d) => d.parsed !== null);
+
+    // If we found date headers, use Semrush format
+    if (dateHeaders.length > 0) {
+      const rows: SemrushTrafficRow[] = [];
+      for (const row of result.data as Record<string, string>[]) {
+        const domain = extractDomain(row[domainKey] || "");
+        if (!domain) continue;
+
+        for (const dh of dateHeaders) {
+          const visits = parseNumber(row[dh.original]);
+          rows.push({
+            domain,
+            period_date: dh.parsed!,
+            visits,
+            period_type: "monthly",
+          });
+        }
+      }
+      if (rows.length > 0) return rows;
+    }
+  }
+
+  // Fallback: try headerless format (PublicWWW: domain;visits;footprint)
+  return tryParseHeaderless(csvText, delimiter);
 }
 
 export function extractDomainsFromText(text: string): string[] {
