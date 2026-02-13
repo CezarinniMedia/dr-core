@@ -411,3 +411,80 @@ export function useBulkInsertTrafficData() {
     },
   });
 }
+
+// ============================================
+// UPDATE HOOKS (for inline editing)
+// ============================================
+
+export function useUpdateOfferDomain() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, offerId, data }: { id: string; offerId: string; data: Record<string, unknown> }) => {
+      const { data: result, error } = await supabase
+        .from('offer_domains')
+        .update(data as any)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return { result, offerId };
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['offer-domains', variables.offerId] });
+      queryClient.invalidateQueries({ queryKey: ['spied-offer', variables.offerId] });
+    },
+  });
+}
+
+export function useUpdateOfferAdLibrary() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, offerId, data }: { id: string; offerId: string; data: Record<string, unknown> }) => {
+      const { data: result, error } = await supabase
+        .from('offer_ad_libraries')
+        .update(data as any)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return { result, offerId };
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['offer-ad-libraries', variables.offerId] });
+      queryClient.invalidateQueries({ queryKey: ['spied-offer', variables.offerId] });
+    },
+  });
+}
+
+export function useUpdateTrafficData() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, offerId, data }: { id: string; offerId: string; data: Record<string, unknown> }) => {
+      const { data: result, error } = await supabase
+        .from('offer_traffic_data')
+        .update(data as any)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return { result, offerId };
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['offer-traffic', variables.offerId] });
+    },
+  });
+}
+
+export function useDeleteTrafficData() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, offerId }: { id: string; offerId: string }) => {
+      const { error } = await supabase.from('offer_traffic_data').delete().eq('id', id);
+      if (error) throw error;
+      return offerId;
+    },
+    onSuccess: (offerId) => {
+      queryClient.invalidateQueries({ queryKey: ['offer-traffic', offerId] });
+    },
+  });
+}
