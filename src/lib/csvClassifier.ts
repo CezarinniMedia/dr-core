@@ -401,31 +401,31 @@ function processSemrushBulk(c: ClassifiedCsv): ProcessedCsvResult {
     const domain = extractDomain(target);
     if (!domain || !domain.includes(".")) continue;
 
-    const hasTraffic = visitsRaw && visitsRaw.toLowerCase() !== "n/a";
+    // N/A or empty → treat as 0 visits, still create traffic record
+    const isNA = !visitsRaw || visitsRaw.toLowerCase() === "n/a";
+    const visits = isNA ? 0 : parseIntNumber(visitsRaw);
+    const uniqueVisitors = isNA ? 0 : parseIntNumber(row["Unique Visitors"] || "");
+    const pagesPerVisit = isNA ? 0 : parseNumber(row["Pages / Visits"] || row["Pages/Visits"] || "");
+    const bounceRate = isNA ? 0 : parseNumber((row["Bounce Rate"] || "").replace("%", ""));
 
-    if (hasTraffic) {
-      const visits = parseIntNumber(visitsRaw);
-      const uniqueVisitors = parseIntNumber(row["Unique Visitors"] || "");
-      const pagesPerVisit = parseNumber(row["Pages / Visits"] || row["Pages/Visits"] || "");
-      const bounceRate = parseNumber((row["Bounce Rate"] || "").replace("%", ""));
-
-      // Parse avg visit duration "12:09" -> seconds
-      const durationRaw = row["Avg. Visit Duration"] || row["Avg Visit Duration"] || "";
-      let avgDuration = 0;
+    // Parse avg visit duration "12:09" -> seconds
+    const durationRaw = row["Avg. Visit Duration"] || row["Avg Visit Duration"] || "";
+    let avgDuration = 0;
+    if (!isNA) {
       const dMatch = durationRaw.match(/(\d+):(\d+)/);
       if (dMatch) avgDuration = parseInt(dMatch[1]) * 60 + parseInt(dMatch[2]);
-
-      trafficRecords.push({
-        domain,
-        period_date: periodDate,
-        visits,
-        unique_visitors: uniqueVisitors || undefined,
-        pages_per_visit: pagesPerVisit || undefined,
-        avg_visit_duration: avgDuration || undefined,
-        bounce_rate: bounceRate || undefined,
-        source: "semrush_bulk",
-      });
     }
+
+    trafficRecords.push({
+      domain,
+      period_date: periodDate,
+      visits,
+      unique_visitors: uniqueVisitors || undefined,
+      pages_per_visit: pagesPerVisit || undefined,
+      avg_visit_duration: avgDuration || undefined,
+      bounce_rate: bounceRate || undefined,
+      source: "semrush_bulk",
+    });
 
     if (!seen.has(domain)) {
       seen.add(domain);
