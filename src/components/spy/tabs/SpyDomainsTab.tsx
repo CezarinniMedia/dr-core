@@ -125,7 +125,6 @@ export function SpyDomainsTab({ offerId }: SpyDomainsTabProps) {
                 <TableHead>Detectado em</TableHead>
                 <TableHead>Fonte</TableHead>
                 <TableHead>Query/Script</TableHead>
-                <TableHead>Tráfego %</TableHead>
                 <TableHead>Notas</TableHead>
                 <TableHead className="w-[80px]"></TableHead>
               </TableRow>
@@ -151,9 +150,6 @@ export function SpyDomainsTab({ offerId }: SpyDomainsTabProps) {
                   <TableCell className="text-xs text-muted-foreground">{d.discovery_source || "—"}</TableCell>
                   <TableCell className="text-xs text-muted-foreground max-w-[120px] truncate" title={d.discovery_query || ""}>
                     {d.discovery_query || "—"}
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {d.traffic_share ? `${d.traffic_share}%` : "—"}
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground max-w-[150px] truncate">{d.notas || "—"}</TableCell>
                   <TableCell>
