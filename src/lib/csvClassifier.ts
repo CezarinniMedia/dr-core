@@ -398,32 +398,34 @@ function processSemrushBulk(c: ClassifiedCsv): ProcessedCsvResult {
     const target = row["Target"] || row["target"] || "";
     const targetType = row["target_type"] || row["Target Type"] || "";
     const visitsRaw = row["Visits"] || row["visits"] || "";
-    if (visitsRaw.toLowerCase() === "n/a" || !visitsRaw) continue;
-
     const domain = extractDomain(target);
     if (!domain || !domain.includes(".")) continue;
 
-    const visits = parseIntNumber(visitsRaw);
-    const uniqueVisitors = parseIntNumber(row["Unique Visitors"] || "");
-    const pagesPerVisit = parseNumber(row["Pages / Visits"] || row["Pages/Visits"] || "");
-    const bounceRate = parseNumber((row["Bounce Rate"] || "").replace("%", ""));
+    const hasTraffic = visitsRaw && visitsRaw.toLowerCase() !== "n/a";
 
-    // Parse avg visit duration "12:09" -> seconds
-    const durationRaw = row["Avg. Visit Duration"] || row["Avg Visit Duration"] || "";
-    let avgDuration = 0;
-    const dMatch = durationRaw.match(/(\d+):(\d+)/);
-    if (dMatch) avgDuration = parseInt(dMatch[1]) * 60 + parseInt(dMatch[2]);
+    if (hasTraffic) {
+      const visits = parseIntNumber(visitsRaw);
+      const uniqueVisitors = parseIntNumber(row["Unique Visitors"] || "");
+      const pagesPerVisit = parseNumber(row["Pages / Visits"] || row["Pages/Visits"] || "");
+      const bounceRate = parseNumber((row["Bounce Rate"] || "").replace("%", ""));
 
-    trafficRecords.push({
-      domain,
-      period_date: periodDate,
-      visits,
-      unique_visitors: uniqueVisitors || undefined,
-      pages_per_visit: pagesPerVisit || undefined,
-      avg_visit_duration: avgDuration || undefined,
-      bounce_rate: bounceRate || undefined,
-      source: "semrush_bulk",
-    });
+      // Parse avg visit duration "12:09" -> seconds
+      const durationRaw = row["Avg. Visit Duration"] || row["Avg Visit Duration"] || "";
+      let avgDuration = 0;
+      const dMatch = durationRaw.match(/(\d+):(\d+)/);
+      if (dMatch) avgDuration = parseInt(dMatch[1]) * 60 + parseInt(dMatch[2]);
+
+      trafficRecords.push({
+        domain,
+        period_date: periodDate,
+        visits,
+        unique_visitors: uniqueVisitors || undefined,
+        pages_per_visit: pagesPerVisit || undefined,
+        avg_visit_duration: avgDuration || undefined,
+        bounce_rate: bounceRate || undefined,
+        source: "semrush_bulk",
+      });
+    }
 
     if (!seen.has(domain)) {
       seen.add(domain);
