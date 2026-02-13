@@ -6,28 +6,16 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Plus, Trash2, Star, ExternalLink, Loader2 } from "lucide-react";
+import { format } from "date-fns";
 
 const TYPE_BADGE: Record<string, string> = {
   landing_page: "bg-info/20 text-info",
@@ -38,6 +26,8 @@ const TYPE_BADGE: Record<string, string> = {
   advertorial: "bg-primary/20 text-primary",
   redirect: "bg-muted text-muted-foreground",
   other: "bg-muted text-muted-foreground",
+  thank_you: "bg-success/20 text-success",
+  upsell: "bg-info/20 text-info",
 };
 
 interface SpyDomainsTabProps {
@@ -56,6 +46,7 @@ export function SpyDomainsTab({ offerId }: SpyDomainsTabProps) {
     is_main: false,
     tech_stack: "",
     notas: "",
+    first_seen: "",
   });
 
   const handleSave = () => {
@@ -69,11 +60,12 @@ export function SpyDomainsTab({ offerId }: SpyDomainsTabProps) {
         is_main: form.is_main,
         tech_stack: form.tech_stack ? { raw: form.tech_stack } : null,
         notas: form.notas || null,
+        first_seen: form.first_seen || null,
       },
       {
         onSuccess: () => {
           setShowForm(false);
-          setForm({ domain: "", domain_type: "landing_page", url: "", is_main: false, tech_stack: "", notas: "" });
+          setForm({ domain: "", domain_type: "landing_page", url: "", is_main: false, tech_stack: "", notas: "", first_seen: "" });
         },
       }
     );
@@ -102,7 +94,8 @@ export function SpyDomainsTab({ offerId }: SpyDomainsTabProps) {
                 <TableHead>Tipo</TableHead>
                 <TableHead>URL</TableHead>
                 <TableHead className="w-[50px]">Main</TableHead>
-                <TableHead>Tech Stack</TableHead>
+                <TableHead>Detectado em</TableHead>
+                <TableHead>Fonte</TableHead>
                 <TableHead>Notas</TableHead>
                 <TableHead className="w-[50px]"></TableHead>
               </TableRow>
@@ -124,8 +117,11 @@ export function SpyDomainsTab({ offerId }: SpyDomainsTabProps) {
                     ) : "—"}
                   </TableCell>
                   <TableCell>{d.is_main && <Star className="h-4 w-4 text-warning" />}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground max-w-[150px] truncate">
-                    {d.tech_stack ? JSON.stringify(d.tech_stack) : "—"}
+                  <TableCell className="text-xs text-muted-foreground">
+                    {d.first_seen ? format(new Date(d.first_seen), "dd/MM/yyyy") : "—"}
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {d.discovery_source || "—"}
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground max-w-[150px] truncate">
                     {d.notas || "—"}
@@ -155,18 +151,14 @@ export function SpyDomainsTab({ offerId }: SpyDomainsTabProps) {
           <div className="space-y-3">
             <div>
               <Label className="text-xs">Domínio *</Label>
-              <Input
-                placeholder="chabariatrico.fun"
-                value={form.domain}
-                onChange={(e) => setForm({ ...form, domain: e.target.value })}
-              />
+              <Input placeholder="chabariatrico.fun" value={form.domain} onChange={(e) => setForm({ ...form, domain: e.target.value })} />
             </div>
             <div>
               <Label className="text-xs">Tipo</Label>
               <Select value={form.domain_type} onValueChange={(v) => setForm({ ...form, domain_type: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {["landing_page", "cloaker", "checkout", "quiz", "preland", "advertorial", "redirect", "other"].map((t) => (
+                  {["landing_page", "cloaker", "checkout", "quiz", "preland", "advertorial", "redirect", "thank_you", "upsell", "other"].map((t) => (
                     <SelectItem key={t} value={t}>{t}</SelectItem>
                   ))}
                 </SelectContent>
@@ -175,6 +167,10 @@ export function SpyDomainsTab({ offerId }: SpyDomainsTabProps) {
             <div>
               <Label className="text-xs">URL completa</Label>
               <Input value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="https://..." />
+            </div>
+            <div>
+              <Label className="text-xs">Detectado em</Label>
+              <Input type="date" value={form.first_seen} onChange={(e) => setForm({ ...form, first_seen: e.target.value })} />
             </div>
             <div className="flex items-center gap-2">
               <Checkbox checked={form.is_main} onCheckedChange={(v) => setForm({ ...form, is_main: !!v })} />
