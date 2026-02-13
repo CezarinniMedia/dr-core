@@ -452,7 +452,7 @@ function processSemrushGeo(c: ClassifiedCsv): ProcessedCsvResult {
     const country = (row["País"] || row["Pais"] || row["país"] || row["pais"] || "").trim();
     const shareRaw = row["Proporção de tráfego"] || row["proporção de tráfego"] || "";
     const share = parseNumber(shareRaw.replace("%", "").replace(",", "."));
-    const visits = parseIntNumber(row["Todos os dispositivos"] || "");
+    const visits = parseIntNumber(row["Todos os dispositivos"] || row["todos os dispositivos"] || "");
 
     if (destino) {
       if (current) geoData.push(current);
@@ -477,10 +477,10 @@ function processSemrushGeo(c: ClassifiedCsv): ProcessedCsvResult {
       geo.secondaryGeos = secondary.map(c => countryToCode(c.country));
     }
 
-    // Build geo notes with analysis date
+    // Build geo notes with analysis date — always include traffic even if not imported to traffic section
     const countryLines = sorted
       .filter(c => c.share > 0)
-      .map(c => `- ${c.country}: ${c.share.toFixed(2)}% (${c.visits.toLocaleString("pt-BR")} visitas)`)
+      .map(c => `- ${c.country}: ${c.share.toFixed(2)}% (${c.visits > 0 ? c.visits.toLocaleString("pt-BR") : "—"} visitas)`)
       .join("\n");
     geo.geoNotes = `## Geodistribuição (${analysisPeriod})\n${countryLines}`;
   }
@@ -550,14 +550,26 @@ function processSemrushSubdomains(c: ClassifiedCsv): ProcessedCsvResult {
   const rows = result.data as Record<string, string>[];
   const domains: ExtractedDomain[] = [];
   const seen = new Set<string>();
+  let currentDestino = "";
 
   for (const row of rows) {
+    const destino = (row["Destino"] || row["destino"] || "").trim();
+    if (destino) currentDestino = destino;
+
     const subdomain = (row["Subdomínio"] || row["subdomínio"] || row["Subdominio"] || row["subdominio"] || "").trim();
     if (!subdomain) continue;
     const domain = extractDomain(subdomain);
     if (!domain || seen.has(domain)) continue;
     seen.add(domain);
-    domains.push({ domain, domain_type: "landing_page", discovery_source: "semrush_subdomains" });
+
+    // Store parentDomain for matching purposes
+    const parentDomain = currentDestino ? extractDomain(currentDestino) : undefined;
+    domains.push({
+      domain,
+      domain_type: "landing_page",
+      discovery_source: "semrush_subdomains",
+      notas: parentDomain && parentDomain !== domain ? `Subdomínio de ${parentDomain}` : undefined,
+    });
   }
 
   return { trafficRecords: [], domains, geoData: [], summary: { totalDomains: domains.length, totalTrafficRecords: 0, totalNewDomains: domains.length } };
@@ -568,18 +580,25 @@ function processSemrushSubfolders(c: ClassifiedCsv): ProcessedCsvResult {
   const rows = result.data as Record<string, string>[];
   const domains: ExtractedDomain[] = [];
   const seen = new Set<string>();
+  let currentDestino = "";
 
   for (const row of rows) {
+    const destino = (row["Destino"] || row["destino"] || "").trim();
+    if (destino) currentDestino = destino;
+
     const subfolder = (row["Subpasta"] || row["subpasta"] || "").trim();
     if (!subfolder) continue;
     const domain = extractDomain(subfolder);
     if (!domain || seen.has(subfolder.toLowerCase())) continue;
     seen.add(subfolder.toLowerCase());
+
+    const parentDomain = currentDestino ? extractDomain(currentDestino) : undefined;
     domains.push({
       domain,
       url: subfolder.startsWith("http") ? subfolder : `http://${subfolder}`,
       domain_type: inferDomainType(subfolder),
       discovery_source: "semrush_subfolders",
+      notas: parentDomain && parentDomain !== domain ? `Subpasta de ${parentDomain}` : undefined,
     });
   }
 
@@ -685,18 +704,19 @@ export function getDefaultExcludedColumns(type: CsvType, headers: string[]): Set
   const headersLower = headers.map(h => h.trim().toLowerCase());
 
   const relevantMap: Partial<Record<CsvType, string[]>> = {
-    semrush_bulk: ["target", "target_type", "visits"], // Strictly: only these 3 columns. Excludes: Unique Visitors, Pages / Visits, Avg. Visit Duration, Bounce Rate
-    semrush_geo: ["destino", "país", "pais", "proporção de tráfego", "proporcao de trafego"],
+    semrush_bulk: ["target", "target_type", "visits"],
+    semrush_geo: ["destino", "país", "pais", "proporção de tráfego", "proporcao de trafego", "todos os dispositivos"],
     semrush_pages: ["destino", "página", "pagina", "proporção de tráfego", "proporcao de trafego", "visitas"],
-    semrush_subdomains: ["subdomínio", "subdominio", "visitas"],
-    semrush_subfolders: ["subpasta", "visitas"],
+    semrush_subdomains: ["destino", "subdomínio", "subdominio", "visitas"],
+    semrush_subfolders: ["destino", "subpasta", "visitas"],
   };
 
   const relevant = relevantMap[type];
   if (!relevant) return excluded;
 
   headersLower.forEach((h, i) => {
-    if (!relevant.some(r => h.includes(r))) {
+    // Use exact match to prevent "pages / visits" from matching "visits"
+    if (!relevant.some(r => h === r)) {
       excluded.add(i);
     }
   });
