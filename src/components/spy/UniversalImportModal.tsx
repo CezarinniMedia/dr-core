@@ -19,9 +19,27 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCreateSpiedOffer, useBulkInsertTrafficData } from "@/hooks/useSpiedOffers";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  classifyCsv, processCsv, detectDelimiter,
+  classifyCsv, processCsv, detectDelimiter, extractDomain as extractDomainUtil,
   type ClassifiedCsv, type CsvType, type ProcessedCsvResult, type ExtractedDomain,
 } from "@/lib/csvClassifier";
+
+// Re-export extractPeriodFromFilename for type override
+function extractPeriodFromFilename(fileName: string): { date: string; label: string } | null {
+  const match = fileName.match(/([a-záéíóúâêîôûãõç]+)\.?\s*(?:de\s+)?(\d{4})/i);
+  if (!match) return null;
+  const MONTH_MAP: Record<string, number> = {
+    jan: 1, janeiro: 1, january: 1, fev: 2, feb: 2, fevereiro: 2, february: 2,
+    mar: 3, março: 3, marco: 3, march: 3, abr: 4, apr: 4, abril: 4, april: 4,
+    mai: 5, may: 5, maio: 5, jun: 6, junho: 6, june: 6, jul: 7, julho: 7, july: 7,
+    ago: 8, aug: 8, agosto: 8, august: 8, set: 9, sep: 9, setembro: 9, september: 9,
+    out: 10, oct: 10, outubro: 10, october: 10, nov: 11, novembro: 11, november: 11,
+    dez: 12, dec: 12, dezembro: 12, december: 12,
+  };
+  const monthKey = match[1].toLowerCase().replace(/\.$/, "");
+  const month = MONTH_MAP[monthKey];
+  if (!month) return null;
+  return { date: `${match[2]}-${String(month).padStart(2, "0")}-01`, label: match[0].trim() };
+}
 import {
   Upload, FileSpreadsheet, CheckCircle, AlertTriangle, ArrowRight, ArrowLeft, Loader2, X,
 } from "lucide-react";
@@ -133,6 +151,14 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
     setFiles(prev => prev.map((f, i) => {
       if (i !== idx) return f;
       const reclassified = { ...f.classified, type: newType, label: ALL_TYPES.find(t => t.value === newType)?.label || newType };
+      // Re-extract period from filename when type changes
+      if (f.name && f.name !== "Colado") {
+        const periodInfo = extractPeriodFromFilename(f.name);
+        if (periodInfo) {
+          reclassified.periodDate = periodInfo.date;
+          reclassified.periodLabel = periodInfo.label;
+        }
+      }
       return { ...f, classified: reclassified, processed: processCsv(reclassified) };
     }));
   };
@@ -264,13 +290,61 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
         setProgress(Math.round((currentStep / totalSteps) * 100));
       }
 
-      // Process each file
+      // Process each file: domains FIRST, then traffic, then geo
       for (const file of files) {
         const p = file.processed;
 
-        // Insert traffic data
+        // 1. Insert domains first
+        for (const d of p.domains) {
+          const offerId = offerIdMap.get(d.domain) || findOfferForSubdomain(d.domain, offerIdMap);
+          if (!offerId) continue;
+
+          // Check if domain already exists (dedup by domain string OR url)
+          const { data: existing } = await supabase
+            .from("offer_domains")
+            .select("id, first_seen")
+            .eq("spied_offer_id", offerId)
+            .eq("domain", d.domain)
+            .maybeSingle();
+
+          if (!existing) {
+            // Also check by URL for subfolders
+            let existsByUrl = false;
+            if (d.url) {
+              const { data: urlMatch } = await supabase
+                .from("offer_domains")
+                .select("id")
+                .eq("spied_offer_id", offerId)
+                .eq("url", d.url)
+                .maybeSingle();
+              existsByUrl = !!urlMatch;
+            }
+
+            if (!existsByUrl) {
+              await supabase.from("offer_domains").insert({
+                spied_offer_id: offerId,
+                workspace_id: workspaceId,
+                domain: d.domain,
+                domain_type: d.domain_type,
+                url: d.url || null,
+                discovery_source: d.discovery_source,
+                discovery_query: d.discovery_query || footprintQuery || null,
+                first_seen: d.first_seen || null,
+                traffic_share: d.traffic_share || null,
+                notas: d.notas || null,
+              } as any);
+            }
+          } else if (d.first_seen && existing.first_seen && d.first_seen < existing.first_seen) {
+            // Update first_seen if imported date is older
+            await supabase.from("offer_domains").update({
+              first_seen: d.first_seen,
+            } as any).eq("id", existing.id);
+          }
+        }
+
+        // 2. Insert traffic data
         for (const [domain, records] of groupBy(p.trafficRecords, r => r.domain)) {
-          const offerId = offerIdMap.get(domain);
+          const offerId = offerIdMap.get(domain) || findOfferForSubdomain(domain, offerIdMap);
           if (!offerId) continue;
           await bulkInsert.mutateAsync({
             offerId,
@@ -288,47 +362,31 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
           trafficCount += records.length;
         }
 
-        // Insert domains
-        for (const d of p.domains) {
-          const offerId = offerIdMap.get(d.domain) || findOfferForSubdomain(d.domain, offerIdMap);
-          if (!offerId) continue;
-
-          // Check if domain already exists
-          const { data: existing } = await supabase
-            .from("offer_domains")
-            .select("id")
-            .eq("spied_offer_id", offerId)
-            .eq("domain", d.domain)
-            .maybeSingle();
-
-          if (!existing) {
-            await supabase.from("offer_domains").insert({
-              spied_offer_id: offerId,
-              workspace_id: workspaceId,
-              domain: d.domain,
-              domain_type: d.domain_type,
-              url: d.url || null,
-              discovery_source: d.discovery_source,
-              discovery_query: d.discovery_query || footprintQuery || null,
-              first_seen: d.first_seen || null,
-              traffic_share: d.traffic_share || null,
-              notas: d.notas || null,
-            } as any);
-          }
-        }
-
-        // Update geo data
+        // 3. Update geo data with multi-country support
         for (const geo of p.geoData) {
           const offerId = offerIdMap.get(geo.domain);
           if (!offerId || !geo.mainGeo) continue;
 
-          const geoNotes = geo.countries
-            .map(c => `- ${c.country}: ${c.share}% (${c.visits} visitas)`)
-            .join("\n");
+          // Build geo value: main + secondary (if any)
+          const geoValue = geo.secondaryGeos && geo.secondaryGeos.length > 0
+            ? `${geo.mainGeo}, ${geo.secondaryGeos.join(", ")}`
+            : geo.mainGeo;
+
+          // Append geo notes to existing notes
+          const { data: currentOffer } = await supabase
+            .from("spied_offers")
+            .select("notas")
+            .eq("id", offerId)
+            .maybeSingle();
+
+          const existingNotes = (currentOffer as any)?.notas || "";
+          const newNotes = existingNotes
+            ? `${existingNotes}\n\n${geo.geoNotes || ""}`
+            : geo.geoNotes || "";
 
           await supabase.from("spied_offers").update({
-            geo: geo.mainGeo,
-            notas: geoNotes,
+            geo: geoValue,
+            notas: newNotes.trim(),
           } as any).eq("id", offerId);
         }
 
@@ -482,7 +540,7 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
                   </Select>
                 </div>
 
-                {f.classified.type === "semrush_bulk" && (
+                {f.classified.type !== "publicwww" && f.classified.type !== "unknown" && (
                   <div className="flex items-center gap-2">
                     <Label className="text-xs whitespace-nowrap">Período:</Label>
                     <Input
@@ -491,6 +549,9 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
                       value={f.classified.periodDate || ""}
                       onChange={(e) => updateFilePeriod(i, e.target.value)}
                     />
+                    {f.classified.periodLabel && (
+                      <span className="text-[10px] text-muted-foreground">({f.classified.periodLabel})</span>
+                    )}
                   </div>
                 )}
 

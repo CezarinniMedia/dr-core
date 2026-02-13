@@ -110,7 +110,7 @@ export function FullOfferFormModal({ open, onClose, editData }: FullOfferFormMod
                   </Select>
                 </Field>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <Field label="Status">
                   <Select value={form.status || "RADAR"} onValueChange={(v) => set("status", v)}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
@@ -129,6 +129,13 @@ export function FullOfferFormModal({ open, onClose, editData }: FullOfferFormMod
                     max={10}
                     step={1}
                     className="mt-2"
+                  />
+                </Field>
+                <Field label="Data criação domínio">
+                  <Input
+                    type="date"
+                    value={form.domain_created_at || ""}
+                    onChange={(e) => set("domain_created_at", e.target.value || null)}
                   />
                 </Field>
               </div>

@@ -90,16 +90,23 @@ export default function SpyOfferDetail() {
               <h1 className="text-2xl font-bold tracking-tight">{offer.nome}</h1>
               <Badge variant="outline" className={sb.className}>{sb.label}</Badge>
             </div>
-            {offer.main_domain && (
-              <a
-                href={`https://${offer.main_domain}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-primary hover:underline flex items-center gap-1"
-              >
-                {offer.main_domain} <ExternalLink className="h-3 w-3" />
-              </a>
-            )}
+            <div className="flex items-center gap-3">
+              {offer.main_domain && (
+                <a
+                  href={`https://${offer.main_domain}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary hover:underline flex items-center gap-1"
+                >
+                  {offer.main_domain} <ExternalLink className="h-3 w-3" />
+                </a>
+              )}
+              {(offer as any).domain_created_at && (
+                <span className="text-xs text-muted-foreground">
+                  Domínio criado em: {new Date((offer as any).domain_created_at).toLocaleDateString("pt-BR")}
+                </span>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2">

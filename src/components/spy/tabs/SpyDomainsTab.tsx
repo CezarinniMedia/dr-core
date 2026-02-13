@@ -47,6 +47,7 @@ export function SpyDomainsTab({ offerId }: SpyDomainsTabProps) {
     tech_stack: "",
     notas: "",
     first_seen: "",
+    discovery_query: "",
   });
 
   const handleSave = () => {
@@ -61,11 +62,12 @@ export function SpyDomainsTab({ offerId }: SpyDomainsTabProps) {
         tech_stack: form.tech_stack ? { raw: form.tech_stack } : null,
         notas: form.notas || null,
         first_seen: form.first_seen || null,
+        discovery_query: form.discovery_query || null,
       },
       {
         onSuccess: () => {
           setShowForm(false);
-          setForm({ domain: "", domain_type: "landing_page", url: "", is_main: false, tech_stack: "", notas: "", first_seen: "" });
+          setForm({ domain: "", domain_type: "landing_page", url: "", is_main: false, tech_stack: "", notas: "", first_seen: "", discovery_query: "" });
         },
       }
     );
@@ -87,7 +89,7 @@ export function SpyDomainsTab({ offerId }: SpyDomainsTabProps) {
         </div>
       ) : (
         <div className="border rounded-lg overflow-hidden">
-          <Table>
+           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Domínio</TableHead>
@@ -96,6 +98,8 @@ export function SpyDomainsTab({ offerId }: SpyDomainsTabProps) {
                 <TableHead className="w-[50px]">Main</TableHead>
                 <TableHead>Detectado em</TableHead>
                 <TableHead>Fonte</TableHead>
+                <TableHead>Query/Script</TableHead>
+                <TableHead>Tráfego %</TableHead>
                 <TableHead>Notas</TableHead>
                 <TableHead className="w-[50px]"></TableHead>
               </TableRow>
@@ -122,6 +126,12 @@ export function SpyDomainsTab({ offerId }: SpyDomainsTabProps) {
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
                     {d.discovery_source || "—"}
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground max-w-[120px] truncate" title={d.discovery_query || ""}>
+                    {d.discovery_query || "—"}
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {d.traffic_share ? `${d.traffic_share}%` : "—"}
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground max-w-[150px] truncate">
                     {d.notas || "—"}
@@ -175,6 +185,10 @@ export function SpyDomainsTab({ offerId }: SpyDomainsTabProps) {
             <div className="flex items-center gap-2">
               <Checkbox checked={form.is_main} onCheckedChange={(v) => setForm({ ...form, is_main: !!v })} />
               <Label className="text-xs">Domínio principal</Label>
+            </div>
+            <div>
+              <Label className="text-xs">Query/Script src usado</Label>
+              <Input value={form.discovery_query} onChange={(e) => setForm({ ...form, discovery_query: e.target.value })} placeholder="cdn.utmify.com.br" />
             </div>
             <div>
               <Label className="text-xs">Tech Stack</Label>
