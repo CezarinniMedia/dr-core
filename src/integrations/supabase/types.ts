@@ -1506,37 +1506,49 @@ export type Database = {
       offer_domains: {
         Row: {
           created_at: string | null
+          discovery_query: string | null
+          discovery_source: string | null
           domain: string
           domain_type: string | null
+          first_seen: string | null
           id: string
           is_main: boolean | null
           notas: string | null
           spied_offer_id: string
           tech_stack: Json | null
+          traffic_share: number | null
           url: string | null
           workspace_id: string
         }
         Insert: {
           created_at?: string | null
+          discovery_query?: string | null
+          discovery_source?: string | null
           domain: string
           domain_type?: string | null
+          first_seen?: string | null
           id?: string
           is_main?: boolean | null
           notas?: string | null
           spied_offer_id: string
           tech_stack?: Json | null
+          traffic_share?: number | null
           url?: string | null
           workspace_id: string
         }
         Update: {
           created_at?: string | null
+          discovery_query?: string | null
+          discovery_source?: string | null
           domain?: string
           domain_type?: string | null
+          first_seen?: string | null
           id?: string
           is_main?: boolean | null
           notas?: string | null
           spied_offer_id?: string
           tech_stack?: Json | null
+          traffic_share?: number | null
           url?: string | null
           workspace_id?: string
         }
@@ -1562,6 +1574,7 @@ export type Database = {
           cloaker_type: string | null
           created_at: string | null
           currency: string | null
+          domain_id: string | null
           html_source: string | null
           id: string
           is_cloaker: boolean | null
@@ -1581,6 +1594,7 @@ export type Database = {
           cloaker_type?: string | null
           created_at?: string | null
           currency?: string | null
+          domain_id?: string | null
           html_source?: string | null
           id?: string
           is_cloaker?: boolean | null
@@ -1600,6 +1614,7 @@ export type Database = {
           cloaker_type?: string | null
           created_at?: string | null
           currency?: string | null
+          domain_id?: string | null
           html_source?: string | null
           id?: string
           is_cloaker?: boolean | null
@@ -1616,6 +1631,13 @@ export type Database = {
           workspace_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "offer_funnel_steps_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "offer_domains"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "offer_funnel_steps_spied_offer_id_fkey"
             columns: ["spied_offer_id"]
@@ -1791,6 +1813,7 @@ export type Database = {
           discovery_query: string | null
           discovery_source: string | null
           discovery_tool_detail: string | null
+          domain_created_at: string | null
           estimated_monthly_revenue: number | null
           estimated_monthly_traffic: number | null
           geo: string | null
@@ -1824,6 +1847,7 @@ export type Database = {
           discovery_query?: string | null
           discovery_source?: string | null
           discovery_tool_detail?: string | null
+          domain_created_at?: string | null
           estimated_monthly_revenue?: number | null
           estimated_monthly_traffic?: number | null
           geo?: string | null
@@ -1857,6 +1881,7 @@ export type Database = {
           discovery_query?: string | null
           discovery_source?: string | null
           discovery_tool_detail?: string | null
+          domain_created_at?: string | null
           estimated_monthly_revenue?: number | null
           estimated_monthly_traffic?: number | null
           geo?: string | null
