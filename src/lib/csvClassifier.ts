@@ -20,7 +20,8 @@ export interface ClassifiedCsv {
   delimiter: string;
   headers: string[];
   previewRows: string[][];
-  periodDate?: string; // extracted from filename for semrush_bulk
+  periodDate?: string; // extracted from filename for all types
+  periodLabel?: string; // human-readable period (e.g. "jan. de 2026")
   discoveryQuery?: string; // extracted footprint for publicwww
 }
 
@@ -63,14 +64,17 @@ function isDateHeader(h: string): boolean {
   return false;
 }
 
-function extractPeriodFromFilename(fileName: string): string | null {
-  // "Bulk Analysis_Jan 2026_Worldwide_All devices.csv"
-  const match = fileName.match(/([a-záéíóúâêîôûãõç]+)[\s._]+(\d{4})/i);
+function extractPeriodFromFilename(fileName: string): { date: string; label: string } | null {
+  // Matches patterns like "Jan 2026", "jan. de 2026", "fev. de 2025", etc.
+  const match = fileName.match(/([a-záéíóúâêîôûãõç]+)\.?\s*(?:de\s+)?(\d{4})/i);
   if (!match) return null;
   const monthKey = match[1].toLowerCase().replace(/\.$/, "");
   const month = MONTH_MAP[monthKey];
   if (!month) return null;
-  return `${match[2]}-${String(month).padStart(2, "0")}-01`;
+  return {
+    date: `${match[2]}-${String(month).padStart(2, "0")}-01`,
+    label: match[0].trim(),
+  };
 }
 
 function extractFootprintFromData(rows: string[][]): string | null {
@@ -124,7 +128,17 @@ export function classifyCsv(csvText: string, fileName?: string, delimiterOverrid
   let type: CsvType = "unknown";
   let label = "Desconhecido";
   let periodDate: string | undefined;
+  let periodLabel: string | undefined;
   let discoveryQuery: string | undefined;
+
+  // Extract period from filename for ALL types
+  if (fileName) {
+    const periodInfo = extractPeriodFromFilename(fileName);
+    if (periodInfo) {
+      periodDate = periodInfo.date;
+      periodLabel = periodInfo.label;
+    }
+  }
 
   // semrush_traffic_trend: "Data" in col1, domains as other headers
   if (headersLower[0] === "data" && headers.length > 1) {
@@ -135,7 +149,6 @@ export function classifyCsv(csvText: string, fileName?: string, delimiterOverrid
   else if (headersLower.includes("target") && headersLower.includes("target_type") && headersLower.includes("visits")) {
     type = "semrush_bulk";
     label = "Semrush: Bulk Analysis";
-    if (fileName) periodDate = extractPeriodFromFilename(fileName) ?? undefined;
   }
   // semrush_summary: Destino + Período + Visitas
   else if (headersLower.includes("destino") && headersLower.includes("período") || headersLower.includes("periodo")) {
@@ -183,7 +196,7 @@ export function classifyCsv(csvText: string, fileName?: string, delimiterOverrid
     }
   }
 
-  return { type, label, rawText: csvText, delimiter, headers, previewRows, periodDate, discoveryQuery, fileName };
+  return { type, label, rawText: csvText, delimiter, headers, previewRows, periodDate, periodLabel, discoveryQuery, fileName };
 }
 
 // ─── Data extraction helpers ───
@@ -270,6 +283,8 @@ export interface ExtractedGeoData {
   domain: string;
   countries: Array<{ country: string; share: number; visits: number }>;
   mainGeo?: string;
+  secondaryGeos?: string[];
+  geoNotes?: string;
 }
 
 export interface ProcessedCsvResult {
@@ -416,15 +431,25 @@ function processSemrushGeo(c: ClassifiedCsv): ProcessedCsvResult {
   }
   if (current) geoData.push(current);
 
-  // Determine main geo
+  // Determine main geo with multi-country logic
+  const analysisPeriod = c.periodLabel || c.periodDate || "data desconhecida";
   for (const geo of geoData) {
     if (geo.countries.length === 0) continue;
     const sorted = [...geo.countries].sort((a, b) => b.share - a.share);
-    if (sorted[0].share >= 80) {
-      geo.mainGeo = countryToCode(sorted[0].country);
-    } else {
-      geo.mainGeo = countryToCode(sorted[0].country);
+    geo.mainGeo = countryToCode(sorted[0].country);
+    
+    // Find secondary countries with 15%+ share
+    const secondary = sorted.slice(1).filter(c => c.share >= 15);
+    if (secondary.length > 0) {
+      geo.secondaryGeos = secondary.map(c => countryToCode(c.country));
     }
+
+    // Build geo notes with analysis date
+    const countryLines = sorted
+      .filter(c => c.share > 0)
+      .map(c => `- ${c.country}: ${c.share.toFixed(2)}% (${c.visits.toLocaleString("pt-BR")} visitas)`)
+      .join("\n");
+    geo.geoNotes = `## Geodistribuição (${analysisPeriod})\n${countryLines}`;
   }
 
   return { trafficRecords: [], domains: [], geoData, summary: { totalDomains: geoData.length, totalTrafficRecords: 0, totalNewDomains: 0 } };
@@ -466,12 +491,19 @@ function processSemrushPages(c: ClassifiedCsv): ProcessedCsvResult {
 
     if (!seen.has(pageUrl.toLowerCase())) {
       seen.add(pageUrl.toLowerCase());
+      const visitsRaw = row["Visitas"] || row["visitas"] || "";
+      const visits = parseIntNumber(visitsRaw);
+      const notaParts: string[] = [];
+      if (share) notaParts.push(`Proporção: ${shareRaw}`);
+      if (visits) notaParts.push(`Visitas: ${visits.toLocaleString("pt-BR")}`);
+      if (c.periodLabel) notaParts.push(`Período: ${c.periodLabel}`);
+      
       domains.push({
         domain,
         url: fullUrl,
         domain_type: inferDomainType(pageUrl),
         traffic_share: share || undefined,
-        notas: share ? `Proporção de tráfego: ${shareRaw}` : undefined,
+        notas: notaParts.length > 0 ? notaParts.join(" | ") : undefined,
         discovery_source: "semrush_pages",
       });
     }
