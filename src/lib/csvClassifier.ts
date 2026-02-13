@@ -363,7 +363,6 @@ function processPublicWWW(c: ClassifiedCsv): ProcessedCsvResult {
   const result = Papa.parse(c.rawText.trim(), { header: false, skipEmptyLines: true, delimiter: c.delimiter });
   const rows = result.data as string[][];
   const today = new Date().toISOString().slice(0, 7) + "-01";
-  const trafficRecords: ExtractedTrafficRecord[] = [];
   const domains: ExtractedDomain[] = [];
   const seen = new Set<string>();
 
@@ -374,13 +373,7 @@ function processPublicWWW(c: ClassifiedCsv): ProcessedCsvResult {
     if (seen.has(domain)) continue;
     seen.add(domain);
 
-    let visits = 0;
-    for (let i = 1; i < row.length; i++) {
-      const num = parseIntNumber(row[i]);
-      if (num > 0) { visits = num; break; }
-    }
-
-    trafficRecords.push({ domain, period_date: today, visits, source: "publicwww" });
+    // PublicWWW col2 is a ranking/position number, NOT traffic. Do not import as visits.
     domains.push({
       domain,
       domain_type: "landing_page",
@@ -390,7 +383,7 @@ function processPublicWWW(c: ClassifiedCsv): ProcessedCsvResult {
     });
   }
 
-  return { trafficRecords, domains, geoData: [], summary: { totalDomains: domains.length, totalTrafficRecords: trafficRecords.length, totalNewDomains: domains.length } };
+  return { trafficRecords: [], domains, geoData: [], summary: { totalDomains: domains.length, totalTrafficRecords: 0, totalNewDomains: domains.length } };
 }
 
 function processSemrushBulk(c: ClassifiedCsv): ProcessedCsvResult {
