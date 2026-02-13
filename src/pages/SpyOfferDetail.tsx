@@ -130,10 +130,9 @@ export default function SpyOfferDetail() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <StatCard label="Vertical" value={offer.vertical || "—"} />
         <StatCard label="Ticket" value={formatCurrency(offer.product_ticket)} />
-        <StatCard label="Tráfego Est." value={offer.estimated_monthly_traffic ? `${(offer.estimated_monthly_traffic / 1000).toFixed(0)}k` : "—"} />
         <StatCard label="Domínios" value={String(domainsCount)} />
         <StatCard label="Ads Salvos" value={String(adsCount)} />
         <StatCard label="Steps Funil" value={String(funnelCount)} />

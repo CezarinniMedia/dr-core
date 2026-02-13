@@ -1,11 +1,21 @@
 import { useState } from "react";
-import { useOfferTrafficData, useBulkInsertTrafficData } from "@/hooks/useSpiedOffers";
+import { useOfferTrafficData, useBulkInsertTrafficData, useUpdateTrafficData, useDeleteTrafficData } from "@/hooks/useSpiedOffers";
 import { TrafficChart } from "@/components/spy/TrafficChart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart3, Plus } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
+import {
+  Collapsible, CollapsibleContent, CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { BarChart3, Plus, Edit, Trash2, ChevronDown, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface SpyTrafficTabProps {
@@ -14,11 +24,11 @@ interface SpyTrafficTabProps {
   mainDomain?: string | null;
 }
 
-const MONTH_NAMES_PT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-
 export function SpyTrafficTab({ offerId, offerDomains, mainDomain }: SpyTrafficTabProps) {
   const { data: trafficData, isLoading } = useOfferTrafficData(offerId);
   const bulkInsert = useBulkInsertTrafficData();
+  const updateTraffic = useUpdateTrafficData();
+  const deleteTraffic = useDeleteTrafficData();
   const { toast } = useToast();
 
   const [showManual, setShowManual] = useState(false);
@@ -26,6 +36,11 @@ export function SpyTrafficTab({ offerId, offerDomains, mainDomain }: SpyTrafficT
   const [manualMonth, setManualMonth] = useState("");
   const [manualVisits, setManualVisits] = useState("");
   const [period, setPeriod] = useState("all");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
+  const [editingRecord, setEditingRecord] = useState<any>(null);
+  const [editVisits, setEditVisits] = useState("");
+  const [showDataTable, setShowDataTable] = useState(false);
 
   const allDomains = [...new Set([
     ...(offerDomains?.map((d) => d.domain) || []),
@@ -34,6 +49,12 @@ export function SpyTrafficTab({ offerId, offerDomains, mainDomain }: SpyTrafficT
   ])];
 
   const filteredData = (trafficData || []).filter((d) => {
+    if (period === "custom") {
+      const date = new Date(d.period_date);
+      if (customFrom && date < new Date(customFrom)) return false;
+      if (customTo && date > new Date(customTo)) return false;
+      return true;
+    }
     if (period === "all") return true;
     const cutoff = new Date();
     cutoff.setMonth(cutoff.getMonth() - parseInt(period));
@@ -60,6 +81,30 @@ export function SpyTrafficTab({ offerId, offerDomains, mainDomain }: SpyTrafficT
     }
   };
 
+  const openEditRecord = (record: any) => {
+    setEditingRecord(record);
+    setEditVisits(record.visits?.toString() || "0");
+  };
+
+  const handleEditSave = () => {
+    if (!editingRecord) return;
+    updateTraffic.mutate(
+      { id: editingRecord.id, offerId, data: { visits: parseInt(editVisits) || 0 } },
+      {
+        onSuccess: () => {
+          setEditingRecord(null);
+          toast({ title: "✅ Registro atualizado!" });
+        },
+      }
+    );
+  };
+
+  const handleDeleteRecord = (id: string) => {
+    deleteTraffic.mutate({ id, offerId }, {
+      onSuccess: () => toast({ title: "Registro removido." }),
+    });
+  };
+
   if (isLoading) return <p className="text-muted-foreground">Carregando...</p>;
 
   if (!trafficData || trafficData.length === 0) {
@@ -73,14 +118,9 @@ export function SpyTrafficTab({ offerId, offerDomains, mainDomain }: SpyTrafficT
         </Button>
         {showManual && (
           <ManualForm
-            domains={allDomains}
-            domain={manualDomain}
-            setDomain={setManualDomain}
-            month={manualMonth}
-            setMonth={setManualMonth}
-            visits={manualVisits}
-            setVisits={setManualVisits}
-            onAdd={handleManualAdd}
+            domains={allDomains} domain={manualDomain} setDomain={setManualDomain}
+            month={manualMonth} setMonth={setManualMonth}
+            visits={manualVisits} setVisits={setManualVisits} onAdd={handleManualAdd}
           />
         )}
       </div>
@@ -90,17 +130,19 @@ export function SpyTrafficTab({ offerId, offerDomains, mainDomain }: SpyTrafficT
   return (
     <div className="space-y-4">
       {/* Period filter */}
-      <div className="flex items-center gap-2">
-        {["3", "6", "12", "all"].map((p) => (
-          <Button
-            key={p}
-            variant={period === p ? "default" : "outline"}
-            size="sm"
-            onClick={() => setPeriod(p)}
-          >
-            {p === "all" ? "Todos" : `${p}M`}
+      <div className="flex items-center gap-2 flex-wrap">
+        {["3", "6", "12", "all", "custom"].map((p) => (
+          <Button key={p} variant={period === p ? "default" : "outline"} size="sm" onClick={() => setPeriod(p)}>
+            {p === "all" ? "Todos" : p === "custom" ? "Personalizado" : `${p}M`}
           </Button>
         ))}
+        {period === "custom" && (
+          <div className="flex items-center gap-2">
+            <Input type="month" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} className="w-36 h-8 text-xs" placeholder="De" />
+            <span className="text-xs text-muted-foreground">até</span>
+            <Input type="month" value={customTo} onChange={(e) => setCustomTo(e.target.value)} className="w-36 h-8 text-xs" placeholder="Até" />
+          </div>
+        )}
       </div>
 
       {/* Chart */}
@@ -117,7 +159,6 @@ export function SpyTrafficTab({ offerId, offerDomains, mainDomain }: SpyTrafficT
             }))}
             height={350}
           />
-          {/* Legend */}
           <div className="flex flex-wrap gap-3 mt-3">
             {allDomains.filter((d) => filteredData.some((td) => td.domain === d)).map((domain, i) => {
               const colors = [
@@ -135,6 +176,57 @@ export function SpyTrafficTab({ offerId, offerDomains, mainDomain }: SpyTrafficT
         </CardContent>
       </Card>
 
+      {/* Data Table (collapsible) */}
+      <Collapsible open={showDataTable} onOpenChange={setShowDataTable}>
+        <Card>
+          <CardHeader className="pb-2">
+            <CollapsibleTrigger className="flex items-center gap-2 w-full">
+              <CardTitle className="text-sm flex-1 text-left flex items-center gap-2">
+                📋 Dados Brutos ({filteredData.length} registros)
+              </CardTitle>
+              <ChevronDown className={`h-4 w-4 transition-transform ${showDataTable ? "rotate-180" : ""}`} />
+            </CollapsibleTrigger>
+          </CardHeader>
+          <CollapsibleContent>
+            <CardContent className="pt-0">
+              <div className="border rounded-lg overflow-x-auto max-h-[400px] overflow-y-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Domínio</TableHead>
+                      <TableHead>Período</TableHead>
+                      <TableHead className="text-right">Visitas</TableHead>
+                      <TableHead>Fonte</TableHead>
+                      <TableHead className="w-[80px]"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredData.map((r: any) => (
+                      <TableRow key={r.id}>
+                        <TableCell className="text-xs font-mono">{r.domain}</TableCell>
+                        <TableCell className="text-xs">{r.period_date}</TableCell>
+                        <TableCell className="text-xs text-right">{(r.visits ?? 0).toLocaleString("pt-BR")}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{r.source || "—"}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEditRecord(r)}>
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDeleteRecord(r.id)}>
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
+
       {/* Manual add */}
       <Card>
         <CardHeader className="pb-2">
@@ -144,17 +236,44 @@ export function SpyTrafficTab({ offerId, offerDomains, mainDomain }: SpyTrafficT
         </CardHeader>
         <CardContent>
           <ManualForm
-            domains={allDomains}
-            domain={manualDomain}
-            setDomain={setManualDomain}
-            month={manualMonth}
-            setMonth={setManualMonth}
-            visits={manualVisits}
-            setVisits={setManualVisits}
-            onAdd={handleManualAdd}
+            domains={allDomains} domain={manualDomain} setDomain={setManualDomain}
+            month={manualMonth} setMonth={setManualMonth}
+            visits={manualVisits} setVisits={setManualVisits} onAdd={handleManualAdd}
           />
         </CardContent>
       </Card>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingRecord} onOpenChange={(open) => { if (!open) setEditingRecord(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Editar Registro de Tráfego</DialogTitle>
+          </DialogHeader>
+          {editingRecord && (
+            <div className="space-y-3">
+              <div>
+                <Label className="text-xs">Domínio</Label>
+                <Input value={editingRecord.domain} disabled className="text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs">Período</Label>
+                <Input value={editingRecord.period_date} disabled className="text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs">Visitas</Label>
+                <Input type="number" value={editVisits} onChange={(e) => setEditVisits(e.target.value)} />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditingRecord(null)}>Cancelar</Button>
+            <Button onClick={handleEditSave} disabled={updateTraffic.isPending}>
+              {updateTraffic.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
+              Atualizar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

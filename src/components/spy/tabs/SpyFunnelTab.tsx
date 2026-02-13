@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useOfferFunnelSteps, useCreateFunnelStep, useDeleteFunnelStep, useOfferDomains, useCreateOfferDomain } from "@/hooks/useSpiedOffers";
+import { useOfferFunnelSteps, useCreateFunnelStep, useDeleteFunnelStep, useUpdateFunnelStep, useOfferDomains, useCreateOfferDomain } from "@/hooks/useSpiedOffers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +14,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, ExternalLink, ArrowDown, AlertTriangle, FileText, Loader2, Link2 } from "lucide-react";
+import { Plus, Trash2, ExternalLink, ArrowDown, AlertTriangle, FileText, Loader2, Link2, Edit } from "lucide-react";
 
 const STEP_TYPES = [
   "AD", "CLOAKER", "PRELAND", "QUIZ", "VSL_PAGE", "CHECKOUT",
@@ -22,29 +22,18 @@ const STEP_TYPES = [
 ];
 
 const STEP_TYPE_COLOR: Record<string, string> = {
-  AD: "bg-info/20 text-info",
-  CLOAKER: "bg-destructive/20 text-destructive",
-  PRELAND: "bg-accent/20 text-accent",
-  QUIZ: "bg-warning/20 text-warning",
-  VSL_PAGE: "bg-primary/20 text-primary",
-  CHECKOUT: "bg-success/20 text-success",
-  UPSELL_1: "bg-info/20 text-info",
-  UPSELL_2: "bg-info/20 text-info",
-  DOWNSELL: "bg-warning/20 text-warning",
-  ORDER_BUMP: "bg-success/20 text-success",
-  THANK_YOU: "bg-muted text-muted-foreground",
-  EMAIL_SEQUENCE: "bg-primary/20 text-primary",
+  AD: "bg-info/20 text-info", CLOAKER: "bg-destructive/20 text-destructive",
+  PRELAND: "bg-accent/20 text-accent", QUIZ: "bg-warning/20 text-warning",
+  VSL_PAGE: "bg-primary/20 text-primary", CHECKOUT: "bg-success/20 text-success",
+  UPSELL_1: "bg-info/20 text-info", UPSELL_2: "bg-info/20 text-info",
+  DOWNSELL: "bg-warning/20 text-warning", ORDER_BUMP: "bg-success/20 text-success",
+  THANK_YOU: "bg-muted text-muted-foreground", EMAIL_SEQUENCE: "bg-primary/20 text-primary",
 };
 
 const STEP_TYPE_TO_DOMAIN_TYPE: Record<string, string> = {
-  CHECKOUT: "checkout",
-  VSL_PAGE: "landing_page",
-  QUIZ: "quiz",
-  PRELAND: "preland",
-  CLOAKER: "cloaker",
-  THANK_YOU: "thank_you",
-  UPSELL_1: "upsell",
-  UPSELL_2: "upsell",
+  CHECKOUT: "checkout", VSL_PAGE: "landing_page", QUIZ: "quiz",
+  PRELAND: "preland", CLOAKER: "cloaker", THANK_YOU: "thank_you",
+  UPSELL_1: "upsell", UPSELL_2: "upsell",
 };
 
 function extractDomain(url: string): string {
@@ -55,27 +44,24 @@ interface SpyFunnelTabProps {
   offerId: string;
 }
 
+const emptyForm = {
+  step_order: 1, step_type: "AD", page_url: "", page_title: "",
+  product_name: "", product_promise: "", price: "",
+  is_cloaker: false, cloaker_type: "", notas: "",
+};
+
 export function SpyFunnelTab({ offerId }: SpyFunnelTabProps) {
   const { data: steps, isLoading } = useOfferFunnelSteps(offerId);
   const { data: domains } = useOfferDomains(offerId);
   const createMutation = useCreateFunnelStep();
+  const updateMutation = useUpdateFunnelStep();
   const createDomainMutation = useCreateOfferDomain();
   const deleteMutation = useDeleteFunnelStep();
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [inputMode, setInputMode] = useState<"manual" | "domain">("manual");
   const [selectedDomainId, setSelectedDomainId] = useState("");
-  const [form, setForm] = useState({
-    step_order: 1,
-    step_type: "AD",
-    page_url: "",
-    page_title: "",
-    product_name: "",
-    product_promise: "",
-    price: "",
-    is_cloaker: false,
-    cloaker_type: "",
-    notas: "",
-  });
+  const [form, setForm] = useState({ ...emptyForm });
 
   const handleSelectDomain = (domainId: string) => {
     setSelectedDomainId(domainId);
@@ -85,9 +71,35 @@ export function SpyFunnelTab({ offerId }: SpyFunnelTabProps) {
     }
   };
 
+  const openAdd = () => {
+    setEditingId(null);
+    setInputMode("manual");
+    setSelectedDomainId("");
+    setForm({ ...emptyForm, step_order: (steps?.length || 0) + 1 });
+    setShowForm(true);
+  };
+
+  const openEdit = (step: any) => {
+    setEditingId(step.id);
+    setInputMode(step.domain_id ? "domain" : "manual");
+    setSelectedDomainId(step.domain_id || "");
+    setForm({
+      step_order: step.step_order,
+      step_type: step.step_type,
+      page_url: step.page_url || "",
+      page_title: step.page_title || "",
+      product_name: step.product_name || "",
+      product_promise: step.product_promise || "",
+      price: step.price?.toString() || "",
+      is_cloaker: step.is_cloaker || false,
+      cloaker_type: step.cloaker_type || "",
+      notas: step.notas || "",
+    });
+    setShowForm(true);
+  };
+
   const handleSave = async () => {
     const stepData: Record<string, unknown> = {
-      spied_offer_id: offerId,
       step_order: form.step_order,
       step_type: form.step_type,
       page_url: form.page_url || null,
@@ -98,51 +110,38 @@ export function SpyFunnelTab({ offerId }: SpyFunnelTabProps) {
       is_cloaker: form.is_cloaker,
       cloaker_type: form.is_cloaker ? form.cloaker_type || null : null,
       notas: form.notas || null,
+      domain_id: inputMode === "domain" && selectedDomainId ? selectedDomainId : null,
     };
 
-    if (inputMode === "domain" && selectedDomainId) {
-      (stepData as any).domain_id = selectedDomainId;
-    }
-
-    createMutation.mutate(stepData, {
-      onSuccess: () => {
-        // If manual mode and URL provided, auto-create domain if it doesn't exist
-        if (inputMode === "manual" && form.page_url) {
-          const domainStr = extractDomain(form.page_url);
-          const exists = domains?.some((d: any) => d.domain === domainStr);
-          if (!exists && domainStr.includes(".")) {
-            createDomainMutation.mutate({
-              spied_offer_id: offerId,
-              domain: domainStr,
-              domain_type: STEP_TYPE_TO_DOMAIN_TYPE[form.step_type] || "landing_page",
-              url: form.page_url,
-            });
+    if (editingId) {
+      updateMutation.mutate(
+        { id: editingId, data: stepData },
+        { onSuccess: () => { setShowForm(false); setEditingId(null); } }
+      );
+    } else {
+      stepData.spied_offer_id = offerId;
+      createMutation.mutate(stepData, {
+        onSuccess: () => {
+          if (inputMode === "manual" && form.page_url) {
+            const domainStr = extractDomain(form.page_url);
+            const exists = domains?.some((d: any) => d.domain === domainStr);
+            if (!exists && domainStr.includes(".")) {
+              createDomainMutation.mutate({
+                spied_offer_id: offerId,
+                domain: domainStr,
+                domain_type: STEP_TYPE_TO_DOMAIN_TYPE[form.step_type] || "landing_page",
+                url: form.page_url,
+              });
+            }
           }
-        }
-
-        setShowForm(false);
-        setSelectedDomainId("");
-        setInputMode("manual");
-        setForm({
-          step_order: (steps?.length || 0) + 2,
-          step_type: "AD",
-          page_url: "",
-          page_title: "",
-          product_name: "",
-          product_promise: "",
-          price: "",
-          is_cloaker: false,
-          cloaker_type: "",
-          notas: "",
-        });
-      },
-    });
+          setShowForm(false);
+          setForm({ ...emptyForm, step_order: (steps?.length || 0) + 2 });
+        },
+      });
+    }
   };
 
-  const openAddForm = () => {
-    setForm((f) => ({ ...f, step_order: (steps?.length || 0) + 1 }));
-    setShowForm(true);
-  };
+  const isPending = createMutation.isPending || updateMutation.isPending;
 
   if (isLoading) return <p className="text-muted-foreground text-sm">Carregando...</p>;
 
@@ -151,9 +150,7 @@ export function SpyFunnelTab({ offerId }: SpyFunnelTabProps) {
       {!steps || steps.length === 0 ? (
         <div className="border border-dashed rounded-lg p-8 text-center space-y-3">
           <p className="text-muted-foreground text-sm">Nenhum step do funil mapeado.</p>
-          <Button size="sm" onClick={openAddForm}>
-            <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar Step
-          </Button>
+          <Button size="sm" onClick={openAdd}><Plus className="h-3.5 w-3.5 mr-1" /> Adicionar Step</Button>
         </div>
       ) : (
         <div className="space-y-1">
@@ -169,25 +166,11 @@ export function SpyFunnelTab({ offerId }: SpyFunnelTabProps) {
                     </div>
                     <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <Badge variant="outline" className={STEP_TYPE_COLOR[step.step_type] || ""}>
-                          {step.step_type}
-                        </Badge>
+                        <Badge variant="outline" className={STEP_TYPE_COLOR[step.step_type] || ""}>{step.step_type}</Badge>
                         {step.page_title && <span className="text-sm font-medium">{step.page_title}</span>}
-                        {step.is_cloaker && (
-                          <Badge variant="outline" className="bg-destructive/20 text-destructive">
-                            <AlertTriangle className="h-3 w-3 mr-1" /> Cloaker
-                          </Badge>
-                        )}
-                        {step.domain_id && (
-                          <Badge variant="outline" className="text-xs">
-                            <Link2 className="h-3 w-3 mr-1" /> Domínio vinculado
-                          </Badge>
-                        )}
-                        {step.html_source && (
-                          <Badge variant="outline" className="text-xs">
-                            <FileText className="h-3 w-3 mr-1" /> HTML salvo
-                          </Badge>
-                        )}
+                        {step.is_cloaker && <Badge variant="outline" className="bg-destructive/20 text-destructive"><AlertTriangle className="h-3 w-3 mr-1" /> Cloaker</Badge>}
+                        {step.domain_id && <Badge variant="outline" className="text-xs"><Link2 className="h-3 w-3 mr-1" /> Domínio vinculado</Badge>}
+                        {step.html_source && <Badge variant="outline" className="text-xs"><FileText className="h-3 w-3 mr-1" /> HTML salvo</Badge>}
                       </div>
                       {step.page_url && (
                         <a href={step.page_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
@@ -201,23 +184,24 @@ export function SpyFunnelTab({ offerId }: SpyFunnelTabProps) {
                       </div>
                       {step.notas && <p className="text-xs text-muted-foreground mt-1">{step.notas}</p>}
                     </div>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive shrink-0" onClick={() => deleteMutation.mutate({ id: step.id, offerId })}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
+                    <div className="flex gap-1 shrink-0">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(step)}>
+                        <Edit className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteMutation.mutate({ id: step.id, offerId })}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
               {idx < steps.length - 1 && (
-                <div className="flex justify-center py-1">
-                  <ArrowDown className="h-4 w-4 text-muted-foreground" />
-                </div>
+                <div className="flex justify-center py-1"><ArrowDown className="h-4 w-4 text-muted-foreground" /></div>
               )}
             </div>
           ))}
           <div className="flex justify-center pt-2">
-            <Button size="sm" variant="outline" onClick={openAddForm}>
-              <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar Step
-            </Button>
+            <Button size="sm" variant="outline" onClick={openAdd}><Plus className="h-3.5 w-3.5 mr-1" /> Adicionar Step</Button>
           </div>
         </div>
       )}
@@ -225,19 +209,15 @@ export function SpyFunnelTab({ offerId }: SpyFunnelTabProps) {
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Adicionar Step do Funil</DialogTitle>
+            <DialogTitle>{editingId ? "Editar Step do Funil" : "Adicionar Step do Funil"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            {/* Toggle: manual vs domain */}
             <Tabs value={inputMode} onValueChange={(v) => setInputMode(v as "manual" | "domain")}>
               <TabsList className="w-full">
                 <TabsTrigger value="manual" className="flex-1">Preencher manualmente</TabsTrigger>
-                <TabsTrigger value="domain" className="flex-1" disabled={!domains || domains.length === 0}>
-                  Selecionar domínio
-                </TabsTrigger>
+                <TabsTrigger value="domain" className="flex-1" disabled={!domains || domains.length === 0}>Selecionar domínio</TabsTrigger>
               </TabsList>
             </Tabs>
-
             {inputMode === "domain" && domains && domains.length > 0 && (
               <div>
                 <Label className="text-xs">Domínio existente</Label>
@@ -245,15 +225,12 @@ export function SpyFunnelTab({ offerId }: SpyFunnelTabProps) {
                   <SelectTrigger><SelectValue placeholder="Selecione um domínio..." /></SelectTrigger>
                   <SelectContent>
                     {domains.map((d: any) => (
-                      <SelectItem key={d.id} value={d.id}>
-                        {d.domain} ({d.domain_type})
-                      </SelectItem>
+                      <SelectItem key={d.id} value={d.id}>{d.domain} ({d.domain_type})</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             )}
-
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs">Ordem</Label>
@@ -264,9 +241,7 @@ export function SpyFunnelTab({ offerId }: SpyFunnelTabProps) {
                 <Select value={form.step_type} onValueChange={(v) => setForm({ ...form, step_type: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {STEP_TYPES.map((t) => (
-                      <SelectItem key={t} value={t}>{t}</SelectItem>
-                    ))}
+                    {STEP_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -310,9 +285,9 @@ export function SpyFunnelTab({ offerId }: SpyFunnelTabProps) {
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setShowForm(false)}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={createMutation.isPending}>
-              {createMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
-              Salvar
+            <Button onClick={handleSave} disabled={isPending}>
+              {isPending && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
+              {editingId ? "Atualizar" : "Salvar"}
             </Button>
           </DialogFooter>
         </DialogContent>
