@@ -1,0 +1,652 @@
+import { useState, useCallback } from "react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useCreateSpiedOffer, useBulkInsertTrafficData } from "@/hooks/useSpiedOffers";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  classifyCsv, processCsv, detectDelimiter,
+  type ClassifiedCsv, type CsvType, type ProcessedCsvResult, type ExtractedDomain,
+} from "@/lib/csvClassifier";
+import {
+  Upload, FileSpreadsheet, CheckCircle, AlertTriangle, ArrowRight, ArrowLeft, Loader2, X,
+} from "lucide-react";
+import { useDropzone } from "react-dropzone";
+
+interface FileEntry {
+  name: string;
+  text: string;
+  classified: ClassifiedCsv;
+  processed: ProcessedCsvResult;
+  delimiterOverride?: string;
+}
+
+interface DomainMatchInfo {
+  domain: string;
+  matched: boolean;
+  offerId?: string;
+  offerName?: string;
+  action: string;
+  csvTypes: string[];
+  trafficRecords: number;
+  newDomains: number;
+}
+
+const TYPE_COLORS: Record<CsvType, string> = {
+  publicwww: "bg-success/20 text-success",
+  semrush_bulk: "bg-info/20 text-info",
+  semrush_geo: "bg-warning/20 text-warning",
+  semrush_pages: "bg-primary/20 text-primary",
+  semrush_subdomains: "bg-accent/20 text-accent",
+  semrush_subfolders: "bg-accent/20 text-accent",
+  semrush_traffic_trend: "bg-destructive/20 text-destructive",
+  semrush_summary: "bg-muted text-muted-foreground",
+  semrush_bulk_historical: "bg-info/20 text-info",
+  unknown: "bg-muted text-muted-foreground",
+};
+
+const ALL_TYPES: { value: CsvType; label: string }[] = [
+  { value: "publicwww", label: "PublicWWW" },
+  { value: "semrush_bulk", label: "Semrush Bulk" },
+  { value: "semrush_geo", label: "Semrush Geo" },
+  { value: "semrush_pages", label: "Semrush Páginas" },
+  { value: "semrush_subdomains", label: "Semrush Subdomínios" },
+  { value: "semrush_subfolders", label: "Semrush Subpastas" },
+  { value: "semrush_traffic_trend", label: "Semrush Tendência" },
+  { value: "semrush_summary", label: "Semrush Resumo" },
+  { value: "semrush_bulk_historical", label: "Semrush Bulk Histórico" },
+];
+
+interface UniversalImportModalProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export function UniversalImportModal({ open, onClose }: UniversalImportModalProps) {
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [files, setFiles] = useState<FileEntry[]>([]);
+  const [pasteText, setPasteText] = useState("");
+  const [pasteDelimiter, setPasteDelimiter] = useState("auto");
+  const [footprintQuery, setFootprintQuery] = useState("");
+  const [domainMatches, setDomainMatches] = useState<DomainMatchInfo[]>([]);
+  const [importing, setImporting] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [importResult, setImportResult] = useState<{ newOffers: number; updated: number; trafficRecords: number } | null>(null);
+  const { toast } = useToast();
+  const createOffer = useCreateSpiedOffer();
+  const bulkInsert = useBulkInsertTrafficData();
+  const queryClient = useQueryClient();
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    for (const file of acceptedFiles) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = e.target?.result as string || "";
+        const classified = classifyCsv(text, file.name);
+        const processed = processCsv(classified);
+        setFiles(prev => [...prev, { name: file.name, text, classified, processed }]);
+        if (classified.discoveryQuery && !footprintQuery) {
+          setFootprintQuery(classified.discoveryQuery);
+        }
+      };
+      reader.readAsText(file);
+    }
+  }, [footprintQuery]);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: { "text/csv": [".csv"], "text/plain": [".txt"] },
+    multiple: true,
+  });
+
+  const handleAddPaste = () => {
+    if (!pasteText.trim()) return;
+    const delim = pasteDelimiter === "auto" ? undefined : pasteDelimiter;
+    const classified = classifyCsv(pasteText, undefined, delim);
+    const processed = processCsv(classified);
+    setFiles(prev => [...prev, { name: "Colado", text: pasteText, classified, processed }]);
+    if (classified.discoveryQuery && !footprintQuery) {
+      setFootprintQuery(classified.discoveryQuery);
+    }
+    setPasteText("");
+  };
+
+  const removeFile = (idx: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const updateFileType = (idx: number, newType: CsvType) => {
+    setFiles(prev => prev.map((f, i) => {
+      if (i !== idx) return f;
+      const reclassified = { ...f.classified, type: newType, label: ALL_TYPES.find(t => t.value === newType)?.label || newType };
+      return { ...f, classified: reclassified, processed: processCsv(reclassified) };
+    }));
+  };
+
+  const updateFilePeriod = (idx: number, period: string) => {
+    setFiles(prev => prev.map((f, i) => {
+      if (i !== idx) return f;
+      const updated = { ...f.classified, periodDate: period };
+      return { ...f, classified: updated, processed: processCsv(updated) };
+    }));
+  };
+
+  // Step 2 -> 3: Match domains
+  const handleMatchDomains = async () => {
+    const allDomains = new Map<string, { csvTypes: Set<string>; trafficRecords: number; newDomains: number }>();
+
+    for (const file of files) {
+      const p = file.processed;
+      for (const d of p.domains) {
+        if (!allDomains.has(d.domain)) {
+          allDomains.set(d.domain, { csvTypes: new Set(), trafficRecords: 0, newDomains: 0 });
+        }
+        allDomains.get(d.domain)!.csvTypes.add(file.classified.label);
+        allDomains.get(d.domain)!.newDomains++;
+      }
+      for (const t of p.trafficRecords) {
+        if (!allDomains.has(t.domain)) {
+          allDomains.set(t.domain, { csvTypes: new Set(), trafficRecords: 0, newDomains: 0 });
+        }
+        allDomains.get(t.domain)!.csvTypes.add(file.classified.label);
+        allDomains.get(t.domain)!.trafficRecords++;
+      }
+      for (const g of p.geoData) {
+        if (!allDomains.has(g.domain)) {
+          allDomains.set(g.domain, { csvTypes: new Set(), trafficRecords: 0, newDomains: 0 });
+        }
+        allDomains.get(g.domain)!.csvTypes.add(file.classified.label);
+      }
+    }
+
+    const matches: DomainMatchInfo[] = [];
+    for (const [domain, info] of allDomains) {
+      const match: DomainMatchInfo = {
+        domain,
+        matched: false,
+        action: "Criar nova oferta",
+        csvTypes: [...info.csvTypes],
+        trafficRecords: info.trafficRecords,
+        newDomains: info.newDomains,
+      };
+
+      const { data: offerMatch } = await supabase
+        .from("spied_offers")
+        .select("id, nome")
+        .eq("main_domain", domain)
+        .maybeSingle();
+
+      if (offerMatch) {
+        match.matched = true;
+        match.offerId = offerMatch.id;
+        match.offerName = offerMatch.nome;
+        match.action = "Atualizar existente";
+      } else {
+        const { data: domainMatch } = await supabase
+          .from("offer_domains")
+          .select("spied_offer_id")
+          .eq("domain", domain)
+          .maybeSingle();
+        if (domainMatch) {
+          const { data: offer } = await supabase
+            .from("spied_offers")
+            .select("id, nome")
+            .eq("id", domainMatch.spied_offer_id)
+            .maybeSingle();
+          if (offer) {
+            match.matched = true;
+            match.offerId = offer.id;
+            match.offerName = offer.nome;
+            match.action = "Atualizar existente";
+          }
+        }
+      }
+      matches.push(match);
+    }
+
+    setDomainMatches(matches);
+    setStep(3);
+  };
+
+  const handleImport = async () => {
+    setImporting(true);
+    setProgress(0);
+    let newOffers = 0;
+    let updated = 0;
+    let trafficCount = 0;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: member } = await supabase
+        .from("workspace_members")
+        .select("workspace_id")
+        .eq("user_id", user?.id ?? "")
+        .single();
+      const workspaceId = member?.workspace_id;
+      if (!workspaceId) throw new Error("Workspace não encontrado");
+
+      // Build offerId map
+      const offerIdMap = new Map<string, string>();
+      const totalSteps = domainMatches.length + files.length;
+      let currentStep = 0;
+
+      // Create missing offers
+      for (const match of domainMatches) {
+        if (match.matched && match.offerId) {
+          offerIdMap.set(match.domain, match.offerId);
+          updated++;
+        } else {
+          const newOffer = await createOffer.mutateAsync({
+            nome: match.domain,
+            main_domain: match.domain,
+            status: "RADAR",
+            discovery_source: files[0]?.classified.type || "manual",
+            discovery_query: footprintQuery || undefined,
+          });
+          offerIdMap.set(match.domain, newOffer.id);
+          newOffers++;
+        }
+        currentStep++;
+        setProgress(Math.round((currentStep / totalSteps) * 100));
+      }
+
+      // Process each file
+      for (const file of files) {
+        const p = file.processed;
+
+        // Insert traffic data
+        for (const [domain, records] of groupBy(p.trafficRecords, r => r.domain)) {
+          const offerId = offerIdMap.get(domain);
+          if (!offerId) continue;
+          await bulkInsert.mutateAsync({
+            offerId,
+            records: records.map(r => ({
+              domain: r.domain,
+              period_date: r.period_date,
+              visits: r.visits,
+              unique_visitors: r.unique_visitors,
+              pages_per_visit: r.pages_per_visit,
+              avg_visit_duration: r.avg_visit_duration,
+              bounce_rate: r.bounce_rate,
+              source: r.source,
+            })),
+          });
+          trafficCount += records.length;
+        }
+
+        // Insert domains
+        for (const d of p.domains) {
+          const offerId = offerIdMap.get(d.domain) || findOfferForSubdomain(d.domain, offerIdMap);
+          if (!offerId) continue;
+
+          // Check if domain already exists
+          const { data: existing } = await supabase
+            .from("offer_domains")
+            .select("id")
+            .eq("spied_offer_id", offerId)
+            .eq("domain", d.domain)
+            .maybeSingle();
+
+          if (!existing) {
+            await supabase.from("offer_domains").insert({
+              spied_offer_id: offerId,
+              workspace_id: workspaceId,
+              domain: d.domain,
+              domain_type: d.domain_type,
+              url: d.url || null,
+              discovery_source: d.discovery_source,
+              discovery_query: d.discovery_query || footprintQuery || null,
+              first_seen: d.first_seen || null,
+              traffic_share: d.traffic_share || null,
+              notas: d.notas || null,
+            } as any);
+          }
+        }
+
+        // Update geo data
+        for (const geo of p.geoData) {
+          const offerId = offerIdMap.get(geo.domain);
+          if (!offerId || !geo.mainGeo) continue;
+
+          const geoNotes = geo.countries
+            .map(c => `- ${c.country}: ${c.share}% (${c.visits} visitas)`)
+            .join("\n");
+
+          await supabase.from("spied_offers").update({
+            geo: geo.mainGeo,
+            notas: geoNotes,
+          } as any).eq("id", offerId);
+        }
+
+        currentStep++;
+        setProgress(Math.round((currentStep / totalSteps) * 100));
+      }
+
+      setImportResult({ newOffers, updated, trafficRecords: trafficCount });
+      queryClient.invalidateQueries({ queryKey: ["spied-offers"] });
+      setStep(4);
+      toast({ title: `✅ Importação concluída!` });
+    } catch (err: any) {
+      toast({ title: "Erro na importação", description: err.message, variant: "destructive" });
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const handleReset = () => {
+    setStep(1);
+    setFiles([]);
+    setPasteText("");
+    setPasteDelimiter("auto");
+    setFootprintQuery("");
+    setDomainMatches([]);
+    setImportResult(null);
+    setProgress(0);
+  };
+
+  const totalDomains = domainMatches.length;
+  const matchedDomains = domainMatches.filter(m => m.matched).length;
+  const newDomains = totalDomains - matchedDomains;
+  const totalTraffic = domainMatches.reduce((s, m) => s + m.trafficRecords, 0);
+
+  return (
+    <Dialog open={open} onOpenChange={() => { handleReset(); onClose(); }}>
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <FileSpreadsheet className="h-5 w-5" /> Importador Universal de CSV
+          </DialogTitle>
+          <DialogDescription>
+            Importe dados do PublicWWW, Semrush Bulk, Geo, Páginas, Subdomínios e mais
+          </DialogDescription>
+        </DialogHeader>
+
+        {/* Step indicators */}
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          {[1, 2, 3, 4].map(s => (
+            <div key={s} className={`flex items-center gap-1 ${step >= s ? "text-primary font-medium" : ""}`}>
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step >= s ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+                {s}
+              </span>
+              {s === 1 && "Upload"}
+              {s === 2 && "Classificação"}
+              {s === 3 && "Matching"}
+              {s === 4 && "Resultado"}
+              {s < 4 && <ArrowRight className="h-3 w-3 ml-1" />}
+            </div>
+          ))}
+        </div>
+
+        {/* Step 1: Upload */}
+        {step === 1 && (
+          <div className="space-y-4">
+            <div
+              {...getRootProps()}
+              className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+                isDragActive ? "border-primary bg-primary/5" : "border-muted-foreground/30 hover:border-primary/50"
+              }`}
+            >
+              <input {...getInputProps()} />
+              <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+              <p className="text-sm text-muted-foreground">
+                Arraste arquivos CSV aqui ou clique para selecionar (múltiplos)
+              </p>
+            </div>
+
+            {files.length > 0 && (
+              <div className="space-y-1">
+                {files.map((f, i) => (
+                  <div key={i} className="flex items-center gap-2 p-2 border rounded text-sm">
+                    <FileSpreadsheet className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="flex-1 truncate">{f.name}</span>
+                    <Badge variant="outline" className={TYPE_COLORS[f.classified.type]}>{f.classified.label}</Badge>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeFile(i)}>
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Ou cole o CSV:</p>
+              <Textarea
+                value={pasteText}
+                onChange={(e) => setPasteText(e.target.value)}
+                placeholder="Cole o conteúdo do CSV aqui..."
+                className="min-h-[100px] font-mono text-xs"
+              />
+              {pasteText.trim() && (
+                <div className="flex items-center gap-3">
+                  <Select value={pasteDelimiter} onValueChange={setPasteDelimiter}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="auto">Auto-detectar</SelectItem>
+                      <SelectItem value=",">Vírgula (,)</SelectItem>
+                      <SelectItem value=";">Ponto e vírgula (;)</SelectItem>
+                      <SelectItem value="&#9;">Tab</SelectItem>
+                      <SelectItem value="|">Pipe (|)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button size="sm" onClick={handleAddPaste}>Adicionar</Button>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <Label className="text-xs">Query/Footprint usado (opcional)</Label>
+              <Input value={footprintQuery} onChange={(e) => setFootprintQuery(e.target.value)} placeholder="Ex: cdn.utmify.com.br" />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => { handleReset(); onClose(); }}>Cancelar</Button>
+              <Button onClick={() => setStep(2)} disabled={files.length === 0}>
+                Próximo <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Classification */}
+        {step === 2 && (
+          <div className="space-y-4">
+            {files.map((f, i) => (
+              <div key={i} className="border rounded-lg p-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium flex-1 truncate">{f.name}</span>
+                  <Select value={f.classified.type} onValueChange={(v) => updateFileType(i, v as CsvType)}>
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ALL_TYPES.map(t => (
+                        <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {f.classified.type === "semrush_bulk" && (
+                  <div className="flex items-center gap-2">
+                    <Label className="text-xs whitespace-nowrap">Período:</Label>
+                    <Input
+                      className="w-[140px] text-xs"
+                      type="date"
+                      value={f.classified.periodDate || ""}
+                      onChange={(e) => updateFilePeriod(i, e.target.value)}
+                    />
+                  </div>
+                )}
+
+                <div className="text-xs text-muted-foreground">
+                  {f.processed.summary.totalDomains > 0 && `${f.processed.summary.totalDomains} domínios`}
+                  {f.processed.summary.totalTrafficRecords > 0 && ` · ${f.processed.summary.totalTrafficRecords} registros de tráfego`}
+                  {f.processed.geoData.length > 0 && ` · ${f.processed.geoData.length} dados de geo`}
+                </div>
+
+                {/* Preview */}
+                {f.classified.previewRows.length > 0 && (
+                  <div className="border rounded overflow-x-auto max-h-[120px]">
+                    <table className="text-[10px] w-full">
+                      <thead>
+                        <tr className="bg-muted/50">
+                          {(f.classified.headers.length > 0 ? f.classified.headers : f.classified.previewRows[0]?.map((_, ci) => `Col ${ci + 1}`))
+                            .slice(0, 6).map((h, hi) => (
+                              <th key={hi} className="px-1.5 py-0.5 text-left font-medium truncate max-w-[120px]">{h}</th>
+                            ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {f.classified.previewRows.slice(0, 3).map((row, ri) => (
+                          <tr key={ri} className="border-t border-muted/30">
+                            {row.slice(0, 6).map((cell, ci) => (
+                              <td key={ci} className="px-1.5 py-0.5 truncate max-w-[120px]">{cell}</td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            <div className="flex justify-between">
+              <Button variant="ghost" onClick={() => setStep(1)}>
+                <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
+              </Button>
+              <Button onClick={handleMatchDomains}>
+                Próximo <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Matching & Preview */}
+        {step === 3 && (
+          <div className="space-y-4">
+            <div className="border rounded-lg overflow-hidden max-h-[400px] overflow-y-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Domínio</TableHead>
+                    <TableHead>Tipo CSV</TableHead>
+                    <TableHead>No Radar?</TableHead>
+                    <TableHead>Ação</TableHead>
+                    <TableHead className="text-right">Dados</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {domainMatches.map(m => (
+                    <TableRow key={m.domain}>
+                      <TableCell className="font-mono text-xs">{m.domain}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {m.csvTypes.map(t => (
+                            <Badge key={t} variant="outline" className="text-[10px]">{t}</Badge>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {m.matched ? (
+                          <Badge variant="outline" className="bg-success/10 text-success text-[10px]">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            {m.offerName}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-warning/10 text-warning text-[10px]">
+                            <AlertTriangle className="h-3 w-3 mr-1" />
+                            Novo
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs">{m.action}</TableCell>
+                      <TableCell className="text-right text-xs text-muted-foreground">
+                        {m.trafficRecords > 0 && `${m.trafficRecords} tráfego`}
+                        {m.newDomains > 0 && ` · ${m.newDomains} dom.`}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="text-sm text-muted-foreground space-y-1">
+              <p>📊 {totalDomains} domínios · {newDomains} novos · {matchedDomains} existentes · {totalTraffic} registros de tráfego</p>
+            </div>
+
+            {importing && <Progress value={progress} className="h-2" />}
+
+            <div className="flex justify-between">
+              <Button variant="ghost" onClick={() => setStep(2)} disabled={importing}>
+                <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
+              </Button>
+              <Button onClick={handleImport} disabled={importing}>
+                {importing ? (
+                  <><Loader2 className="h-4 w-4 animate-spin mr-1" /> Importando... {progress}%</>
+                ) : (
+                  "Importar"
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Result */}
+        {step === 4 && importResult && (
+          <div className="space-y-4">
+            <div className="border rounded-lg p-6 text-center space-y-3">
+              <CheckCircle className="h-12 w-12 text-success mx-auto" />
+              <h3 className="text-lg font-semibold">Importação Concluída!</h3>
+              <div className="text-sm text-muted-foreground space-y-1">
+                <p>✅ {importResult.newOffers} ofertas criadas</p>
+                <p>🔄 {importResult.updated} ofertas atualizadas</p>
+                <p>📊 {importResult.trafficRecords} registros de tráfego importados</p>
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <Button onClick={() => { handleReset(); onClose(); }}>Fechar</Button>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Helpers
+function groupBy<T>(arr: T[], keyFn: (item: T) => string): Map<string, T[]> {
+  const map = new Map<string, T[]>();
+  for (const item of arr) {
+    const key = keyFn(item);
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(item);
+  }
+  return map;
+}
+
+function findOfferForSubdomain(domain: string, offerIdMap: Map<string, string>): string | undefined {
+  // Try to find parent domain: app.megadedicados.com.br -> megadedicados.com.br
+  const parts = domain.split(".");
+  for (let i = 1; i < parts.length - 1; i++) {
+    const parent = parts.slice(i).join(".");
+    if (offerIdMap.has(parent)) return offerIdMap.get(parent);
+  }
+  return undefined;
+}

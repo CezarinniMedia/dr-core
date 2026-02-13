@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useSpiedOffers, useDeleteSpiedOffer } from "@/hooks/useSpiedOffers";
 import { QuickAddOfferModal } from "@/components/spy/QuickAddOfferModal";
 import { FullOfferFormModal } from "@/components/spy/FullOfferFormModal";
-import { SemrushImportModal } from "@/components/spy/SemrushImportModal";
-import { PublicWWWPipeline } from "@/components/spy/PublicWWWPipeline";
+import { UniversalImportModal } from "@/components/spy/UniversalImportModal";
 import { TrafficComparisonView } from "@/components/spy/TrafficComparisonView";
 import { TrafficSparkline } from "@/components/spy/TrafficChart";
 import { Button } from "@/components/ui/button";
@@ -36,7 +35,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Zap, Search, Eye, Trash2, Radar, FileSpreadsheet, Globe } from "lucide-react";
+import { Plus, Zap, Search, Eye, Trash2, Radar, FileSpreadsheet } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -89,7 +88,6 @@ export default function SpyRadar() {
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [showFullForm, setShowFullForm] = useState(false);
   const [showImport, setShowImport] = useState(false);
-  const [showPipeline, setShowPipeline] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [mainTab, setMainTab] = useState("offers");
 
@@ -132,10 +130,6 @@ export default function SpyRadar() {
           <Button variant="outline" onClick={() => setShowImport(true)}>
             <FileSpreadsheet className="h-4 w-4 mr-2" />
             Importar CSV
-          </Button>
-          <Button variant="outline" onClick={() => setShowPipeline(true)}>
-            <Globe className="h-4 w-4 mr-2" />
-            Pipeline PublicWWW
           </Button>
         </div>
       </div>
@@ -326,8 +320,7 @@ export default function SpyRadar() {
       {/* Modals */}
       <QuickAddOfferModal open={showQuickAdd} onClose={() => setShowQuickAdd(false)} />
       <FullOfferFormModal open={showFullForm} onClose={() => setShowFullForm(false)} />
-      <SemrushImportModal open={showImport} onClose={() => setShowImport(false)} />
-      <PublicWWWPipeline open={showPipeline} onClose={() => setShowPipeline(false)} />
+      <UniversalImportModal open={showImport} onClose={() => setShowImport(false)} />
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
