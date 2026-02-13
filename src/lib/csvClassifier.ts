@@ -93,6 +93,44 @@ function extractFootprintFromData(rows: string[][]): string | null {
   return cleaned || null;
 }
 
+export function filterCsvData(
+  classified: ClassifiedCsv,
+  excludedColumns: Set<number>,
+  excludedRows: Set<number>
+): ClassifiedCsv {
+  if (excludedColumns.size === 0 && excludedRows.size === 0) return classified;
+
+  // Filter headers
+  const headers = classified.headers.filter((_, i) => !excludedColumns.has(i));
+
+  // Rebuild rawText by re-parsing and filtering
+  const result = Papa.parse(classified.rawText.trim(), {
+    header: false,
+    skipEmptyLines: true,
+    delimiter: classified.delimiter,
+  });
+  const allRows = (result.data as string[][]) || [];
+  const hasHeader = classified.headers.length > 0;
+  const dataStartIdx = hasHeader ? 1 : 0;
+
+  const filteredRows = allRows
+    .filter((_, i) => {
+      if (i < dataStartIdx) return true; // keep header row
+      return !excludedRows.has(i - dataStartIdx);
+    })
+    .map(row => row.filter((_, ci) => !excludedColumns.has(ci)));
+
+  const newRawText = filteredRows.map(row => row.join(classified.delimiter)).join("\n");
+  const previewRows = filteredRows.slice(hasHeader ? 1 : 0, hasHeader ? 6 : 5);
+
+  return {
+    ...classified,
+    rawText: newRawText,
+    headers,
+    previewRows,
+  };
+}
+
 export function classifyCsv(csvText: string, fileName?: string, delimiterOverride?: string): ClassifiedCsv {
   const delimiter = delimiterOverride || detectDelimiter(csvText);
   const result = Papa.parse(csvText.trim(), {
@@ -216,7 +254,9 @@ function parseIntNumber(val: string): number {
   if (!val || val.toLowerCase() === "n/a") return 0;
   const cleaned = val.replace(/["'\s]/g, "").replace(/\./g, "").replace(/,/g, "");
   const n = parseInt(cleaned, 10);
-  return isNaN(n) ? 0 : n;
+  if (isNaN(n)) return 0;
+  // Cap to PostgreSQL integer max to prevent numeric overflow
+  return Math.min(n, 2147483647);
 }
 
 function parsePtDate(dateStr: string): string | null {

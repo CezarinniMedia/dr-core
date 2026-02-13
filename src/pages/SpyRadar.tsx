@@ -103,8 +103,9 @@ export default function SpyRadar() {
   const getCount = (item: any, relation: string) => {
     const rel = item[relation];
     if (!rel) return 0;
+    // Supabase count queries return [{count: N}] - check count property first
+    if (Array.isArray(rel) && rel.length > 0 && rel[0]?.count !== undefined) return rel[0].count;
     if (Array.isArray(rel)) return rel.length;
-    if (rel[0]?.count !== undefined) return rel[0].count;
     return 0;
   };
 
@@ -139,6 +140,7 @@ export default function SpyRadar() {
         <TabsList>
           <TabsTrigger value="offers">📋 Ofertas</TabsTrigger>
           <TabsTrigger value="comparison">📊 Comparação de Tráfego</TabsTrigger>
+          <TabsTrigger value="about">ℹ️ Sobre</TabsTrigger>
         </TabsList>
 
         <TabsContent value="offers" className="mt-4 space-y-4">
@@ -314,6 +316,32 @@ export default function SpyRadar() {
 
         <TabsContent value="comparison" className="mt-4">
           <TrafficComparisonView />
+        </TabsContent>
+
+        <TabsContent value="about" className="mt-4">
+          <div className="border rounded-lg p-6 max-w-2xl space-y-4">
+            <h2 className="text-lg font-semibold">Ciclo de Vida das Ofertas</h2>
+            <p className="text-sm text-muted-foreground">Cada oferta no radar passa por um ciclo de qualificação. Use os status abaixo para organizar seu pipeline de espionagem:</p>
+            <div className="space-y-3">
+              {[
+                { status: "RADAR", emoji: "📡", title: "Radar", desc: "Oferta recém-descoberta. Ainda não foi analisada em detalhe. É o ponto de entrada — tudo que você encontra espionando começa aqui." },
+                { status: "ANALYZING", emoji: "🔍", title: "Analyzing", desc: "Você está investigando ativamente: analisando funil, criativos, tráfego e viabilidade. A oferta está sob avaliação." },
+                { status: "HOT", emoji: "🔥", title: "HOT", desc: "A oferta mostrou sinais fortes: tráfego crescente, múltiplos criativos ativos, funil validado. Merece atenção imediata e possível clone." },
+                { status: "SCALING", emoji: "🚀", title: "Scaling", desc: "A oferta está em fase de crescimento acelerado. Tráfego subindo consistentemente, novos criativos aparecendo. É o momento de agir rápido." },
+                { status: "DYING", emoji: "📉", title: "Dying", desc: "Tráfego em queda, criativos sendo pausados. A oferta está perdendo força. Ainda pode ter insights úteis, mas o timing já passou." },
+                { status: "DEAD", emoji: "💀", title: "Dead", desc: "A oferta parou completamente. Sem tráfego, sem criativos ativos. Mantida no radar apenas como referência histórica." },
+                { status: "CLONED", emoji: "🧬", title: "Cloned", desc: "Você já clonou/adaptou esta oferta. Indica que o ciclo de espionagem foi concluído e a inteligência foi aplicada na sua própria operação." },
+              ].map(item => (
+                <div key={item.status} className="flex gap-3 p-3 rounded-lg bg-muted/30">
+                  <span className="text-xl">{item.emoji}</span>
+                  <div>
+                    <p className="font-medium text-sm">{item.title}</p>
+                    <p className="text-xs text-muted-foreground">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
 
