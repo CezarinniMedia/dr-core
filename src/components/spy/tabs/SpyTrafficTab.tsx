@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useOfferTrafficData, useBulkInsertTrafficData, useUpdateTrafficData, useDeleteTrafficData } from "@/hooks/useSpiedOffers";
 import { TrafficChart } from "@/components/spy/TrafficChart";
+import { MonthRangePicker } from "@/components/spy/MonthRangePicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,9 +36,8 @@ export function SpyTrafficTab({ offerId, offerDomains, mainDomain }: SpyTrafficT
   const [manualDomain, setManualDomain] = useState(mainDomain || "");
   const [manualMonth, setManualMonth] = useState("");
   const [manualVisits, setManualVisits] = useState("");
-  const [period, setPeriod] = useState("all");
-  const [customFrom, setCustomFrom] = useState("");
-  const [customTo, setCustomTo] = useState("");
+  const [rangeFrom, setRangeFrom] = useState<string | null>(null);
+  const [rangeTo, setRangeTo] = useState<string | null>(null);
   const [editingRecord, setEditingRecord] = useState<any>(null);
   const [editVisits, setEditVisits] = useState("");
   const [showDataTable, setShowDataTable] = useState(false);
@@ -49,17 +49,17 @@ export function SpyTrafficTab({ offerId, offerDomains, mainDomain }: SpyTrafficT
   ])];
 
   const filteredData = (trafficData || []).filter((d) => {
-    if (period === "custom") {
-      const date = new Date(d.period_date);
-      if (customFrom && date < new Date(customFrom)) return false;
-      if (customTo && date > new Date(customTo)) return false;
-      return true;
-    }
-    if (period === "all") return true;
-    const cutoff = new Date();
-    cutoff.setMonth(cutoff.getMonth() - parseInt(period));
-    return new Date(d.period_date) >= cutoff;
+    if (!rangeFrom && !rangeTo) return true;
+    const dateKey = d.period_date.slice(0, 7); // "2025-11"
+    if (rangeFrom && dateKey < rangeFrom) return false;
+    if (rangeTo && dateKey > rangeTo) return false;
+    return true;
   });
+
+  const handleRangeChange = (from: string | null, to: string | null) => {
+    setRangeFrom(from);
+    setRangeTo(to);
+  };
 
   const handleManualAdd = async () => {
     if (!manualDomain || !manualMonth || !manualVisits) return;
@@ -129,21 +129,8 @@ export function SpyTrafficTab({ offerId, offerDomains, mainDomain }: SpyTrafficT
 
   return (
     <div className="space-y-4">
-      {/* Period filter */}
-      <div className="flex items-center gap-2 flex-wrap">
-        {["3", "6", "12", "all", "custom"].map((p) => (
-          <Button key={p} variant={period === p ? "default" : "outline"} size="sm" onClick={() => setPeriod(p)}>
-            {p === "all" ? "Todos" : p === "custom" ? "Personalizado" : `${p}M`}
-          </Button>
-        ))}
-        {period === "custom" && (
-          <div className="flex items-center gap-2">
-            <Input type="month" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} className="w-36 h-8 text-xs" placeholder="De" />
-            <span className="text-xs text-muted-foreground">até</span>
-            <Input type="month" value={customTo} onChange={(e) => setCustomTo(e.target.value)} className="w-36 h-8 text-xs" placeholder="Até" />
-          </div>
-        )}
-      </div>
+      {/* Period filter — Semrush-style */}
+      <MonthRangePicker from={rangeFrom} to={rangeTo} onChange={handleRangeChange} />
 
       {/* Chart */}
       <Card>
