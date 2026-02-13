@@ -19,7 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCreateSpiedOffer, useBulkInsertTrafficData } from "@/hooks/useSpiedOffers";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  classifyCsv, processCsv, detectDelimiter, extractDomain as extractDomainUtil,
+  classifyCsv, processCsv, detectDelimiter, extractDomain as extractDomainUtil, filterCsvData,
   type ClassifiedCsv, type CsvType, type ProcessedCsvResult, type ExtractedDomain,
 } from "@/lib/csvClassifier";
 
@@ -51,6 +51,8 @@ interface FileEntry {
   classified: ClassifiedCsv;
   processed: ProcessedCsvResult;
   delimiterOverride?: string;
+  excludedColumns?: Set<number>;
+  excludedRows?: Set<number>;
 }
 
 interface DomainMatchInfo {
@@ -102,6 +104,8 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
   const [footprintQuery, setFootprintQuery] = useState("");
   const [domainMatches, setDomainMatches] = useState<DomainMatchInfo[]>([]);
   const [importing, setImporting] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [progress, setProgress] = useState(0);
   const [importResult, setImportResult] = useState<{ newOffers: number; updated: number; trafficRecords: number } | null>(null);
   const { toast } = useToast();
@@ -110,9 +114,21 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
   const queryClient = useQueryClient();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
+    setUploading(true);
+    setUploadProgress(0);
+    let loaded = 0;
+    const total = acceptedFiles.length;
+
     for (const file of acceptedFiles) {
       const reader = new FileReader();
+      reader.onprogress = (e) => {
+        if (e.lengthComputable) {
+          setUploadProgress(Math.round(((loaded + e.loaded / e.total) / total) * 100));
+        }
+      };
       reader.onload = (e) => {
+        loaded++;
+        setUploadProgress(Math.round((loaded / total) * 100));
         const text = e.target?.result as string || "";
         const classified = classifyCsv(text, file.name);
         const processed = processCsv(classified);
@@ -120,6 +136,11 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
         if (classified.discoveryQuery && !footprintQuery) {
           setFootprintQuery(classified.discoveryQuery);
         }
+        if (loaded === total) setUploading(false);
+      };
+      reader.onerror = () => {
+        loaded++;
+        if (loaded === total) setUploading(false);
       };
       reader.readAsText(file);
     }
@@ -168,6 +189,27 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
       if (i !== idx) return f;
       const updated = { ...f.classified, periodDate: period };
       return { ...f, classified: updated, processed: processCsv(updated) };
+    }));
+  };
+
+  const toggleColumn = (fileIdx: number, colIdx: number) => {
+    setFiles(prev => prev.map((f, i) => {
+      if (i !== fileIdx) return f;
+      const exc = new Set(f.excludedColumns || []);
+      if (exc.has(colIdx)) exc.delete(colIdx); else exc.add(colIdx);
+      // Reprocess with filtered data
+      const filtered = filterCsvData(f.classified, exc, f.excludedRows || new Set());
+      return { ...f, excludedColumns: exc, processed: processCsv(filtered) };
+    }));
+  };
+
+  const toggleRow = (fileIdx: number, rowIdx: number) => {
+    setFiles(prev => prev.map((f, i) => {
+      if (i !== fileIdx) return f;
+      const exc = new Set(f.excludedRows || []);
+      if (exc.has(rowIdx)) exc.delete(rowIdx); else exc.add(rowIdx);
+      const filtered = filterCsvData(f.classified, f.excludedColumns || new Set(), exc);
+      return { ...f, excludedRows: exc, processed: processCsv(filtered) };
     }));
   };
 
@@ -459,10 +501,20 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
               }`}
             >
               <input {...getInputProps()} />
-              <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground">
-                Arraste arquivos CSV aqui ou clique para selecionar (múltiplos)
-              </p>
+              {uploading ? (
+                <>
+                  <Loader2 className="h-8 w-8 mx-auto text-primary mb-2 animate-spin" />
+                  <p className="text-sm text-muted-foreground">Processando arquivos... {uploadProgress}%</p>
+                  <Progress value={uploadProgress} className="h-2 max-w-[200px] mx-auto" />
+                </>
+              ) : (
+                <>
+                  <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    Arraste arquivos CSV aqui ou clique para selecionar (múltiplos)
+                  </p>
+                </>
+              )}
             </div>
 
             {files.length > 0 && (
@@ -541,14 +593,42 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
                 </div>
 
                 {f.classified.type !== "publicwww" && f.classified.type !== "unknown" && (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Label className="text-xs whitespace-nowrap">Período:</Label>
-                    <Input
-                      className="w-[140px] text-xs"
-                      type="date"
-                      value={f.classified.periodDate || ""}
-                      onChange={(e) => updateFilePeriod(i, e.target.value)}
-                    />
+                    <Select
+                      value={f.classified.periodDate ? new Date(f.classified.periodDate + "T00:00:00").toISOString().slice(5, 7) : ""}
+                      onValueChange={(month) => {
+                        const year = f.classified.periodDate ? f.classified.periodDate.slice(0, 4) : new Date().getFullYear().toString();
+                        updateFilePeriod(i, `${year}-${month}-01`);
+                      }}
+                    >
+                      <SelectTrigger className="w-[110px] text-xs h-8">
+                        <SelectValue placeholder="Mês" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {["01","02","03","04","05","06","07","08","09","10","11","12"].map(m => (
+                          <SelectItem key={m} value={m}>
+                            {new Date(2026, parseInt(m) - 1).toLocaleDateString("pt-BR", { month: "long" })}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={f.classified.periodDate ? f.classified.periodDate.slice(0, 4) : ""}
+                      onValueChange={(year) => {
+                        const month = f.classified.periodDate ? f.classified.periodDate.slice(5, 7) : "01";
+                        updateFilePeriod(i, `${year}-${month}-01`);
+                      }}
+                    >
+                      <SelectTrigger className="w-[90px] text-xs h-8">
+                        <SelectValue placeholder="Ano" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {["2024", "2025", "2026", "2027"].map(y => (
+                          <SelectItem key={y} value={y}>{y}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     {f.classified.periodLabel && (
                       <span className="text-[10px] text-muted-foreground">({f.classified.periodLabel})</span>
                     )}
@@ -561,28 +641,46 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
                   {f.processed.geoData.length > 0 && ` · ${f.processed.geoData.length} dados de geo`}
                 </div>
 
-                {/* Preview */}
+                {/* Preview with column/row selection */}
                 {f.classified.previewRows.length > 0 && (
-                  <div className="border rounded overflow-x-auto max-h-[120px]">
-                    <table className="text-[10px] w-full">
-                      <thead>
-                        <tr className="bg-muted/50">
-                          {(f.classified.headers.length > 0 ? f.classified.headers : f.classified.previewRows[0]?.map((_, ci) => `Col ${ci + 1}`))
-                            .slice(0, 6).map((h, hi) => (
-                              <th key={hi} className="px-1.5 py-0.5 text-left font-medium truncate max-w-[120px]">{h}</th>
-                            ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {f.classified.previewRows.slice(0, 3).map((row, ri) => (
-                          <tr key={ri} className="border-t border-muted/30">
-                            {row.slice(0, 6).map((cell, ci) => (
-                              <td key={ci} className="px-1.5 py-0.5 truncate max-w-[120px]">{cell}</td>
-                            ))}
+                  <div className="space-y-1">
+                    <p className="text-[10px] text-muted-foreground">Clique nos cabeçalhos ou linhas para excluir/incluir:</p>
+                    <div className="border rounded overflow-x-auto max-h-[160px] overflow-y-auto">
+                      <table className="text-[10px] w-full">
+                        <thead>
+                          <tr className="bg-muted/50">
+                            <th className="px-1 py-0.5 w-6"></th>
+                            {(f.classified.headers.length > 0 ? f.classified.headers : f.classified.previewRows[0]?.map((_, ci) => `Col ${ci + 1}`))
+                              .map((h, hi) => (
+                                <th
+                                  key={hi}
+                                  className={`px-1.5 py-0.5 text-left font-medium truncate max-w-[120px] cursor-pointer hover:bg-primary/10 transition-colors ${f.excludedColumns?.has(hi) ? "line-through opacity-40" : ""}`}
+                                  onClick={() => toggleColumn(i, hi)}
+                                  title={f.excludedColumns?.has(hi) ? "Clique para incluir" : "Clique para excluir"}
+                                >
+                                  {h}
+                                </th>
+                              ))}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {f.classified.previewRows.map((row, ri) => (
+                            <tr key={ri} className={`border-t border-muted/30 ${f.excludedRows?.has(ri) ? "opacity-40 line-through" : ""}`}>
+                              <td
+                                className="px-1 py-0.5 cursor-pointer hover:bg-destructive/10 text-center"
+                                onClick={() => toggleRow(i, ri)}
+                                title={f.excludedRows?.has(ri) ? "Incluir linha" : "Excluir linha"}
+                              >
+                                {f.excludedRows?.has(ri) ? "✗" : "✓"}
+                              </td>
+                              {row.map((cell, ci) => (
+                                <td key={ci} className={`px-1.5 py-0.5 truncate max-w-[120px] ${f.excludedColumns?.has(ci) ? "opacity-40" : ""}`}>{cell}</td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 )}
               </div>
