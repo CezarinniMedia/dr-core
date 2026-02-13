@@ -1,204 +1,258 @@
 
 
-# Plano: Importador Inteligente de CSVs + Integração Funil-Domínios
+# VERIFICAÇÃO DETALHADA: Implementação do Importador Inteligente + Integração Funil-Domínios
 
-## Resumo
+## ✅ O QUE FOI IMPLEMENTADO CORRETAMENTE
 
-Este plano reestrutura o sistema de importação para ser um **importador universal inteligente** que identifica automaticamente o tipo de CSV (PublicWWW, Semrush Bulk, Semrush Geo, Semrush Páginas, Semrush Subdomínios, Semrush Tendência de Tráfego, etc.) e roteia os dados para os campos corretos. Também conecta Funil e Domínios, e adiciona campos de data de criação.
+### 1. CSV Classifier (`src/lib/csvClassifier.ts`)
+- ✅ Detecta 9 tipos de CSV corretamente baseado em headers determinísticos
+- ✅ Extrai período do nome do arquivo para Semrush Bulk (ex: `Jan 2026`)
+- ✅ Extrai footprint do PublicWWW (coluna 3, limpa prefixos e protocolos)
+- ✅ Detecta formato transposto (semrush_traffic_trend) com "Data" na coluna 1
+- ✅ Parseia datas em português ("ago. de 2025" → "2025-08-01")
+- ✅ Funções de parsing para números, domínios, tipos de domínio por URL
+- ✅ Processadores para cada tipo retornam structs de dados extraídos
 
----
+### 2. Modal Unificado (`src/components/spy/UniversalImportModal.tsx`)
+- ✅ 4 steps: Upload → Classificação → Matching → Resultado
+- ✅ Dropzone + textarea para paste CSV
+- ✅ Seletor de delimitador (auto + manual: , ; \t |)
+- ✅ Preview das primeiras 5 linhas
+- ✅ Permite override do tipo CSV detectado
+- ✅ Campo "Query/Footprint usado" (pré-preenchido)
+- ✅ Matching inteligente: verifica main_domain e offer_domains
+- ✅ Cria novas ofertas para domínios não encontrados
+- ✅ Progress bar e toast de resultado
 
-## 1. Alterações no Banco de Dados
+### 3. Integração Funil-Domínios (`src/components/spy/tabs/SpyFunnelTab.tsx`)
+- ✅ Toggle (Tab) "Preencher manualmente" vs "Selecionar domínio"
+- ✅ Dropdown com lista de domínios existentes da oferta
+- ✅ Ao selecionar domínio, preenche URL automaticamente
+- ✅ Salva domain_id quando domínio é selecionado
+- ✅ Auto-cria domínio se preencher manualmente + URL válida
+- ✅ Infere domain_type a partir do step_type (CHECKOUT → checkout, etc.)
 
-### 1.1 Novos campos em `offer_domains`
-- `first_seen DATE` -- data em que o domínio foi detectado pela primeira vez
-- `discovery_source VARCHAR(100)` -- de onde veio (publicwww, semrush_pages, manual)
-- `discovery_query TEXT` -- query/script usado para encontrar
+### 4. Tabela de Domínios (`src/components/spy/tabs/SpyDomainsTab.tsx`)
+- ✅ Novo campo `first_seen` (date picker) no formulário
+- ✅ Exibe data formatada na tabela: "dd/MM/yyyy"
+- ✅ Exibe `discovery_source` na tabela
+- ✅ Permite adicionar domínio manualmente com data
 
-### 1.2 Novos campos em `spied_offers`
-- `domain_created_at DATE` -- data de criação do domínio principal (WHOIS ou manual)
-
-### 1.3 Novo campo em `offer_funnel_steps`
-- `domain_id UUID REFERENCES offer_domains(id) ON DELETE SET NULL` -- vincula o step a um domínio existente
-
-### 1.4 Novo campo em `offer_domains`
-- `traffic_share DECIMAL(5,2)` -- proporção de tráfego (para dados do Semrush Páginas)
-
----
-
-## 2. Classificador Inteligente de CSV (sem IA)
-
-Arquivo: `src/lib/csvClassifier.ts`
-
-O sistema analisa os headers do CSV para classificar automaticamente o tipo. Regras determinísticas:
-
-| Headers contém... | Tipo detectado |
-|---|---|
-| Coluna 1 = URL/domínio + colunas numéricas sem header de data + sem "Destino" | `publicwww` |
-| "Target", "target_type", "Visits" | `semrush_bulk` |
-| "Destino", "País", "Proporção de tráfego" | `semrush_geo` |
-| "Destino", "Página", "Proporção de tráfego" OU "Página", "Proporção de tráfego" (sem Destino) | `semrush_pages` |
-| "Destino", "Subdomínio", "Visitas" OU "Subdomínio", "Visitas" | `semrush_subdomains` |
-| "Destino", "Subpasta", "Proporção de tráfego" | `semrush_subfolders` |
-| "Data" na coluna 1 + domínios como headers das colunas restantes | `semrush_traffic_trend` |
-| "Destino", "Período", "Visitas" | `semrush_summary` |
-| Coluna 1 = domínio + colunas com headers de data (Oct 2024, Nov 2024...) | `semrush_bulk_historical` (formato antigo) |
-
-### Extração do footprint/query do PublicWWW
-
-O título do CSV do PublicWWW contém a query usada (ex: `cdn.utmify.com.br`). Como esse dado vem no nome do arquivo e no conteúdo da coluna "script src", o sistema:
-1. Pega o valor da 3a coluna (footprint/script src) da primeira linha de dados
-2. Extrai o domínio/path core removendo prefixos como `script src=\`, aspas, `https://`
-3. Compara com o nome do arquivo (se disponível) para validação cruzada
-4. Armazena como `discovery_query` nos domínios importados
-
-### Extração de data do nome do arquivo (Semrush Bulk)
-
-O nome do arquivo `Bulk Analysis_Jan 2026_Worldwide_All devices.csv` é parseado com regex para extrair mês/ano. O sistema mapeia nomes em inglês e português (jan./jan, fev./feb, etc.).
+### 5. Database Schema
+- ✅ `offer_domains.first_seen DATE` - adicionado
+- ✅ `offer_domains.discovery_source VARCHAR(100)` - adicionado
+- ✅ `offer_domains.discovery_query TEXT` - adicionado
+- ✅ `offer_domains.traffic_share DECIMAL(5,2)` - adicionado
+- ✅ `spied_offers.domain_created_at DATE` - adicionado
+- ✅ `offer_funnel_steps.domain_id UUID FK` - adicionado
 
 ---
 
-## 3. Processadores por Tipo de CSV
+## ❌ FALHAS IDENTIFICADAS (Itens que faltaram ou estão incorretos)
 
-### 3.1 `publicwww` (Etapa 1)
-- Extrai: domínio (coluna 1), visitas (coluna 2), footprint/script (coluna 3)
-- Para cada domínio: verifica se já existe em `spied_offers.main_domain` ou `offer_domains.domain`
-- Se existe: ignora criação, mas adiciona `discovery_query` se ausente
-- Se não existe: cria nova `spied_offer` com `discovery_source = 'publicwww'` e `discovery_query` = footprint extraído
-- Visitas vão para `offer_traffic_data` com `period_date` = mês atual, `source = 'publicwww'`
+### **FALTA 1: Campo `domain_created_at` não está sendo exibido no formulário da oferta**
+**Requisito**: "precisamos de um campo para adicionar também quando o domínio principal foi criado, em qual data"
 
-### 3.2 `semrush_bulk` (Etapa 2)
-- Extrai: Target (domínio), Visits, Unique Visitors, Pages/Visits, Avg Visit Duration, Bounce Rate
-- Data do período: extraída do nome do arquivo (ex: `Jan 2026`)
-- Se `target_type = "subfolder"`: a URL completa é adicionada como domínio (tipo `other`), o domínio raiz é o pai
-- Para cada domínio: match com existente, upsert em `offer_traffic_data` com todos os campos extras (unique_visitors, pages_per_visit, avg_visit_duration, bounce_rate)
-- Ignora domínios com `visits = "n/a"`
+- O campo foi adicionado ao schema ✅
+- **MAS não está sendo renderizado em nenhuma página de edição da oferta**
+- Precisa adicionar ao formulário na página `SpyOfferDetail.tsx`
 
-### 3.3 `semrush_geo` (Etapa 3.1)
-- Formato "Destino" multi-linha: quando coluna "Destino" está vazia, pertence ao último destino preenchido
-- Extrai: país + proporção de tráfego + visitas por dispositivo
-- Lógica de geo automatico:
-  - Se um país tem 80%+ do tráfego: `spied_offers.geo` = código desse país
-  - Se 2+ países com 15%+: preenche geo com o principal, mas registra todos
-- Dados completos (todos os países + percentuais + data) vao para `spied_offers.notas` em formato markdown
-- Ignora: proporção de computadores e dispositivos móveis
-
-### 3.4 `semrush_pages` (Etapa 3.2 e 4.1)
-- Formato com ou sem "Destino": se tem "Destino", agrupa por destino; se não, o domínio é identificado pelo campo "Página"
-- Extrai: URL completa da página
-- Adiciona cada URL como `offer_domain` (tipo inferido pelo path: /checkout = checkout, /obrigado ou /thankyou = thank_you, etc.)
-- Nota do domínio: proporção de tráfego
-- Ignora: "Exibições de página únicas" e "Exclusivo"
-
-### 3.5 `semrush_subdomains` (Etapa 3.3 e 4.2)
-- Extrai: subdomínio como novo domínio
-- Verifica se já existe em `offer_domains`; se não, adiciona
-- Ignora: visitas, computador, móvel
-
-### 3.6 `semrush_subfolders` (Etapa 3.4)
-- Extrai: subpasta completa como URL/domínio
-- Mesmo tratamento que subdomains: se a URL não existe, adiciona como domínio
-- Ignora: proporção de tráfego, exibições, exclusivo
-
-### 3.7 `semrush_traffic_trend` (Etapa 3.5)
-- Formato TRANSPOSTO: coluna 1 = "Data" com meses nas linhas, colunas 2+ = domínios com visitas
-- Parse de datas PT: "ago. de 2025" -> 2025-08-01, "jan. de 2026" -> 2026-01-01
-- Para cada domínio-coluna: gera registros de tráfego (`offer_traffic_data`)
-- Match de domínio: cada header de coluna é um domínio, vincula ao `spied_offer` correspondente
-
-### 3.8 `semrush_summary`
-- Formato com "Destino" multi-linha + "Período"
-- Extrai: Visitas e período para upsert em `offer_traffic_data`
-- Também extrai: Páginas/Visita, Duração, Bounce Rate para enriquecer dados existentes
-- Ignora: colunas de "diferença" (variação percentual)
+**Impacto**: Usuário não consegue preencher quando o domínio principal foi criado.
 
 ---
 
-## 4. Integração Funil <-> Domínios
+### **FALTA 2: Campo `discovery_query` não está sendo exibido na tabela de Domínios**
+**Requisito**: "Quero também a possibilidade de adicionar o Script src, palavra chave etc."
 
-### No formulário "Adicionar Step do Funil":
-- Adiciona toggle no topo: "Selecionar domínio existente" vs "Preencher manualmente"
-- **Selecionar existente**: dropdown com todos os `offer_domains` da oferta. Ao selecionar, `page_url` é preenchido automaticamente com a URL do domínio, e o campo `domain_id` é salvo
-- **Preencher manualmente**: campos atuais (URL, título, etc.). Ao salvar, se a URL contém um domínio que não existe em `offer_domains`, o sistema cria automaticamente o domínio com `domain_type` inferido do `step_type` (CHECKOUT -> checkout, VSL_PAGE -> landing_page, etc.)
+- O campo foi adicionado ao schema ✅
+- O campo é extraído do CSV e salvo ✅
+- **MAS não está sendo exibido na tabela da tab "Domínios"**
+- Não há campo no formulário para editar manualmente
 
----
-
-## 5. UI do Importador Universal
-
-Substitui o modal `SemrushImportModal` atual por um **ImportadorUniversal** que:
-
-### Step 1 - Upload
-- Dropzone para arquivo(s) CSV (aceita multiplos)
-- OU textarea para colar
-- Seletor de delimitador (auto + manual)
-- Campo "Query/Footprint usado" (pré-preenchido se detectado do CSV)
-
-### Step 2 - Classificação
-- Para cada arquivo: mostra o tipo detectado automaticamente com badge colorido
-- Permite override manual do tipo se detecção errar
-- Preview das primeiras 5 linhas parseadas
-- Para Semrush Bulk: mostra o período extraído do nome do arquivo, permite editar
-
-### Step 3 - Matching e Preview
-- Tabela mostrando cada domínio encontrado
-- Colunas: Domínio | Tipo CSV | Já no Radar? | Ação a realizar | Dados extraídos
-- Para domínios existentes: mostra o que será atualizado/enriquecido
-- Para domínios novos: mostra que será criado
-
-### Step 4 - Confirmação e Importação
-- Resumo: X domínios novos, Y atualizados, Z registros de tráfego
-- Botão "Importar"
-- Progress bar durante importação
-- Toast com resultado final
+**Impacto**: Usuário não vê qual foi a query/footprint usado para descobrir o domínio.
 
 ---
 
-## 6. Campos de Data nos Domínios
+### **FALTA 3: Lógica de processamento de CSV Geo incompleta**
+**Requisito Específico**: "Se o principal país tiver 80% ou mais, apenas ele deve ser preenchido no campo de geolocalização. [...] Se tiver múltiplos países com uma quantidade relevante, como não sei, talvez 15, 20%, ele deverá entender que também está rodando naquele país."
 
-### Na tab "Domínios":
-- Novo campo `first_seen` (date picker) no formulário de adicionar domínio
-- Exibido na tabela como coluna "Detectado em"
-- Quando importado via CSV, `first_seen` = data da importação (ou data do período do CSV se disponível)
-
-### No formulário da oferta:
-- Novo campo `domain_created_at` na seção de dados básicos
-- Label: "Data de criação do domínio principal"
-
----
-
-## 7. Detalhes Tecnicoss
-
-### Arquivos a criar:
-- `src/lib/csvClassifier.ts` -- classificador de tipo de CSV + processadores
-- `src/components/spy/UniversalImportModal.tsx` -- novo modal unificado
-
-### Arquivos a modificar:
-- `src/lib/parseSemrushCSV.ts` -- adicionar parsers para formatos transpostos e multi-destino
-- `src/components/spy/tabs/SpyFunnelTab.tsx` -- integração com domínios
-- `src/components/spy/tabs/SpyDomainsTab.tsx` -- campo first_seen
-- `src/hooks/useSpiedOffers.ts` -- novos hooks para upsert enriquecido
-- `src/pages/SpyRadar.tsx` -- trocar SemrushImportModal + PublicWWWPipeline por UniversalImportModal
-- `src/pages/SpyOfferDetail.tsx` -- passar domínios para FunnelTab
-
-### Migração SQL:
-```sql
-ALTER TABLE offer_domains
-  ADD COLUMN IF NOT EXISTS first_seen DATE,
-  ADD COLUMN IF NOT EXISTS discovery_source VARCHAR(100),
-  ADD COLUMN IF NOT EXISTS discovery_query TEXT,
-  ADD COLUMN IF NOT EXISTS traffic_share DECIMAL(5,2);
-
-ALTER TABLE spied_offers
-  ADD COLUMN IF NOT EXISTS domain_created_at DATE;
-
-ALTER TABLE offer_funnel_steps
-  ADD COLUMN IF NOT EXISTS domain_id UUID REFERENCES offer_domains(id) ON DELETE SET NULL;
+**Implementado ERRADO**:
+```typescript
+if (sorted[0].share >= 80) {
+  geo.mainGeo = countryToCode(sorted[0].country);
+} else {
+  geo.mainGeo = countryToCode(sorted[0].country); // Sempre retorna o primeiro!
+}
 ```
 
-### Regras de matching de domínio (sempre aplicadas):
-1. Extrai domínio raiz de qualquer URL (remove protocolo, path, porta)
-2. Compara lowercase contra `spied_offers.main_domain`
-3. Compara contra `offer_domains.domain`
-4. Se `app.megadedicados.com.br` e `megadedicados.com.br` pertencem a mesma oferta, ambos devem linkar ao mesmo `spied_offer`
-5. Subpastas como `aogosto.com.br/delivery/` sao tratadas como domínios separados mas vinculadas ao mesmo spied_offer do domínio raiz
+- Falta lógica para múltiplos países (15%+)
+- O `geo` no Supabase é um campo único (string), não um array
+- Precisa verificar: o campo deve ser string única ou array?
+
+**Exemplo do seu CSV**: 
+- `espiaodecelular.com.br`: 84,85% EUA + 15,15% Países Baixos → deveria marcar como **AMBOS**
+- `herculesgames.com.br`: 67,22% BR + 27,81% EUA → deveria marcar como **AMBOS**
+
+**Impacto**: Sistema não identifica corretamente ofertas multi-país.
+
+---
+
+### **FALTA 4: Notas do Geo não estão sendo preenchidas corretamente**
+**Requisito**: "Os dados de porcentagem, da data em que essa porcentagem foi extraída, esses dados foram extraídos e quais países. Onde deve ser adicionado isso? No campo de notas"
+
+**Implementado**:
+```typescript
+const geoNotes = geo.countries
+  .map(c => `- ${c.country}: ${c.share}% (${c.visits} visitas)`)
+  .join("\n");
+```
+
+- ✅ Está sendo salvo
+- **MAS falta**: data de quando a análise foi feita
+  - Deveria extrair do nome do arquivo (ex: `jan. de 2026`)
+  - Deveria incluir na nota: "Análise de jan. de 2026:"
+
+**Impacto**: Usuário não sabe quando foi a coleta de dados de geo.
+
+---
+
+### **FALTA 5: Campo `traffic_share` não está sendo exibido**
+**Requisito**: Campos extras de Semrush Pages (proporção de tráfego, dados de páginas)
+
+- O campo foi adicionado ✅
+- É extraído do CSV ✅
+- **MAS não está sendo salvo NEM exibido em lugar nenhum**
+- Não há UI para mostrar proporção de tráfego de cada página
+
+**Impacto**: Usuário não sabe qual página teve maior tráfego.
+
+---
+
+### **FALTA 6: Processador de Subdomínios e Subpastas não está extraindo corretamente**
+**Requisito**: "Nesse tipo, deve ser extraído apenas os novos domínios (Com novos domínios, eu quero dizer: as novas URLs de modo geral)"
+
+- Os processadores `processSemrushSubdomains` e `processSemrushSubfolders` existem
+- **MAS não há validação para ignorar domínios que JÁ EXISTEM**
+- Sistema pode duplicar domínios
+
+**Lógica necessária**:
+- Ao processar, verificar se o domínio/URL já existe na oferta
+- Se existir, **não adicionar novamente** (apenas atualizar first_seen se for mais antigo)
+
+**Impacto**: Duplicação de domínios ao importar múltiplos CSVs.
+
+---
+
+### **FALTA 7: Não há campo para data de análise (período) no processamento de Geo**
+**Requisito**: "Os dados de porcentagem, da data em que essa porcentagem foi extraída..."
+
+- O nome do arquivo tem a data (ex: `jan. de 2026`)
+- **MAS o ClassifiedCsv não extrai período para tipos Geo/Pages/etc, apenas para Bulk**
+
+```typescript
+let periodDate: string | undefined;
+...
+if (fileName) periodDate = extractPeriodFromFilename(fileName) ?? undefined;  // Apenas Bulk!
+```
+
+Precisa extrair para TODOS os tipos de CSV.
+
+---
+
+### **FALTA 8: Notas de Páginas não estão sendo preenchidas com proporção de tráfego**
+**Requisito**: "E na nota daquele domínio ele deve adicionar"
+
+- O processador de Pages extrai dados
+- **MAS não está montando notas com o contexto da página**
+- Cada página deveria ter uma nota como: "Proporção: 93,07% | Visitas: 10.690"
+
+---
+
+### **FALTA 9: Lógica de matching de domínios muito simplista para subpastas**
+**Requisito**: "Se eles estiverem encaminhando para um outro lugar, é um domínio."
+
+Exemplo: `aogosto.com.br/delivery/` é um "subfolder" no CSV Bulk
+
+- Sistema trata como `domain_type = "other"` ✅
+- **MAS não vincula automaticamente ao domínio raiz `aogosto.com.br`**
+- Precisa de lógica: extrair domínio raiz, verificar se oferece já existe, se sim, vincular
+
+---
+
+### **FALTA 10: Ordem de processo no import confusa**
+**Requisito**: Criar ofertas -> Adicionar domínios -> Adicionar tráfego
+
+**Atual**:
+```typescript
+// 1. Criar ofertas por domain
+// 2. Para cada arquivo, inserir tráfego
+// 3. Para cada arquivo, inserir domínios
+// 4. Para cada arquivo, atualizar geo
+```
+
+- Ordem está certa, **MAS há problema**:
+  - Tráfego é inserido ANTES dos domínios serem criados
+  - Se houver erro ao criar domínios, tráfego já foi inserido
+  - Não há vinculação entre tráfego e domínios específicos (apenas à oferta)
+
+---
+
+### **FALTA 11: Não há validação de tipo CSV manual**
+**Requisito**: "Permite override manual do tipo se detecção errar"
+
+- UI permite override ✅
+- **MAS quando usuário muda o tipo manualmente:**
+  - Sistema reprocessa com `processCsv(reclassified)` ✅
+  - **MAS period e footprint não são recalculados com base no novo tipo**
+  - Se usuário muda para Bulk, período deveria ser re-extraído do arquivo
+
+---
+
+### **FALTA 12: Campo `discovery_source` na oferta**
+**Requisito**: Sistema identifica onde o domínio veio ("publicwww", "semrush_bulk", etc.)
+
+- Está sendo salvo em `offer_domains.discovery_source` ✅
+- **MAS não em `spied_offers.discovery_source`**
+- Quando cria nova oferta, coloca `discovery_source: files[0]?.classified.type`
+- Deveria ser uma lógica mais clara
+
+---
+
+## 📋 RESUMO DO QUE FALTOU
+
+| ID | Severidade | Item | Impacto |
+|----|-----------|------|--------|
+| 1 | 🔴 Alta | `domain_created_at` não está em nenhuma UI | Não consegue registrar quando domínio principal foi criado |
+| 2 | 🟡 Média | `discovery_query` não é exibido | Usuário não vê qual script foi usado |
+| 3 | 🔴 Alta | Lógica de geo multi-país incompleta | Ofertas multi-país não são identificadas corretamente |
+| 4 | 🟡 Média | Data de análise não vai para notas de geo | Não sabe quando dados foram coletados |
+| 5 | 🟡 Média | `traffic_share` não é exibido | Não sabe proporção de tráfego de páginas |
+| 6 | 🟡 Média | Sem validação de domínios duplicados | Pode duplicar domínios ao importar |
+| 7 | 🟡 Média | Período não extraído para todos tipos | Data de análise não é registrada |
+| 8 | 🟡 Média | Notas de páginas não preenchidas | Sem contexto de tráfego por página |
+| 9 | 🟡 Média | Matching de subpastas não vincula ao domínio raiz | Subpastas não são agrupadas |
+| 10 | 🟡 Média | Ordem de processo de import pode gerar inconsistências | Tráfego inserido antes de domínios |
+| 11 | 🟡 Média | Override manual de tipo não recalcula período/query | Período pode estar errado após mudança |
+| 12 | 🟡 Média | `discovery_source` da oferta não está claro | Histórico de origem confuso |
+
+---
+
+## 🎯 PRÓXIMOS PASSOS RECOMENDADOS
+
+1. **CRÍTICO** (implementar agora):
+   - Adicionar `domain_created_at` ao formulário de edição da oferta
+   - Corrigir lógica de geo multi-país
+   - Extrair período para TODOS os tipos de CSV
+   - Preenchimento de notas com data de análise
+
+2. **IMPORTANTE** (próxima sessão):
+   - Exibir `discovery_query` na tabela de domínios
+   - Validação de domínios duplicados
+   - Preenchimento de notas de páginas
+   - Matching de subpastas ao domínio raiz
+
+3. **NICE-TO-HAVE**:
+   - Melhorar validação de tipos CSV manualmente
+   - Verificar e corrigir ordem do processo de import
+   - Clarificar `discovery_source` da oferta
 
