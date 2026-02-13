@@ -258,6 +258,7 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
         newDomains: info.newDomains,
       };
 
+      // 1. Exact match on main_domain
       const { data: offerMatch } = await supabase
         .from("spied_offers")
         .select("id, nome")
@@ -270,6 +271,7 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
         match.offerName = offerMatch.nome;
         match.action = "Atualizar existente";
       } else {
+        // 2. Exact match on offer_domains
         const { data: domainMatch } = await supabase
           .from("offer_domains")
           .select("spied_offer_id")
@@ -289,6 +291,47 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
           }
         }
       }
+
+      // 3. Try parent domain matching (e.g., app.megadedicados.com.br -> megadedicados.com.br)
+      if (!match.matched) {
+        const parts = domain.split(".");
+        for (let i = 1; i < parts.length - 1; i++) {
+          const parentDomain = parts.slice(i).join(".");
+          const { data: parentMatch } = await supabase
+            .from("spied_offers")
+            .select("id, nome")
+            .eq("main_domain", parentDomain)
+            .maybeSingle();
+          if (parentMatch) {
+            match.matched = true;
+            match.offerId = parentMatch.id;
+            match.offerName = parentMatch.nome;
+            match.action = "Atualizar existente";
+            break;
+          }
+          // Also check offer_domains
+          const { data: parentDomainMatch } = await supabase
+            .from("offer_domains")
+            .select("spied_offer_id")
+            .eq("domain", parentDomain)
+            .maybeSingle();
+          if (parentDomainMatch) {
+            const { data: offer } = await supabase
+              .from("spied_offers")
+              .select("id, nome")
+              .eq("id", parentDomainMatch.spied_offer_id)
+              .maybeSingle();
+            if (offer) {
+              match.matched = true;
+              match.offerId = offer.id;
+              match.offerName = offer.nome;
+              match.action = "Atualizar existente";
+              break;
+            }
+          }
+        }
+      }
+
       matches.push(match);
     }
 
@@ -347,46 +390,52 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
           const offerId = offerIdMap.get(d.domain) || findOfferForSubdomain(d.domain, offerIdMap);
           if (!offerId) continue;
 
-          // Check if domain already exists (dedup by domain string OR url)
-          const { data: existing } = await supabase
+          // Check if domain already exists (dedup by domain string AND url for subfolders)
+          const { data: existingList } = await supabase
             .from("offer_domains")
-            .select("id, first_seen")
+            .select("id, first_seen, url")
             .eq("spied_offer_id", offerId)
-            .eq("domain", d.domain)
-            .maybeSingle();
+            .eq("domain", d.domain);
+
+          const existing = existingList && existingList.length > 0 ? existingList : null;
 
           if (!existing) {
-            // Also check by URL for subfolders
-            let existsByUrl = false;
-            if (d.url) {
-              const { data: urlMatch } = await supabase
-                .from("offer_domains")
-                .select("id")
-                .eq("spied_offer_id", offerId)
-                .eq("url", d.url)
-                .maybeSingle();
-              existsByUrl = !!urlMatch;
-            }
-
-            if (!existsByUrl) {
+            // No domain entry at all - insert
+            await supabase.from("offer_domains").insert({
+              spied_offer_id: offerId,
+              workspace_id: workspaceId,
+              domain: d.domain,
+              domain_type: d.domain_type,
+              url: d.url || null,
+              discovery_source: d.discovery_source,
+              discovery_query: d.discovery_query || footprintQuery || null,
+              first_seen: d.first_seen || null,
+              notas: d.notas || null,
+            } as any);
+          } else if (d.url) {
+            // Domain exists but this might be a different URL (subfolder/page)
+            const urlExists = existing.some(e => e.url === d.url);
+            if (!urlExists) {
               await supabase.from("offer_domains").insert({
                 spied_offer_id: offerId,
                 workspace_id: workspaceId,
                 domain: d.domain,
                 domain_type: d.domain_type,
-                url: d.url || null,
+                url: d.url,
                 discovery_source: d.discovery_source,
                 discovery_query: d.discovery_query || footprintQuery || null,
                 first_seen: d.first_seen || null,
-                traffic_share: d.traffic_share || null,
                 notas: d.notas || null,
               } as any);
             }
-          } else if (d.first_seen && existing.first_seen && d.first_seen < existing.first_seen) {
-            // Update first_seen if imported date is older
-            await supabase.from("offer_domains").update({
-              first_seen: d.first_seen,
-            } as any).eq("id", existing.id);
+          } else {
+            // Domain exists without URL, check if first_seen should be updated
+            const mainEntry = existing.find(e => !e.url) || existing[0];
+            if (d.first_seen && mainEntry.first_seen && d.first_seen < mainEntry.first_seen) {
+              await supabase.from("offer_domains").update({
+                first_seen: d.first_seen,
+              } as any).eq("id", mainEntry.id);
+            }
           }
         }
 
