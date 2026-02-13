@@ -19,7 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCreateSpiedOffer, useBulkInsertTrafficData } from "@/hooks/useSpiedOffers";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  classifyCsv, processCsv, detectDelimiter, extractDomain as extractDomainUtil, filterCsvData,
+  classifyCsv, processCsv, detectDelimiter, extractDomain as extractDomainUtil, filterCsvData, getDefaultExcludedColumns,
   type ClassifiedCsv, type CsvType, type ProcessedCsvResult, type ExtractedDomain,
 } from "@/lib/csvClassifier";
 
@@ -131,8 +131,14 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
         setUploadProgress(Math.round((loaded / total) * 100));
         const text = e.target?.result as string || "";
         const classified = classifyCsv(text, file.name);
-        const processed = processCsv(classified);
-        setFiles(prev => [...prev, { name: file.name, text, classified, processed }]);
+        // Auto-exclude irrelevant columns based on CSV type
+        const autoExcluded = getDefaultExcludedColumns(classified.type, classified.headers);
+        const filtered = autoExcluded.size > 0 ? filterCsvData(classified, autoExcluded, new Set()) : classified;
+        const processed = processCsv(filtered);
+        setFiles(prev => [...prev, {
+          name: file.name, text, classified, processed,
+          excludedColumns: autoExcluded.size > 0 ? autoExcluded : undefined,
+        }]);
         if (classified.discoveryQuery && !footprintQuery) {
           setFootprintQuery(classified.discoveryQuery);
         }
