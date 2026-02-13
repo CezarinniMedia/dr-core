@@ -685,7 +685,7 @@ export function getDefaultExcludedColumns(type: CsvType, headers: string[]): Set
   const headersLower = headers.map(h => h.trim().toLowerCase());
 
   const relevantMap: Partial<Record<CsvType, string[]>> = {
-    semrush_bulk: ["target", "target_type", "visits"],
+    semrush_bulk: ["target", "target_type", "visits"], // Strictly: only these 3 columns. Excludes: Unique Visitors, Pages / Visits, Avg. Visit Duration, Bounce Rate
     semrush_geo: ["destino", "país", "pais", "proporção de tráfego", "proporcao de trafego"],
     semrush_pages: ["destino", "página", "pagina", "proporção de tráfego", "proporcao de trafego", "visitas"],
     semrush_subdomains: ["subdomínio", "subdominio", "visitas"],
