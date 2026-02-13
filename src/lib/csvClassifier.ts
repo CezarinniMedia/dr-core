@@ -683,3 +683,30 @@ function processSemrushBulkHistorical(c: ClassifiedCsv): ProcessedCsvResult {
 
   return { trafficRecords, domains: [], geoData: [], summary: { totalDomains: 0, totalTrafficRecords: trafficRecords.length, totalNewDomains: 0 } };
 }
+
+// ─── Auto-exclude irrelevant columns per CSV type ───
+
+export function getDefaultExcludedColumns(type: CsvType, headers: string[]): Set<number> {
+  const excluded = new Set<number>();
+  if (headers.length === 0) return excluded;
+  const headersLower = headers.map(h => h.trim().toLowerCase());
+
+  const relevantMap: Partial<Record<CsvType, string[]>> = {
+    semrush_bulk: ["target", "target_type", "visits"],
+    semrush_geo: ["destino", "país", "pais", "proporção de tráfego", "proporcao de trafego"],
+    semrush_pages: ["destino", "página", "pagina", "proporção de tráfego", "proporcao de trafego", "visitas"],
+    semrush_subdomains: ["subdomínio", "subdominio", "visitas"],
+    semrush_subfolders: ["subpasta", "visitas"],
+  };
+
+  const relevant = relevantMap[type];
+  if (!relevant) return excluded;
+
+  headersLower.forEach((h, i) => {
+    if (!relevant.some(r => h.includes(r))) {
+      excluded.add(i);
+    }
+  });
+
+  return excluded;
+}
