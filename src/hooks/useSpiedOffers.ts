@@ -15,35 +15,47 @@ export function useSpiedOffers(filters?: {
   return useQuery({
     queryKey: ['spied-offers', filters],
     queryFn: async () => {
-      let query = supabase
-        .from('spied_offers')
-        .select(`
-          *,
-          offer_domains(count),
-          offer_ad_libraries(count),
-          offer_funnel_steps(count),
-          ad_creatives(count)
-        `)
-        .order('updated_at', { ascending: false });
+      const pageSize = 1000;
+      const all: any[] = [];
+      let from = 0;
 
-      if (filters?.status && filters.status !== 'all') {
-        query = query.eq('status', filters.status);
-      }
-      if (filters?.vertical) {
-        query = query.eq('vertical', filters.vertical);
-      }
-      if (filters?.discovery_source) {
-        query = query.eq('discovery_source', filters.discovery_source);
-      }
-      if (filters?.search) {
-        query = query.or(
-          `nome.ilike.%${filters.search}%,main_domain.ilike.%${filters.search}%,product_name.ilike.%${filters.search}%`
-        );
+      while (true) {
+        let query = supabase
+          .from('spied_offers')
+          .select(`
+            *,
+            offer_domains(count),
+            offer_ad_libraries(count),
+            offer_funnel_steps(count),
+            ad_creatives(count)
+          `)
+          .order('updated_at', { ascending: false })
+          .range(from, from + pageSize - 1);
+
+        if (filters?.status && filters.status !== 'all') {
+          query = query.eq('status', filters.status);
+        }
+        if (filters?.vertical) {
+          query = query.eq('vertical', filters.vertical);
+        }
+        if (filters?.discovery_source) {
+          query = query.eq('discovery_source', filters.discovery_source);
+        }
+        if (filters?.search) {
+          query = query.or(
+            `nome.ilike.%${filters.search}%,main_domain.ilike.%${filters.search}%,product_name.ilike.%${filters.search}%`
+          );
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        all.push(...data);
+        if (data.length < pageSize) break;
+        from += pageSize;
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
+      return all;
     },
   });
 }
