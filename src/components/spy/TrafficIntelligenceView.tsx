@@ -3,6 +3,26 @@ import { useNavigate } from "react-router-dom";
 import { useSpiedOffers } from "@/hooks/useSpiedOffers";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+
+// Paginated fetch to bypass Supabase's 1000-row default limit
+async function fetchAllTrafficRows() {
+  const all: { spied_offer_id: string; domain: string; period_date: string; visits: number | null }[] = [];
+  const pageSize = 1000;
+  let from = 0;
+  while (true) {
+    const { data, error } = await supabase
+      .from("offer_traffic_data")
+      .select("spied_offer_id, domain, period_date, visits")
+      .order("period_date", { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    all.push(...data);
+    if (data.length < pageSize) break;
+    from += pageSize;
+  }
+  return all;
+}
 import { TrafficChart } from "@/components/spy/TrafficChart";
 import { MonthRangePicker } from "@/components/spy/MonthRangePicker";
 import { Button } from "@/components/ui/button";
@@ -87,17 +107,10 @@ export function TrafficIntelligenceView() {
   const [rangeFrom, setRangeFrom] = useState<string | null>(null);
   const [rangeTo, setRangeTo] = useState<string | null>(null);
 
-  // Fetch ALL traffic data for the workspace
+  // Fetch ALL traffic data for the workspace (paginated to bypass 1000-row limit)
   const { data: allTraffic } = useQuery({
     queryKey: ["all-traffic-data"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("offer_traffic_data")
-        .select("spied_offer_id, domain, period_date, visits")
-        .order("period_date", { ascending: true });
-      if (error) throw error;
-      return data || [];
-    },
+    queryFn: fetchAllTrafficRows,
   });
 
   // Build rows: one per offer, aggregating traffic across domains
