@@ -183,8 +183,12 @@ export function classifyCsv(csvText: string, fileName?: string, delimiterOverrid
     type = "semrush_traffic_trend";
     label = "Semrush: Tendência de Tráfego";
   }
-  // semrush_bulk: has Target, target_type, Visits
-  else if (headersLower.includes("target") && headersLower.includes("target_type") && headersLower.includes("visits")) {
+  // semrush_bulk: has Target/Destino, target_type, Visits/Visitas
+  else if (
+    (headersLower.includes("target") || headersLower.includes("destino")) &&
+    (headersLower.includes("target_type") || headersLower.includes("tipo de destino")) &&
+    (headersLower.includes("visits") || headersLower.includes("visitas"))
+  ) {
     type = "semrush_bulk";
     label = "Semrush: Bulk Analysis";
   }
@@ -395,21 +399,21 @@ function processSemrushBulk(c: ClassifiedCsv): ProcessedCsvResult {
   const seen = new Set<string>();
 
   for (const row of rows) {
-    const target = row["Target"] || row["target"] || "";
-    const targetType = row["target_type"] || row["Target Type"] || "";
-    const visitsRaw = row["Visits"] || row["visits"] || "";
+    const target = row["Target"] || row["target"] || row["Destino"] || row["destino"] || "";
+    const targetType = row["target_type"] || row["Target Type"] || row["Tipo de destino"] || row["tipo de destino"] || "";
+    const visitsRaw = row["Visits"] || row["visits"] || row["Visitas"] || row["visitas"] || "";
     const domain = extractDomain(target);
     if (!domain || !domain.includes(".")) continue;
 
     // N/A or empty → treat as 0 visits, still create traffic record
     const isNA = !visitsRaw || visitsRaw.toLowerCase() === "n/a";
     const visits = isNA ? 0 : parseIntNumber(visitsRaw);
-    const uniqueVisitors = isNA ? 0 : parseIntNumber(row["Unique Visitors"] || "");
-    const pagesPerVisit = isNA ? 0 : parseNumber(row["Pages / Visits"] || row["Pages/Visits"] || "");
-    const bounceRate = isNA ? 0 : parseNumber((row["Bounce Rate"] || "").replace("%", ""));
+    const uniqueVisitors = isNA ? 0 : parseIntNumber(row["Unique Visitors"] || row["Exclusivo"] || "");
+    const pagesPerVisit = isNA ? 0 : parseNumber(row["Pages / Visits"] || row["Pages/Visits"] || row["Páginas / visita"] || row["Paginas / visita"] || "");
+    const bounceRate = isNA ? 0 : parseNumber((row["Bounce Rate"] || row["Taxa de rejeição"] || row["Taxa de rejeicao"] || "").replace("%", ""));
 
     // Parse avg visit duration "12:09" -> seconds
-    const durationRaw = row["Avg. Visit Duration"] || row["Avg Visit Duration"] || "";
+    const durationRaw = row["Avg. Visit Duration"] || row["Avg Visit Duration"] || row["Méd. de duração da visita"] || row["Med. de duracao da visita"] || "";
     let avgDuration = 0;
     if (!isNA) {
       const dMatch = durationRaw.match(/(\d+):(\d+)/);
@@ -429,10 +433,11 @@ function processSemrushBulk(c: ClassifiedCsv): ProcessedCsvResult {
 
     if (!seen.has(domain)) {
       seen.add(domain);
-      const dtype = targetType === "subfolder" ? "other" : "landing_page";
+      const isSubfolder = targetType === "subfolder" || targetType === "subpasta";
+      const dtype = isSubfolder ? "other" : "landing_page";
       domains.push({
         domain,
-        url: targetType === "subfolder" ? target : undefined,
+        url: isSubfolder ? target : undefined,
         domain_type: dtype,
         discovery_source: "semrush_bulk",
         first_seen: periodDate,
@@ -706,7 +711,7 @@ export function getDefaultExcludedColumns(type: CsvType, headers: string[]): Set
   const headersLower = headers.map(h => h.trim().toLowerCase());
 
   const relevantMap: Partial<Record<CsvType, string[]>> = {
-    semrush_bulk: ["target", "target_type", "visits"],
+    semrush_bulk: ["target", "target_type", "visits", "destino", "tipo de destino", "visitas"],
     semrush_geo: ["destino", "país", "pais", "proporção de tráfego", "proporcao de trafego", "todos os dispositivos"],
     semrush_pages: ["destino", "página", "pagina", "proporção de tráfego", "proporcao de trafego", "visitas"],
     semrush_subdomains: ["destino", "subdomínio", "subdominio", "visitas"],
