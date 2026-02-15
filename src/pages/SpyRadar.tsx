@@ -4,7 +4,7 @@ import { useSpiedOffers, useDeleteSpiedOffer, useUpdateSpiedOffer } from "@/hook
 import { QuickAddOfferModal } from "@/components/spy/QuickAddOfferModal";
 import { FullOfferFormModal } from "@/components/spy/FullOfferFormModal";
 import { UniversalImportModal } from "@/components/spy/UniversalImportModal";
-import { TrafficComparisonView } from "@/components/spy/TrafficComparisonView";
+import { TrafficIntelligenceView } from "@/components/spy/TrafficIntelligenceView";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -265,7 +265,7 @@ export default function SpyRadar() {
       <Tabs value={mainTab} onValueChange={setMainTab}>
         <TabsList>
           <TabsTrigger value="offers">📋 Ofertas</TabsTrigger>
-          <TabsTrigger value="comparison">📊 Comparação de Tráfego</TabsTrigger>
+          <TabsTrigger value="comparison">📊 Inteligência de Tráfego</TabsTrigger>
           <TabsTrigger value="about">ℹ️ Sobre</TabsTrigger>
         </TabsList>
 
@@ -545,7 +545,7 @@ export default function SpyRadar() {
         </TabsContent>
 
         <TabsContent value="comparison" className="mt-4">
-          <TrafficComparisonView />
+          <TrafficIntelligenceView />
         </TabsContent>
 
         <TabsContent value="about" className="mt-4">
