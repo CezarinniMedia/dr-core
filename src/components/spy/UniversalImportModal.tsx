@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useCreateSpiedOffer, useBulkInsertTrafficData } from "@/hooks/useSpiedOffers";
+// Direct Supabase batch operations used instead of individual mutation hooks
 import { useQueryClient } from "@tanstack/react-query";
 import {
   classifyCsv, processCsv, detectDelimiter, extractDomain as extractDomainUtil, filterCsvData, getDefaultExcludedColumns,
@@ -107,10 +107,10 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [progressLabel, setProgressLabel] = useState("");
+  const [matching, setMatching] = useState(false);
   const [importResult, setImportResult] = useState<{ newOffers: number; updated: number; trafficRecords: number } | null>(null);
   const { toast } = useToast();
-  const createOffer = useCreateSpiedOffer();
-  const bulkInsert = useBulkInsertTrafficData();
   const queryClient = useQueryClient();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -219,132 +219,175 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
     }));
   };
 
-  // Step 2 -> 3: Match domains
+  // Step 2 -> 3: Match domains (batch queries instead of 1-by-1)
   const handleMatchDomains = async () => {
-    const allDomains = new Map<string, { csvTypes: Set<string>; trafficRecords: number; newDomains: number }>();
+    setMatching(true);
+    setProgressLabel("Analisando domínios...");
 
-    for (const file of files) {
-      const p = file.processed;
-      for (const d of p.domains) {
-        if (!allDomains.has(d.domain)) {
-          allDomains.set(d.domain, { csvTypes: new Set(), trafficRecords: 0, newDomains: 0 });
-        }
-        allDomains.get(d.domain)!.csvTypes.add(file.classified.label);
-        allDomains.get(d.domain)!.newDomains++;
-      }
-      for (const t of p.trafficRecords) {
-        if (!allDomains.has(t.domain)) {
-          allDomains.set(t.domain, { csvTypes: new Set(), trafficRecords: 0, newDomains: 0 });
-        }
-        allDomains.get(t.domain)!.csvTypes.add(file.classified.label);
-        allDomains.get(t.domain)!.trafficRecords++;
-      }
-      for (const g of p.geoData) {
-        if (!allDomains.has(g.domain)) {
-          allDomains.set(g.domain, { csvTypes: new Set(), trafficRecords: 0, newDomains: 0 });
-        }
-        allDomains.get(g.domain)!.csvTypes.add(file.classified.label);
-      }
-    }
+    try {
+      const allDomains = new Map<string, { csvTypes: Set<string>; trafficRecords: number; newDomains: number }>();
 
-    const matches: DomainMatchInfo[] = [];
-    for (const [domain, info] of allDomains) {
-      const match: DomainMatchInfo = {
-        domain,
-        matched: false,
-        action: "Criar nova oferta",
-        csvTypes: [...info.csvTypes],
-        trafficRecords: info.trafficRecords,
-        newDomains: info.newDomains,
-      };
-
-      // 1. Exact match on main_domain
-      const { data: offerMatch } = await supabase
-        .from("spied_offers")
-        .select("id, nome")
-        .eq("main_domain", domain)
-        .maybeSingle();
-
-      if (offerMatch) {
-        match.matched = true;
-        match.offerId = offerMatch.id;
-        match.offerName = offerMatch.nome;
-        match.action = "Atualizar existente";
-      } else {
-        // 2. Exact match on offer_domains
-        const { data: domainMatch } = await supabase
-          .from("offer_domains")
-          .select("spied_offer_id")
-          .eq("domain", domain)
-          .maybeSingle();
-        if (domainMatch) {
-          const { data: offer } = await supabase
-            .from("spied_offers")
-            .select("id, nome")
-            .eq("id", domainMatch.spied_offer_id)
-            .maybeSingle();
-          if (offer) {
-            match.matched = true;
-            match.offerId = offer.id;
-            match.offerName = offer.nome;
-            match.action = "Atualizar existente";
+      for (const file of files) {
+        const p = file.processed;
+        for (const d of p.domains) {
+          if (!allDomains.has(d.domain)) {
+            allDomains.set(d.domain, { csvTypes: new Set(), trafficRecords: 0, newDomains: 0 });
           }
+          allDomains.get(d.domain)!.csvTypes.add(file.classified.label);
+          allDomains.get(d.domain)!.newDomains++;
+        }
+        for (const t of p.trafficRecords) {
+          if (!allDomains.has(t.domain)) {
+            allDomains.set(t.domain, { csvTypes: new Set(), trafficRecords: 0, newDomains: 0 });
+          }
+          allDomains.get(t.domain)!.csvTypes.add(file.classified.label);
+          allDomains.get(t.domain)!.trafficRecords++;
+        }
+        for (const g of p.geoData) {
+          if (!allDomains.has(g.domain)) {
+            allDomains.set(g.domain, { csvTypes: new Set(), trafficRecords: 0, newDomains: 0 });
+          }
+          allDomains.get(g.domain)!.csvTypes.add(file.classified.label);
         }
       }
 
-      // 3. Try parent domain matching (e.g., app.megadedicados.com.br -> megadedicados.com.br)
-      if (!match.matched) {
+      // Collect all domains + parent variants for batch lookup
+      const domainList = [...allDomains.keys()];
+      const allLookupDomains = new Set(domainList);
+      for (const domain of domainList) {
         const parts = domain.split(".");
         for (let i = 1; i < parts.length - 1; i++) {
-          const parentDomain = parts.slice(i).join(".");
-          const { data: parentMatch } = await supabase
-            .from("spied_offers")
-            .select("id, nome")
-            .eq("main_domain", parentDomain)
-            .maybeSingle();
-          if (parentMatch) {
-            match.matched = true;
-            match.offerId = parentMatch.id;
-            match.offerName = parentMatch.nome;
-            match.action = "Atualizar existente";
-            break;
-          }
-          // Also check offer_domains
-          const { data: parentDomainMatch } = await supabase
-            .from("offer_domains")
-            .select("spied_offer_id")
-            .eq("domain", parentDomain)
-            .maybeSingle();
-          if (parentDomainMatch) {
-            const { data: offer } = await supabase
-              .from("spied_offers")
-              .select("id, nome")
-              .eq("id", parentDomainMatch.spied_offer_id)
-              .maybeSingle();
+          allLookupDomains.add(parts.slice(i).join("."));
+        }
+      }
+      const lookupArray = [...allLookupDomains];
+
+      setProgressLabel(`Buscando ${lookupArray.length} domínios no radar...`);
+
+      // Batch query spied_offers by main_domain
+      const offersByMainDomain = new Map<string, { id: string; nome: string }>();
+      for (let i = 0; i < lookupArray.length; i += 100) {
+        const chunk = lookupArray.slice(i, i + 100);
+        const { data } = await supabase
+          .from("spied_offers")
+          .select("id, nome, main_domain")
+          .in("main_domain", chunk);
+        for (const offer of data || []) {
+          offersByMainDomain.set(offer.main_domain, { id: offer.id, nome: offer.nome });
+        }
+      }
+
+      // Batch query offer_domains
+      const offerDomainLookup = new Map<string, string>();
+      for (let i = 0; i < lookupArray.length; i += 100) {
+        const chunk = lookupArray.slice(i, i + 100);
+        const { data } = await supabase
+          .from("offer_domains")
+          .select("domain, spied_offer_id")
+          .in("domain", chunk);
+        for (const od of data || []) {
+          offerDomainLookup.set(od.domain, od.spied_offer_id);
+        }
+      }
+
+      // Fetch offer details for IDs found via offer_domains
+      const offersById = new Map<string, { id: string; nome: string }>();
+      for (const o of offersByMainDomain.values()) offersById.set(o.id, o);
+
+      const missingIds = [...new Set(offerDomainLookup.values())].filter(id => !offersById.has(id));
+      for (let i = 0; i < missingIds.length; i += 100) {
+        const chunk = missingIds.slice(i, i + 100);
+        const { data } = await supabase
+          .from("spied_offers")
+          .select("id, nome")
+          .in("id", chunk);
+        for (const offer of data || []) {
+          offersById.set(offer.id, { id: offer.id, nome: offer.nome });
+        }
+      }
+
+      // Match locally (no more individual queries)
+      setProgressLabel("Fazendo matching...");
+      const matches: DomainMatchInfo[] = [];
+      for (const [domain, info] of allDomains) {
+        const match: DomainMatchInfo = {
+          domain,
+          matched: false,
+          action: "Criar nova oferta",
+          csvTypes: [...info.csvTypes],
+          trafficRecords: info.trafficRecords,
+          newDomains: info.newDomains,
+        };
+
+        // 1. Exact match on main_domain
+        const offerMatch = offersByMainDomain.get(domain);
+        if (offerMatch) {
+          match.matched = true;
+          match.offerId = offerMatch.id;
+          match.offerName = offerMatch.nome;
+          match.action = "Atualizar existente";
+        }
+
+        // 2. Match via offer_domains
+        if (!match.matched) {
+          const offerId = offerDomainLookup.get(domain);
+          if (offerId) {
+            const offer = offersById.get(offerId);
             if (offer) {
               match.matched = true;
               match.offerId = offer.id;
               match.offerName = offer.nome;
               match.action = "Atualizar existente";
-              break;
             }
           }
         }
+
+        // 3. Try parent domain matching (e.g., app.megadedicados.com.br -> megadedicados.com.br)
+        if (!match.matched) {
+          const parts = domain.split(".");
+          for (let i = 1; i < parts.length - 1; i++) {
+            const parentDomain = parts.slice(i).join(".");
+            const parentOffer = offersByMainDomain.get(parentDomain);
+            if (parentOffer) {
+              match.matched = true;
+              match.offerId = parentOffer.id;
+              match.offerName = parentOffer.nome;
+              match.action = "Atualizar existente";
+              break;
+            }
+            const parentOfferId = offerDomainLookup.get(parentDomain);
+            if (parentOfferId) {
+              const offer = offersById.get(parentOfferId);
+              if (offer) {
+                match.matched = true;
+                match.offerId = offer.id;
+                match.offerName = offer.nome;
+                match.action = "Atualizar existente";
+                break;
+              }
+            }
+          }
+        }
+
+        matches.push(match);
       }
 
-      matches.push(match);
+      setDomainMatches(matches);
+      setStep(3);
+    } finally {
+      setMatching(false);
+      setProgressLabel("");
     }
-
-    setDomainMatches(matches);
-    setStep(3);
   };
 
   const handleImport = async () => {
     setImporting(true);
     setProgress(0);
+    setProgressLabel("Preparando importação...");
     let newOffers = 0;
     let updated = 0;
     let trafficCount = 0;
+    const BATCH = 500;
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -356,52 +399,84 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
       const workspaceId = member?.workspace_id;
       if (!workspaceId) throw new Error("Workspace não encontrado");
 
-      // Build offerId map
       const offerIdMap = new Map<string, string>();
-      const totalSteps = domainMatches.length + files.length;
-      let currentStep = 0;
 
-      // Create missing offers
-      for (const match of domainMatches) {
-        if (match.matched && match.offerId) {
-          offerIdMap.set(match.domain, match.offerId);
-          updated++;
-        } else {
-          const newOffer = await createOffer.mutateAsync({
-            nome: match.domain,
-            main_domain: match.domain,
-            status: "RADAR",
-            discovery_source: files[0]?.classified.type || "manual",
-            discovery_query: footprintQuery || undefined,
-          });
-          offerIdMap.set(match.domain, newOffer.id);
-          newOffers++;
+      // ── Phase 1: Batch create offers ──
+      const existingMatches = domainMatches.filter(m => m.matched && m.offerId);
+      const newMatches = domainMatches.filter(m => !m.matched || !m.offerId);
+
+      for (const m of existingMatches) {
+        offerIdMap.set(m.domain, m.offerId!);
+      }
+      updated = existingMatches.length;
+
+      if (newMatches.length > 0) {
+        setProgressLabel(`Criando ${newMatches.length} ofertas...`);
+        const offersToCreate = newMatches.map(m => ({
+          nome: m.domain,
+          main_domain: m.domain,
+          status: "RADAR",
+          workspace_id: workspaceId,
+          discovery_source: files[0]?.classified.type || "manual",
+          discovery_query: footprintQuery || null,
+        }));
+
+        for (let i = 0; i < offersToCreate.length; i += BATCH) {
+          const chunk = offersToCreate.slice(i, i + BATCH);
+          const { data, error } = await supabase
+            .from("spied_offers")
+            .insert(chunk as any[])
+            .select("id, main_domain");
+          if (error) throw error;
+          for (const offer of data || []) {
+            offerIdMap.set(offer.main_domain, offer.id);
+          }
+          newOffers += chunk.length;
+          const done = Math.min(i + BATCH, offersToCreate.length);
+          setProgress(Math.round((done / offersToCreate.length) * 20));
+          setProgressLabel(`Criando ofertas... ${done}/${offersToCreate.length}`);
         }
-        currentStep++;
-        setProgress(Math.round((currentStep / totalSteps) * 100));
       }
 
-      // Process each file: domains FIRST, then traffic, then geo
-      for (const file of files) {
-        const p = file.processed;
+      // ── Phase 2: Pre-fetch existing domains for dedup ──
+      setProgressLabel("Verificando domínios existentes...");
+      setProgress(20);
 
-        // 1. Insert domains first
-        for (const d of p.domains) {
+      const domainStringsToCheck = [...new Set(
+        files.flatMap(f => f.processed.domains.map(d => d.domain))
+      )];
+      const existingDomainsMap = new Map<string, { id: string; url: string | null; first_seen: string | null }[]>();
+
+      for (let i = 0; i < domainStringsToCheck.length; i += 100) {
+        const chunk = domainStringsToCheck.slice(i, i + 100);
+        const { data } = await supabase
+          .from("offer_domains")
+          .select("id, spied_offer_id, domain, url, first_seen")
+          .in("domain", chunk);
+        for (const d of data || []) {
+          const key = `${d.spied_offer_id}:${d.domain}`;
+          if (!existingDomainsMap.has(key)) existingDomainsMap.set(key, []);
+          existingDomainsMap.get(key)!.push({ id: d.id, url: d.url, first_seen: d.first_seen });
+        }
+      }
+
+      // ── Phase 3: Batch insert domains ──
+      setProgressLabel("Processando domínios...");
+      setProgress(30);
+
+      const domainsToInsert: any[] = [];
+      const domainsToUpdateFirstSeen: { id: string; first_seen: string }[] = [];
+
+      for (const file of files) {
+        for (const d of file.processed.domains) {
           const offerId = offerIdMap.get(d.domain) || findOfferForSubdomain(d.domain, offerIdMap);
           if (!offerId) continue;
 
-          // Check if domain already exists (dedup by domain string AND url for subfolders)
-          const { data: existingList } = await supabase
-            .from("offer_domains")
-            .select("id, first_seen, url")
-            .eq("spied_offer_id", offerId)
-            .eq("domain", d.domain);
-
-          const existing = existingList && existingList.length > 0 ? existingList : null;
+          const key = `${offerId}:${d.domain}`;
+          const existing = existingDomainsMap.get(key);
 
           if (!existing) {
-            // No domain entry at all - insert
-            await supabase.from("offer_domains").insert({
+            domainsToInsert.push({
               spied_offer_id: offerId,
               workspace_id: workspaceId,
               domain: d.domain,
@@ -411,12 +486,13 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
               discovery_query: d.discovery_query || footprintQuery || null,
               first_seen: d.first_seen || null,
               notas: d.notas || null,
-            } as any);
+            });
+            // Track locally to avoid duplicates within the same import
+            existingDomainsMap.set(key, [{ id: "pending", url: d.url || null, first_seen: d.first_seen || null }]);
           } else if (d.url) {
-            // Domain exists but this might be a different URL (subfolder/page)
             const urlExists = existing.some(e => e.url === d.url);
             if (!urlExists) {
-              await supabase.from("offer_domains").insert({
+              domainsToInsert.push({
                 spied_offer_id: offerId,
                 workspace_id: workspaceId,
                 domain: d.domain,
@@ -426,26 +502,49 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
                 discovery_query: d.discovery_query || footprintQuery || null,
                 first_seen: d.first_seen || null,
                 notas: d.notas || null,
-              } as any);
+              });
+              existing.push({ id: "pending", url: d.url, first_seen: d.first_seen || null });
             }
           } else {
-            // Domain exists without URL, check if first_seen should be updated
             const mainEntry = existing.find(e => !e.url) || existing[0];
             if (d.first_seen && mainEntry.first_seen && d.first_seen < mainEntry.first_seen) {
-              await supabase.from("offer_domains").update({
-                first_seen: d.first_seen,
-              } as any).eq("id", mainEntry.id);
+              domainsToUpdateFirstSeen.push({ id: mainEntry.id, first_seen: d.first_seen });
             }
           }
         }
+      }
 
-        // 2. Insert traffic data
-        for (const [domain, records] of groupBy(p.trafficRecords, r => r.domain)) {
+      if (domainsToInsert.length > 0) {
+        for (let i = 0; i < domainsToInsert.length; i += BATCH) {
+          const chunk = domainsToInsert.slice(i, i + BATCH);
+          const { error } = await supabase.from("offer_domains").insert(chunk);
+          if (error) throw error;
+          const done = Math.min(i + BATCH, domainsToInsert.length);
+          setProgress(30 + Math.round((done / domainsToInsert.length) * 15));
+          setProgressLabel(`Inserindo domínios... ${done}/${domainsToInsert.length}`);
+        }
+      }
+
+      // Update first_seen for existing domains (usually very few)
+      for (const upd of domainsToUpdateFirstSeen) {
+        if (upd.id !== "pending") {
+          await supabase.from("offer_domains").update({ first_seen: upd.first_seen } as any).eq("id", upd.id);
+        }
+      }
+
+      // ── Phase 4: Batch insert traffic data ──
+      setProgress(45);
+      setProgressLabel("Importando dados de tráfego...");
+
+      const allTrafficRecords: any[] = [];
+      for (const file of files) {
+        for (const [domain, records] of groupBy(file.processed.trafficRecords, r => r.domain)) {
           const offerId = offerIdMap.get(domain) || findOfferForSubdomain(domain, offerIdMap);
           if (!offerId) continue;
-          await bulkInsert.mutateAsync({
-            offerId,
-            records: records.map(r => ({
+          for (const r of records) {
+            allTrafficRecords.push({
+              spied_offer_id: offerId,
+              workspace_id: workspaceId,
               domain: r.domain,
               period_date: r.period_date,
               visits: r.visits,
@@ -453,23 +552,39 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
               pages_per_visit: r.pages_per_visit,
               avg_visit_duration: r.avg_visit_duration,
               bounce_rate: r.bounce_rate,
-              source: r.source,
-            })),
-          });
-          trafficCount += records.length;
+              source: r.source || "semrush_csv",
+            });
+          }
         }
+      }
 
-        // 3. Update geo data with multi-country support
-        for (const geo of p.geoData) {
+      if (allTrafficRecords.length > 0) {
+        for (let i = 0; i < allTrafficRecords.length; i += BATCH) {
+          const chunk = allTrafficRecords.slice(i, i + BATCH);
+          const { error } = await supabase
+            .from("offer_traffic_data")
+            .upsert(chunk as any[], { onConflict: "spied_offer_id,domain,period_type,period_date" });
+          if (error) throw error;
+          trafficCount += chunk.length;
+          const done = Math.min(i + BATCH, allTrafficRecords.length);
+          setProgress(45 + Math.round((done / allTrafficRecords.length) * 40));
+          setProgressLabel(`Importando tráfego... ${done}/${allTrafficRecords.length}`);
+        }
+      }
+
+      // ── Phase 5: Geo data ──
+      setProgress(85);
+      setProgressLabel("Atualizando geodistribuição...");
+
+      for (const file of files) {
+        for (const geo of file.processed.geoData) {
           const offerId = offerIdMap.get(geo.domain);
           if (!offerId || !geo.mainGeo) continue;
 
-          // Build geo value: main + secondary (if any)
           const geoValue = geo.secondaryGeos && geo.secondaryGeos.length > 0
             ? `${geo.mainGeo}, ${geo.secondaryGeos.join(", ")}`
             : geo.mainGeo;
 
-          // Append geo notes to existing notes
           const { data: currentOffer } = await supabase
             .from("spied_offers")
             .select("notas")
@@ -486,19 +601,19 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
             notas: newNotes.trim(),
           } as any).eq("id", offerId);
         }
-
-        currentStep++;
-        setProgress(Math.round((currentStep / totalSteps) * 100));
       }
 
+      setProgress(100);
+      setProgressLabel("Concluído!");
       setImportResult({ newOffers, updated, trafficRecords: trafficCount });
       queryClient.invalidateQueries({ queryKey: ["spied-offers"] });
       setStep(4);
-      toast({ title: `✅ Importação concluída!` });
+      toast({ title: "Importação concluída!" });
     } catch (err: any) {
       toast({ title: "Erro na importação", description: err.message, variant: "destructive" });
     } finally {
       setImporting(false);
+      setProgressLabel("");
     }
   };
 
@@ -511,6 +626,8 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
     setDomainMatches([]);
     setImportResult(null);
     setProgress(0);
+    setProgressLabel("");
+    setMatching(false);
   };
 
   const totalDomains = domainMatches.length;
@@ -741,12 +858,20 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
               </div>
             ))}
 
+            {matching && progressLabel && (
+              <p className="text-xs text-muted-foreground text-center">{progressLabel}</p>
+            )}
+
             <div className="flex justify-between">
-              <Button variant="ghost" onClick={() => setStep(1)}>
+              <Button variant="ghost" onClick={() => setStep(1)} disabled={matching}>
                 <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
               </Button>
-              <Button onClick={handleMatchDomains}>
-                Próximo <ArrowRight className="h-4 w-4 ml-1" />
+              <Button onClick={handleMatchDomains} disabled={matching}>
+                {matching ? (
+                  <><Loader2 className="h-4 w-4 animate-spin mr-1" /> Analisando...</>
+                ) : (
+                  <>Próximo <ArrowRight className="h-4 w-4 ml-1" /></>
+                )}
               </Button>
             </div>
           </div>
@@ -805,7 +930,14 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
               <p>📊 {totalDomains} domínios · {newDomains} novos · {matchedDomains} existentes · {totalTraffic} registros de tráfego</p>
             </div>
 
-            {importing && <Progress value={progress} className="h-2" />}
+            {importing && (
+              <div className="space-y-1">
+                <Progress value={progress} className="h-2" />
+                {progressLabel && (
+                  <p className="text-xs text-muted-foreground text-center">{progressLabel}</p>
+                )}
+              </div>
+            )}
 
             <div className="flex justify-between">
               <Button variant="ghost" onClick={() => setStep(2)} disabled={importing}>
