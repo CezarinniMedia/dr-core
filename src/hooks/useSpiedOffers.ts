@@ -15,11 +15,11 @@ export function useSpiedOffers(filters?: {
   return useQuery({
     queryKey: ['spied-offers', filters],
     queryFn: async () => {
-      const pageSize = 10000;
-      const all: any[] = [];
-      let from = 0;
+      const pageSize = 1000;
+      const PARALLEL = 5;
 
-      while (true) {
+      // Build query helper with filters applied
+      const buildQuery = (from: number) => {
         let query = supabase
           .from('spied_offers')
           .select(`
@@ -46,13 +46,58 @@ export function useSpiedOffers(filters?: {
             `nome.ilike.%${filters.search}%,main_domain.ilike.%${filters.search}%,product_name.ilike.%${filters.search}%`
           );
         }
+        return query;
+      };
 
-        const { data, error } = await query;
-        if (error) throw error;
-        if (!data || data.length === 0) break;
-        all.push(...data);
-        if (data.length < pageSize) break;
-        from += pageSize;
+      // First page + count
+      const buildCountQuery = () => {
+        let query = supabase
+          .from('spied_offers')
+          .select('id', { count: 'exact', head: true });
+
+        if (filters?.status && filters.status !== 'all') {
+          query = query.eq('status', filters.status);
+        }
+        if (filters?.vertical) {
+          query = query.eq('vertical', filters.vertical);
+        }
+        if (filters?.discovery_source) {
+          query = query.eq('discovery_source', filters.discovery_source);
+        }
+        if (filters?.search) {
+          query = query.or(
+            `nome.ilike.%${filters.search}%,main_domain.ilike.%${filters.search}%,product_name.ilike.%${filters.search}%`
+          );
+        }
+        return query;
+      };
+
+      // Get count and first page in parallel
+      const [countResult, firstResult] = await Promise.all([
+        buildCountQuery(),
+        buildQuery(0),
+      ]);
+
+      if (firstResult.error) throw firstResult.error;
+      if (!firstResult.data || firstResult.data.length === 0) return [];
+
+      const all: any[] = [...firstResult.data];
+      const total = countResult.count || 0;
+
+      if (firstResult.data.length < pageSize || total <= pageSize) return all;
+
+      // Fetch remaining pages in parallel
+      const totalPages = Math.ceil(total / pageSize);
+      for (let batch = 1; batch < totalPages; batch += PARALLEL) {
+        const promises = [];
+        for (let p = batch; p < Math.min(batch + PARALLEL, totalPages); p++) {
+          promises.push(buildQuery(p * pageSize));
+        }
+        const results = await Promise.all(promises);
+        for (const { data, error } of results) {
+          if (error) throw error;
+          if (data) all.push(...data);
+        }
       }
 
       return all;

@@ -4,24 +4,46 @@ import { useSpiedOffers } from "@/hooks/useSpiedOffers";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 
-// Paginated fetch to bypass Supabase's 1000-row default limit
-// Uses large pages (10k) to minimize round trips for large datasets
+// Parallel paginated fetch — gets row count first, then fetches pages 5 at a time
 async function fetchAllTrafficRows() {
-  const all: { spied_offer_id: string; domain: string; period_date: string; visits: number | null }[] = [];
-  const pageSize = 10000;
-  let from = 0;
-  while (true) {
-    const { data, error } = await supabase
-      .from("offer_traffic_data")
-      .select("spied_offer_id, domain, period_date, visits")
-      .order("period_date", { ascending: true })
-      .range(from, from + pageSize - 1);
-    if (error) throw error;
-    if (!data || data.length === 0) break;
-    all.push(...data);
-    if (data.length < pageSize) break;
-    from += pageSize;
+  type Row = { spied_offer_id: string; domain: string; period_date: string; visits: number | null };
+  const pageSize = 1000;
+  const PARALLEL = 5;
+
+  // First page + exact count
+  const { data: first, error: firstErr, count } = await supabase
+    .from("offer_traffic_data")
+    .select("spied_offer_id, domain, period_date, visits", { count: "exact" })
+    .order("period_date", { ascending: true })
+    .range(0, pageSize - 1);
+
+  if (firstErr) throw firstErr;
+  if (!first || first.length === 0) return [] as Row[];
+
+  const all: Row[] = [...first];
+  if (first.length < pageSize || !count || count <= pageSize) return all;
+
+  // Fetch remaining pages in parallel batches
+  const totalPages = Math.ceil(count / pageSize);
+  for (let batch = 1; batch < totalPages; batch += PARALLEL) {
+    const promises = [];
+    for (let p = batch; p < Math.min(batch + PARALLEL, totalPages); p++) {
+      const from = p * pageSize;
+      promises.push(
+        supabase
+          .from("offer_traffic_data")
+          .select("spied_offer_id, domain, period_date, visits")
+          .order("period_date", { ascending: true })
+          .range(from, from + pageSize - 1)
+      );
+    }
+    const results = await Promise.all(promises);
+    for (const { data, error } of results) {
+      if (error) throw error;
+      if (data) all.push(...data);
+    }
   }
+
   return all;
 }
 import { TrafficChart } from "@/components/spy/TrafficChart";
