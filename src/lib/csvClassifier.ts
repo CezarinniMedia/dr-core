@@ -65,7 +65,21 @@ function isDateHeader(h: string): boolean {
 }
 
 function extractPeriodFromFilename(fileName: string): { date: string; label: string } | null {
-  // Matches patterns like "Jan 2026", "jan. de 2026", "fev. de 2025", etc.
+  // 1. ISO format: "2026-01", "2025-12" (e.g. consolidado_2026-01.csv)
+  const isoMatch = fileName.match(/(\d{4})[-_](\d{2})/);
+  if (isoMatch) {
+    const year = parseInt(isoMatch[1]);
+    const month = parseInt(isoMatch[2]);
+    if (year >= 2020 && year <= 2030 && month >= 1 && month <= 12) {
+      const names = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+      return {
+        date: `${isoMatch[1]}-${isoMatch[2]}-01`,
+        label: `${names[month - 1]} ${isoMatch[1]}`,
+      };
+    }
+  }
+
+  // 2. Month name format: "Jan 2026", "jan. de 2026", "Aug 2025", etc.
   const match = fileName.match(/([a-záéíóúâêîôûãõç]+)\.?\s*(?:de\s+)?(\d{4})/i);
   if (!match) return null;
   const monthKey = match[1].toLowerCase().replace(/\.$/, "");

@@ -1,6 +1,6 @@
 # Estado do Projeto - DR OPS
-**Ultima atualizacao:** 2026-02-17
-**Atualizado por:** Claude Opus 4.6 (fix BUG-002)
+**Ultima atualizacao:** 2026-02-18
+**Atualizado por:** Claude Opus 4.6 (paginacao, multi-status, inline edit, colunas)
 
 ## Status Geral
 - **Fase:** MVP com modulo SPY funcional, outros modulos em estado basico
@@ -12,7 +12,9 @@
 - Auth (login/logout via Supabase)
 - Layout com sidebar, dark mode, header com usuario
 - Radar de Ofertas: lista com filtros por status, multi-select, bulk actions, paginacao (25/pg)
-- Inteligencia de Trafego: sparklines, graficos comparativos multi-dominio, ordenacao por trafego/variacao/pico
+- Inteligencia de Trafego: sparklines, graficos comparativos, paginacao, multi-status filter, inline status edit, colunas personalizaveis (incluindo meses individuais)
+- Radar de Ofertas: multi-status filter (badges), inline status edit, colunas personalizaveis
+- Status disponiveis: RADAR, ANALYZING, HOT, SCALING, DYING, DEAD, CLONED, VAULT, NEVER_SCALED
 - Importador Universal CSV: detecta 9 tipos (PublicWWW, Semrush Bulk/Geo/Pages/Subdomains/Subfolders/Traffic Trend/Summary/Bulk Historical) — otimizado com batch ops para 14k+ linhas
 - Oferta individual: 7 tabs (Overview, Dominios, Bibliotecas, Ad Creatives, Funil, Trafego, Notas)
 - Month Range Picker estilo Semrush
@@ -33,10 +35,12 @@
 - SPY Upgrade Part 3: Traffic Intelligence
 - + Multiplos ajustes feitos diretamente no Lovable (ver changelog)
 - BUG-002 Fix: Importacao CSV batch + progress granular
+- Fix: Parallel fetch + pagination fix (87k+ registros de trafego)
+- Paginacao + multi-status + inline edit + colunas personalizaveis + novos status (VAULT, NEVER_SCALED)
 
 ## Dados no sistema
-- ~30+ ofertas espionadas (importadas via CSV)
-- Dados de trafego de 7 meses para varios dominios
+- 12k+ ofertas espionadas (importadas via CSV)
+- 87k+ registros de trafego historico
 - Fonte principal: PublicWWW (footprint cdn.utmify.com.br) + Semrush Bulk Analysis
 
 ## Proximas acoes
