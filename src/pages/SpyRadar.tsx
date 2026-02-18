@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSpiedOffers, useDeleteSpiedOffer, useUpdateSpiedOffer } from "@/hooks/useSpiedOffers";
 import { QuickAddOfferModal } from "@/components/spy/QuickAddOfferModal";
@@ -35,32 +35,61 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Zap, Search, Eye, Trash2, Radar, FileSpreadsheet, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from "@/components/ui/popover";
+import { Plus, Zap, Search, Eye, Trash2, Radar, FileSpreadsheet, ChevronLeft, ChevronRight, Archive, Columns, X } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 const STATUS_OPTIONS = [
-  { value: "all", label: "Todos" },
   { value: "RADAR", label: "Radar" },
   { value: "ANALYZING", label: "Analyzing" },
-  { value: "HOT", label: "🔥 HOT" },
-  { value: "SCALING", label: "🚀 Scaling" },
+  { value: "HOT", label: "HOT" },
+  { value: "SCALING", label: "Scaling" },
   { value: "DYING", label: "Dying" },
   { value: "DEAD", label: "Dead" },
   { value: "CLONED", label: "Cloned" },
+  { value: "VAULT", label: "Vault" },
+  { value: "NEVER_SCALED", label: "Never Scaled" },
 ];
 
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   RADAR: { label: "Radar", className: "bg-muted text-muted-foreground" },
   ANALYZING: { label: "Analyzing", className: "bg-warning/20 text-warning" },
-  HOT: { label: "🔥 HOT", className: "bg-destructive/20 text-destructive" },
-  SCALING: { label: "🚀 Scaling", className: "bg-success/20 text-success animate-pulse" },
+  HOT: { label: "HOT", className: "bg-destructive/20 text-destructive" },
+  SCALING: { label: "Scaling", className: "bg-success/20 text-success animate-pulse" },
   DYING: { label: "Dying", className: "bg-accent/20 text-accent" },
   DEAD: { label: "Dead", className: "bg-muted text-muted-foreground line-through" },
   CLONED: { label: "Cloned", className: "bg-primary/20 text-primary" },
+  VAULT: { label: "Vault", className: "bg-muted text-muted-foreground" },
+  NEVER_SCALED: { label: "Never Scaled", className: "bg-muted/50 text-muted-foreground" },
 };
+
+const DEFAULT_SPY_COLUMNS = new Set(["status", "nome", "vertical", "ticket", "trafego", "fonte", "dom", "ads", "funil", "discovered"]);
+const ALL_SPY_COLUMNS: { key: string; label: string }[] = [
+  { key: "status", label: "Status" },
+  { key: "nome", label: "Nome" },
+  { key: "vertical", label: "Vertical" },
+  { key: "ticket", label: "Ticket" },
+  { key: "trafego", label: "Trafego" },
+  { key: "fonte", label: "Fonte" },
+  { key: "dom", label: "Dom." },
+  { key: "ads", label: "Ads" },
+  { key: "funil", label: "Funil" },
+  { key: "discovered", label: "Descoberto" },
+];
+const LS_KEY_SPY_COLUMNS = "spy-radar-columns";
+
+function loadSpyColumns(): Set<string> {
+  try {
+    const saved = localStorage.getItem(LS_KEY_SPY_COLUMNS);
+    if (saved) return new Set(JSON.parse(saved));
+  } catch {}
+  return new Set(DEFAULT_SPY_COLUMNS);
+}
 
 const VERTICAL_BADGE: Record<string, string> = {
   nutra: "bg-success/20 text-success",
@@ -92,10 +121,12 @@ function formatCurrency(value: number | null | undefined) {
 export default function SpyRadar() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [status, setStatus] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set());
   const [vertical, setVertical] = useState("");
   const [source, setSource] = useState("");
   const [search, setSearch] = useState("");
+  const [visibleColumns, setVisibleColumns] = useState<Set<string>>(loadSpyColumns);
+  const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [showFullForm, setShowFullForm] = useState(false);
   const [showImport, setShowImport] = useState(false);
@@ -117,12 +148,52 @@ export default function SpyRadar() {
   const deleteMutation = useDeleteSpiedOffer();
   const updateMutation = useUpdateSpiedOffer();
 
-  const { data: offers, isLoading, refetch } = useSpiedOffers({
-    status: status !== "all" ? status : undefined,
+  // Persist column prefs
+  useEffect(() => {
+    localStorage.setItem(LS_KEY_SPY_COLUMNS, JSON.stringify([...visibleColumns]));
+  }, [visibleColumns]);
+
+  const toggleStatusFilter = (value: string) => {
+    setStatusFilter(prev => {
+      const next = new Set(prev);
+      if (next.has(value)) next.delete(value); else next.add(value);
+      return next;
+    });
+    handleFilterChange();
+  };
+
+  const toggleSpyColumn = (key: string) => {
+    setVisibleColumns(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
+
+  // Inline status change
+  const handleInlineStatusChange = async (offerId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase.from("spied_offers").update({ status: newStatus } as any).eq("id", offerId);
+      if (error) throw error;
+      setEditingStatusId(null);
+      refetch();
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const { data: allOffersRaw, isLoading, refetch } = useSpiedOffers({
     vertical: vertical || undefined,
     discovery_source: source || undefined,
     search: search || undefined,
   });
+
+  // Client-side multi-status filter
+  const offers = useMemo(() => {
+    if (!allOffersRaw) return allOffersRaw;
+    if (statusFilter.size === 0) return allOffersRaw;
+    return allOffersRaw.filter((o: any) => statusFilter.has(o.status || "RADAR"));
+  }, [allOffersRaw, statusFilter]);
 
   const getCount = (item: any, relation: string) => {
     const rel = item[relation];
@@ -272,19 +343,6 @@ export default function SpyRadar() {
         <TabsContent value="offers" className="mt-4 space-y-4">
           {/* Filters */}
           <div className="flex flex-wrap gap-3">
-            <div className="flex gap-1 flex-wrap">
-              {STATUS_OPTIONS.map((s) => (
-                <Button
-                  key={s.value}
-                  variant={status === s.value ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => { setStatus(s.value); handleFilterChange(); }}
-                  className="text-xs"
-                >
-                  {s.label}
-                </Button>
-              ))}
-            </div>
             <Select value={vertical} onValueChange={(v) => { setVertical(v === "all" ? "" : v); handleFilterChange(); }}>
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="Vertical" />
@@ -309,15 +367,59 @@ export default function SpyRadar() {
                 <SelectItem value="manual">Manual</SelectItem>
               </SelectContent>
             </Select>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="text-xs gap-1">
+                  <Columns className="h-3.5 w-3.5" />
+                  Colunas
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-48 p-3" align="end">
+                <p className="text-xs font-medium mb-2">Colunas visiveis</p>
+                <div className="space-y-1.5">
+                  {ALL_SPY_COLUMNS.map(col => (
+                    <label key={col.key} className="flex items-center gap-2 text-sm cursor-pointer">
+                      <Checkbox
+                        checked={visibleColumns.has(col.key)}
+                        onCheckedChange={() => toggleSpyColumn(col.key)}
+                      />
+                      {col.label}
+                    </label>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar nome, domínio, produto..."
+                placeholder="Buscar nome, dominio, produto..."
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); handleFilterChange(); }}
                 className="pl-9"
               />
             </div>
+          </div>
+
+          {/* Multi-status filter badges */}
+          <div className="flex flex-wrap gap-1.5">
+            {STATUS_OPTIONS.map(s => {
+              const active = statusFilter.has(s.value);
+              return (
+                <Badge
+                  key={s.value}
+                  variant="outline"
+                  className={`cursor-pointer transition-colors ${active ? "ring-2 ring-primary bg-primary/10" : "hover:bg-muted/50"}`}
+                  onClick={() => toggleStatusFilter(s.value)}
+                >
+                  {s.label}
+                </Badge>
+              );
+            })}
+            {statusFilter.size > 0 && (
+              <Button variant="ghost" size="sm" className="h-5 text-xs px-2" onClick={() => { setStatusFilter(new Set()); handleFilterChange(); }}>
+                <X className="h-3 w-3 mr-1" /> Limpar
+              </Button>
+            )}
           </div>
 
           {/* Bulk action bar */}
@@ -333,7 +435,7 @@ export default function SpyRadar() {
                   <SelectValue placeholder="Alterar status" />
                 </SelectTrigger>
                 <SelectContent>
-                  {STATUS_OPTIONS.filter(s => s.value !== "all").map(s => (
+                  {STATUS_OPTIONS.map(s => (
                     <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
                   ))}
                 </SelectContent>
@@ -375,19 +477,19 @@ export default function SpyRadar() {
                             }
                           }}
                           onCheckedChange={handleSelectPage}
-                          aria-label="Selecionar página"
+                          aria-label="Selecionar pagina"
                         />
                       </TableHead>
-                      <TableHead className="w-[90px]">Status</TableHead>
-                      <TableHead className="w-[200px]">Nome</TableHead>
-                      <TableHead className="w-[80px]">Vertical</TableHead>
-                      <TableHead className="w-[80px]">Ticket</TableHead>
-                      <TableHead className="w-[120px]">Tráfego</TableHead>
-                      <TableHead className="w-[100px]">Fonte</TableHead>
-                      <TableHead className="w-[60px] text-center">Dom.</TableHead>
-                      <TableHead className="w-[60px] text-center">Ads</TableHead>
-                      <TableHead className="w-[60px] text-center">Funil</TableHead>
-                      <TableHead className="w-[90px]">Descoberto</TableHead>
+                      {visibleColumns.has("status") && <TableHead className="w-[90px]">Status</TableHead>}
+                      {visibleColumns.has("nome") && <TableHead className="w-[200px]">Nome</TableHead>}
+                      {visibleColumns.has("vertical") && <TableHead className="w-[80px]">Vertical</TableHead>}
+                      {visibleColumns.has("ticket") && <TableHead className="w-[80px]">Ticket</TableHead>}
+                      {visibleColumns.has("trafego") && <TableHead className="w-[120px]">Trafego</TableHead>}
+                      {visibleColumns.has("fonte") && <TableHead className="w-[100px]">Fonte</TableHead>}
+                      {visibleColumns.has("dom") && <TableHead className="w-[60px] text-center">Dom.</TableHead>}
+                      {visibleColumns.has("ads") && <TableHead className="w-[60px] text-center">Ads</TableHead>}
+                      {visibleColumns.has("funil") && <TableHead className="w-[60px] text-center">Funil</TableHead>}
+                      {visibleColumns.has("discovered") && <TableHead className="w-[90px]">Descoberto</TableHead>}
                       <TableHead className="w-[80px]"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -428,17 +530,39 @@ export default function SpyRadar() {
                               aria-label={`Selecionar ${offer.nome}`}
                             />
                           </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className={sb.className}>
-                              {sb.label}
-                            </Badge>
+                          {visibleColumns.has("status") && (
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <Popover open={editingStatusId === offer.id} onOpenChange={(open) => setEditingStatusId(open ? offer.id : null)}>
+                              <PopoverTrigger asChild>
+                                <button className="cursor-pointer">
+                                  <Badge variant="outline" className={sb.className}>
+                                    {sb.label}
+                                  </Badge>
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-40 p-1" align="start">
+                                {STATUS_OPTIONS.map(s => (
+                                  <button
+                                    key={s.value}
+                                    className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted/50 transition-colors"
+                                    onClick={() => handleInlineStatusChange(offer.id, s.value)}
+                                  >
+                                    {s.label}
+                                  </button>
+                                ))}
+                              </PopoverContent>
+                            </Popover>
                           </TableCell>
+                          )}
+                          {visibleColumns.has("nome") && (
                           <TableCell>
                             <p className="font-medium text-sm">{offer.nome}</p>
                             {offer.main_domain && (
                               <p className="text-xs text-muted-foreground">{offer.main_domain}</p>
                             )}
                           </TableCell>
+                          )}
+                          {visibleColumns.has("vertical") && (
                           <TableCell>
                             {offer.vertical && (
                               <Badge variant="outline" className={VERTICAL_BADGE[offer.vertical] || ""}>
@@ -446,9 +570,13 @@ export default function SpyRadar() {
                               </Badge>
                             )}
                           </TableCell>
+                          )}
+                          {visibleColumns.has("ticket") && (
                           <TableCell className="text-sm">
                             {formatCurrency(offer.product_ticket)}
                           </TableCell>
+                          )}
+                          {visibleColumns.has("trafego") && (
                           <TableCell className="text-sm">
                             {offer.estimated_monthly_traffic
                               ? `${(offer.estimated_monthly_traffic / 1000).toFixed(0)}k`
@@ -457,19 +585,26 @@ export default function SpyRadar() {
                               <span className="ml-1">{TREND_ICON[offer.traffic_trend] || ""}</span>
                             )}
                           </TableCell>
+                          )}
+                          {visibleColumns.has("fonte") && (
                           <TableCell className="text-xs text-muted-foreground">
                             {offer.discovery_source || "—"}
                           </TableCell>
-                          <TableCell className="text-center text-sm">{domainsCount}</TableCell>
-                          <TableCell className="text-center text-sm">{adsCount}</TableCell>
+                          )}
+                          {visibleColumns.has("dom") && <TableCell className="text-center text-sm">{domainsCount}</TableCell>}
+                          {visibleColumns.has("ads") && <TableCell className="text-center text-sm">{adsCount}</TableCell>}
+                          {visibleColumns.has("funil") && (
                           <TableCell className="text-center text-sm">
-                            {funnelCount > 0 ? "✅" : "—"}
+                            {funnelCount > 0 ? "OK" : "—"}
                           </TableCell>
+                          )}
+                          {visibleColumns.has("discovered") && (
                           <TableCell className="text-xs text-muted-foreground">
                             {offer.discovered_at
                               ? format(new Date(offer.discovered_at), "dd MMM", { locale: ptBR })
                               : "—"}
                           </TableCell>
+                          )}
                           <TableCell>
                             <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                               <Button
@@ -560,7 +695,9 @@ export default function SpyRadar() {
                 { status: "SCALING", emoji: "🚀", title: "Scaling", desc: "A oferta está em fase de crescimento acelerado. Tráfego subindo consistentemente, novos criativos aparecendo. É o momento de agir rápido." },
                 { status: "DYING", emoji: "📉", title: "Dying", desc: "Tráfego em queda, criativos sendo pausados. A oferta está perdendo força. Ainda pode ter insights úteis, mas o timing já passou." },
                 { status: "DEAD", emoji: "💀", title: "Dead", desc: "A oferta parou completamente. Sem tráfego, sem criativos ativos. Mantida no radar apenas como referência histórica." },
-                { status: "CLONED", emoji: "🧬", title: "Cloned", desc: "Você já clonou/adaptou esta oferta. Indica que o ciclo de espionagem foi concluído e a inteligência foi aplicada na sua própria operação." },
+                { status: "CLONED", emoji: "🧬", title: "Cloned", desc: "Voce ja clonou/adaptou esta oferta. Indica que o ciclo de espionagem foi concluido e a inteligencia foi aplicada na sua propria operacao." },
+                { status: "VAULT", emoji: "🗄️", title: "Vault", desc: "Bau de sites irrelevantes (google, youtube, hotmart, etc). Nao polui o radar nem os dados de trafego." },
+                { status: "NEVER_SCALED", emoji: "📊", title: "Never Scaled", desc: "Sites que nunca escalaram. Mantidos para referencia mas separados dos dados ativos." },
               ].map(item => (
                 <div key={item.status} className="flex gap-3 p-3 rounded-lg bg-muted/30">
                   <span className="text-xl">{item.emoji}</span>

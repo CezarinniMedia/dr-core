@@ -1,5 +1,26 @@
 # Changelog - DR OPS
 
+## 2026-02-18 - CSV: Reconhecimento de formato ISO + "Aplicar a todos" (Claude Opus 4.6)
+- **Fix:** `extractPeriodFromFilename` agora reconhece formato ISO `YYYY-MM` (ex: `consolidado_2026-01.csv`) alem do formato Semrush (`Aug 2025`)
+- Regex adicionado em `csvClassifier.ts` e `UniversalImportModal.tsx`
+- **"Aplicar a todos"**: Na etapa 2 (classificacao), botoes para aplicar tipo ou periodo de um arquivo a todos os demais
+- Funcoes `applyTypeToAll` e `applyPeriodToAll` no modal de importacao
+
+## 2026-02-18 - Paginacao, multi-status, inline edit, colunas personalizaveis (Claude Opus 4.6)
+- **Paginacao** na Inteligencia de Trafego (10/25/50/100/Todas) — controles em cima e embaixo da tabela
+- **Multi-status filter** em ambas views (SpyRadar + TrafficIntelligence): badges clicaveis com toggle, substituindo select single
+- **Inline status edit**: clicar na badge de status abre popover para mudar status direto na tabela
+- **Colunas personalizaveis** em ambas views: botao "Colunas" com checkboxes, preferencia salva em localStorage
+- **Meses individuais de trafego** como colunas opcionais na Inteligencia de Trafego
+- **Novos status**: VAULT (bau de sites irrelevantes) e NEVER_SCALED (sites que nunca escalaram)
+- Removidos emojis iOS das labels de status (HOT, Scaling) — usando apenas texto
+- Arquivos: `src/components/spy/TrafficIntelligenceView.tsx`, `src/pages/SpyRadar.tsx`
+
+## 2026-02-17 - Fix: Parallel fetch + pagination fix (Claude Opus 4.6)
+- **Fix:** Inteligencia de Trafego carregava no maximo 1000 registros (limite do Supabase)
+- Reescrito `fetchAllTrafficRows` com fetch paralelo paginado (5 paginas simultaneas)
+- Fix na paginacao do SpyRadar que nao aplicava corretamente o range
+
 ## 2026-02-17 - BUG-002: Performance da importacao CSV (Claude Opus 4.6)
 - **Fix:** Importacao de CSV grande (14k+ linhas) reescrita com operacoes batch
 - `handleMatchDomains`: queries individuais por dominio substituidas por batch queries (.in()) em chunks de 100 + matching local em memoria

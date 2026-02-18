@@ -25,6 +25,18 @@ import {
 
 // Re-export extractPeriodFromFilename for type override
 function extractPeriodFromFilename(fileName: string): { date: string; label: string } | null {
+  // 1. ISO format: "2026-01", "2025-12" (e.g. consolidado_2026-01.csv)
+  const isoMatch = fileName.match(/(\d{4})[-_](\d{2})/);
+  if (isoMatch) {
+    const year = parseInt(isoMatch[1]);
+    const mo = parseInt(isoMatch[2]);
+    if (year >= 2020 && year <= 2030 && mo >= 1 && mo <= 12) {
+      const names = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+      return { date: `${isoMatch[1]}-${isoMatch[2]}-01`, label: `${names[mo - 1]} ${isoMatch[1]}` };
+    }
+  }
+
+  // 2. Month name format: "Jan 2026", "jan. de 2026", "Aug 2025", etc.
   const match = fileName.match(/([a-záéíóúâêîôûãõç]+)\.?\s*(?:de\s+)?(\d{4})/i);
   if (!match) return null;
   const MONTH_MAP: Record<string, number> = {
@@ -216,6 +228,28 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
       if (exc.has(rowIdx)) exc.delete(rowIdx); else exc.add(rowIdx);
       const filtered = filterCsvData(f.classified, f.excludedColumns || new Set(), exc);
       return { ...f, excludedRows: exc, processed: processCsv(filtered) };
+    }));
+  };
+
+  // ── Apply to all ──
+  const applyTypeToAll = (newType: CsvType) => {
+    setFiles(prev => prev.map(f => {
+      const reclassified = { ...f.classified, type: newType, label: ALL_TYPES.find(t => t.value === newType)?.label || newType };
+      if (f.name && f.name !== "Colado") {
+        const periodInfo = extractPeriodFromFilename(f.name);
+        if (periodInfo) {
+          reclassified.periodDate = periodInfo.date;
+          reclassified.periodLabel = periodInfo.label;
+        }
+      }
+      return { ...f, classified: reclassified, processed: processCsv(reclassified) };
+    }));
+  };
+
+  const applyPeriodToAll = (period: string) => {
+    setFiles(prev => prev.map(f => {
+      const updated = { ...f.classified, periodDate: period };
+      return { ...f, classified: updated, processed: processCsv(updated) };
     }));
   };
 
@@ -788,6 +822,11 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
                       ))}
                     </SelectContent>
                   </Select>
+                  {files.length > 1 && (
+                    <Button variant="ghost" size="sm" className="text-[10px] h-7 px-2 whitespace-nowrap" onClick={() => applyTypeToAll(f.classified.type)}>
+                      Aplicar a todos
+                    </Button>
+                  )}
                 </div>
 
                 {f.classified.type !== "publicwww" && f.classified.type !== "unknown" && (
@@ -829,6 +868,11 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
                     </Select>
                     {f.classified.periodLabel && (
                       <span className="text-[10px] text-muted-foreground">({f.classified.periodLabel})</span>
+                    )}
+                    {files.length > 1 && f.classified.periodDate && (
+                      <Button variant="ghost" size="sm" className="text-[10px] h-7 px-2 whitespace-nowrap" onClick={() => applyPeriodToAll(f.classified.periodDate!)}>
+                        Aplicar a todos
+                      </Button>
                     )}
                   </div>
                 )}
