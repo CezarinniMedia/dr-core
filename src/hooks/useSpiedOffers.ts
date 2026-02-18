@@ -15,7 +15,7 @@ export function useSpiedOffers(filters?: {
   return useQuery({
     queryKey: ['spied-offers', filters],
     queryFn: async () => {
-      const pageSize = 1000;
+      const pageSize = 10000;
       const all: any[] = [];
       let from = 0;
 

@@ -387,7 +387,8 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
     let newOffers = 0;
     let updated = 0;
     let trafficCount = 0;
-    const BATCH = 500;
+    const BATCH = 1000;
+    const PARALLEL = 3; // concurrent batch requests
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -515,13 +516,24 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
       }
 
       if (domainsToInsert.length > 0) {
+        const domChunks: any[][] = [];
         for (let i = 0; i < domainsToInsert.length; i += BATCH) {
-          const chunk = domainsToInsert.slice(i, i + BATCH);
-          const { error } = await supabase.from("offer_domains").insert(chunk);
-          if (error) throw error;
-          const done = Math.min(i + BATCH, domainsToInsert.length);
+          domChunks.push(domainsToInsert.slice(i, i + BATCH));
+        }
+
+        let domChunksCompleted = 0;
+        for (let i = 0; i < domChunks.length; i += PARALLEL) {
+          const batch = domChunks.slice(i, i + PARALLEL);
+          const results = await Promise.all(
+            batch.map(chunk => supabase.from("offer_domains").insert(chunk))
+          );
+          for (const { error } of results) {
+            if (error) throw error;
+          }
+          domChunksCompleted += batch.length;
+          const done = Math.min(domChunksCompleted * BATCH, domainsToInsert.length);
           setProgress(30 + Math.round((done / domainsToInsert.length) * 15));
-          setProgressLabel(`Inserindo domínios... ${done}/${domainsToInsert.length}`);
+          setProgressLabel(`Inserindo domínios... ${done.toLocaleString("pt-BR")}/${domainsToInsert.length.toLocaleString("pt-BR")}`);
         }
       }
 
@@ -559,16 +571,30 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
       }
 
       if (allTrafficRecords.length > 0) {
+        // Split into chunks and process PARALLEL at a time for speed
+        const chunks: any[][] = [];
         for (let i = 0; i < allTrafficRecords.length; i += BATCH) {
-          const chunk = allTrafficRecords.slice(i, i + BATCH);
-          const { error } = await supabase
-            .from("offer_traffic_data")
-            .upsert(chunk as any[], { onConflict: "spied_offer_id,domain,period_type,period_date" });
-          if (error) throw error;
-          trafficCount += chunk.length;
-          const done = Math.min(i + BATCH, allTrafficRecords.length);
+          chunks.push(allTrafficRecords.slice(i, i + BATCH));
+        }
+
+        let chunksCompleted = 0;
+        for (let i = 0; i < chunks.length; i += PARALLEL) {
+          const batch = chunks.slice(i, i + PARALLEL);
+          const results = await Promise.all(
+            batch.map(chunk =>
+              supabase
+                .from("offer_traffic_data")
+                .upsert(chunk as any[], { onConflict: "spied_offer_id,domain,period_type,period_date" })
+            )
+          );
+          for (const { error } of results) {
+            if (error) throw error;
+          }
+          chunksCompleted += batch.length;
+          trafficCount += batch.reduce((sum, c) => sum + c.length, 0);
+          const done = Math.min(chunksCompleted * BATCH, allTrafficRecords.length);
           setProgress(45 + Math.round((done / allTrafficRecords.length) * 40));
-          setProgressLabel(`Importando tráfego... ${done}/${allTrafficRecords.length}`);
+          setProgressLabel(`Importando tráfego... ${done.toLocaleString("pt-BR")}/${allTrafficRecords.length.toLocaleString("pt-BR")}`);
         }
       }
 
