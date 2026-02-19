@@ -1,5 +1,5 @@
 # Estado do Projeto - DR OPS
-**Ultima atualizacao:** 2026-02-19
+**Ultima atualizacao:** 2026-02-19 (sessão 2)
 **Atualizado por:** Claude Sonnet 4.6
 
 ## Status Geral
@@ -11,7 +11,9 @@
 ## O que funciona
 
 ### Modulo SPY (prioritario)
-- **Radar de Ofertas**: lista com multi-status filter (badges toggle), multi-select (Cmd/Shift), bulk actions, paginacao (10/25/50/100/Todas), inline status edit via popover, colunas personalizaveis (salvas em localStorage), **toggle SimilarWeb/SEMrush para coluna de trafego** (padrao: SimilarWeb)
+- **Radar de Ofertas**: lista com multi-status filter (badges toggle), multi-select (Cmd/Shift), bulk actions, paginacao (10/25/50/100/Todas), inline status edit via DropdownMenu, **colunas personalizaveis** (todos os campos agrupados em 6 grupos, busca por coluna, presets salvos em localStorage), **toggle SimilarWeb/SEMrush para coluna de trafego** (padrao: SimilarWeb)
+  - **Coluna Notas**: texto truncado + tooltip hover + editar inline via Popover com textarea
+  - **Screenshot preview**: icone na linha com hover thumbnail + lightbox (zoom+pan) ao clicar
 - **Inteligencia de Trafego**: sparklines, graficos comparativos multi-dominio, paginacao (top + bottom), multi-status filter, inline status edit, colunas personalizaveis (incluindo meses individuais de trafego), ordenacao por trafego/variacao/pico
 - **Status disponiveis**: RADAR, ANALYZING, HOT, SCALING, DYING, DEAD, CLONED, VAULT, NEVER_SCALED
 - **Importador Universal CSV**: detecta 10 tipos automaticamente (PublicWWW, **SimilarWeb**, Semrush Bulk/Geo/Pages/Subdomains/Subfolders/Traffic Trend/Summary/Bulk Historical)
@@ -44,6 +46,8 @@
 - CSV: formato ISO (YYYY-MM) + "Aplicar a todos"
 - SimilarWeb como segunda fonte de trafego + toggle no Radar (2026-02-19)
 - SimilarWeb: extracao completa (geo, screenshot, keywords, trafficSources→notas) + campo screenshot no Overview (2026-02-19)
+- Radar lista: screenshot preview, notas inline, colunas expandidas com grupos+busca+presets (2026-02-19)
+- Fix: status dropdown (Popover→DropdownMenu), bulk status delay (otimistic update), scroll jump no toggleChart (2026-02-19)
 
 ## Dados no sistema
 - 12k+ ofertas espionadas (importadas via CSV)
