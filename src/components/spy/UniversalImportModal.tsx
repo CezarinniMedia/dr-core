@@ -896,7 +896,7 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
                   )}
                 </div>
 
-                {f.classified.type !== "publicwww" && f.classified.type !== "unknown" && (
+                {f.classified.type !== "publicwww" && f.classified.type !== "unknown" && f.classified.type !== "similarweb" && (
                   <div className="flex items-center gap-2 flex-wrap">
                     <Label className="text-xs whitespace-nowrap">Período:</Label>
                     <Select
@@ -943,6 +943,31 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
                     )}
                   </div>
                 )}
+                {f.classified.type === "similarweb" && (() => {
+                  const monthHeaders = f.classified.headers
+                    .filter(h => h.toLowerCase().startsWith("estimatedmonthlyvisits/"))
+                    .map(h => {
+                      const match = h.match(/(\d{4})-(\d{2})/);
+                      return match ? `${match[1]}-${match[2]}-01` : null;
+                    })
+                    .filter(Boolean)
+                    .sort() as string[];
+                  if (monthHeaders.length === 0) return null;
+                  const MONTH_NAMES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+                  const fmtDate = (d: string) => {
+                    const [y, m] = d.split("-");
+                    return `${MONTH_NAMES[parseInt(m) - 1]} ${y}`;
+                  };
+                  const first = monthHeaders[0];
+                  const last = monthHeaders[monthHeaders.length - 1];
+                  return (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        Períodos detectados: <span className="font-medium text-foreground">{fmtDate(first)} – {fmtDate(last)}</span> ({monthHeaders.length} {monthHeaders.length === 1 ? "mês" : "meses"})
+                      </span>
+                    </div>
+                  );
+                })()}
 
                 <div className="text-xs text-muted-foreground">
                   {f.processed.summary.totalDomains > 0 && `${f.processed.summary.totalDomains} domínios`}

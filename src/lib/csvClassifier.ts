@@ -892,7 +892,6 @@ export function getDefaultExcludedColumns(type: CsvType, headers: string[]): Set
     semrush_pages: ["destino", "página", "pagina", "proporção de tráfego", "proporcao de trafego", "visitas"],
     semrush_subdomains: ["destino", "subdomínio", "subdominio", "visitas"],
     semrush_subfolders: ["destino", "subpasta", "visitas"],
-    similarweb: ["domain", "visits", "bouncerate", "pagespervisit", "timeonsite", "globalrank", "category"],
   };
 
   const relevant = relevantMap[type];
