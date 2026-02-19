@@ -736,6 +736,16 @@ function processSemrushBulkHistorical(c: ClassifiedCsv): ProcessedCsvResult {
   return { trafficRecords, domains: [], geoData: [], offerUpdates: [], summary: { totalDomains: 0, totalTrafficRecords: trafficRecords.length, totalNewDomains: 0 } };
 }
 
+// ─── Helper exclusivo e blindado para números do SimilarWeb ───
+function parseSwNumber(val: string): number {
+  if (!val || val.toLowerCase() === "n/a") return 0;
+  // SimilarWeb usa formato US (vírgula como milhar, ponto como decimal). 
+  // Removemos aspas, espaços, % e vírgulas. Deixamos o ponto decimal e notação 'e'.
+  const cleaned = val.replace(/["'\s%,]/g, "");
+  const n = parseFloat(cleaned);
+  return isNaN(n) ? 0 : n;
+}
+
 function processSimilarWeb(c: ClassifiedCsv): ProcessedCsvResult {
   const result = Papa.parse(c.rawText.trim(), { header: true, skipEmptyLines: true, delimiter: c.delimiter });
   const rows = result.data as Record<string, string>[];
@@ -753,11 +763,12 @@ function processSimilarWeb(c: ClassifiedCsv): ProcessedCsvResult {
     const domain = extractDomain(row["domain"] || "");
     if (!domain || !domain.includes(".")) continue;
 
-    const bounceRateRaw = parseNumber(row["bounceRate"] || "");
-    // SimilarWeb bounce rate is decimal (0–1), convert to percentage
-    const bounceRate = bounceRateRaw > 0 && bounceRateRaw <= 1 ? bounceRateRaw * 100 : bounceRateRaw;
-    const pagesPerVisit = parseNumber(row["pagesPerVisit"] || "");
-    const timeOnSite = parseIntNumber(row["timeOnSite"] || ""); // in seconds
+    const bounceRateRaw = parseSwNumber(row["bounceRate"] || "");
+    // SimilarWeb bounce rate is decimal (0–1), convert to percentage and lock to 2 decimals
+    const bounceRate = Number((bounceRateRaw > 0 && bounceRateRaw <= 1 ? bounceRateRaw * 100 : bounceRateRaw).toFixed(2));
+    
+    const pagesPerVisit = Number(parseSwNumber(row["pagesPerVisit"] || "").toFixed(2));
+    const timeOnSite = Math.round(parseSwNumber(row["timeOnSite"] || "")); // in seconds
 
     // ── Traffic records (one per month) ──
     for (const h of monthlyVisitHeaders) {
@@ -766,7 +777,12 @@ function processSimilarWeb(c: ClassifiedCsv): ProcessedCsvResult {
       const dateMatch = datePart.match(/^(\d{4})-(\d{2})/);
       if (!dateMatch) continue;
       const periodDate = `${dateMatch[1]}-${dateMatch[2]}-01`;
-      const visits = parseIntNumber(row[h] || "");
+      
+      const rawVisits = row[h] || "";
+      // Strip decimals and cap at PostgreSQL integer max to prevent numeric overflow
+      const visitsParsed = Math.round(parseSwNumber(rawVisits));
+      const visits = Math.min(visitsParsed, 2147483647); 
+      
       trafficRecords.push({
         domain,
         period_date: periodDate,
@@ -794,16 +810,18 @@ function processSimilarWeb(c: ClassifiedCsv): ProcessedCsvResult {
       const name = (row[`topCountryShares/${i}/Country`] || "").trim();
       const valueRaw = (row[`topCountryShares/${i}/Value`] || "").trim();
       if ((!code && !name) || !valueRaw) continue;
-      const shareDecimal = parseNumber(valueRaw);
+      
+      const shareDecimal = parseSwNumber(valueRaw);
       if (shareDecimal <= 0) continue;
-      const share = shareDecimal <= 1 ? shareDecimal * 100 : shareDecimal;
+      // Convert to % and lock to 2 decimals
+      const share = Number((shareDecimal <= 1 ? shareDecimal * 100 : shareDecimal).toFixed(2));
       countries.push({ country: code || name, share, visits: 0 });
     }
     if (countries.length > 0) {
       const sorted = [...countries].sort((a, b) => b.share - a.share);
       const mainGeo = primaryCountryCode || sorted[0].country;
       const secondary = sorted.slice(1).filter(cc => cc.share >= 15).map(cc => cc.country);
-      const countryLines = sorted.map(cc => `- ${cc.country}: ${cc.share.toFixed(1)}%`).join("\n");
+      const countryLines = sorted.map(cc => `- ${cc.country}: ${cc.share.toFixed(2)}%`).join("\n");
       geoData.push({
         domain,
         countries,
@@ -837,10 +855,10 @@ function processSimilarWeb(c: ClassifiedCsv): ProcessedCsvResult {
     ];
     const srcRows = srcFields
       .map(([label, raw]) => {
-        const val = parseNumber(raw);
+        const val = parseSwNumber(raw);
         if (!val) return null;
         const pct = val <= 1 ? val * 100 : val;
-        return `| ${label} | ${pct.toFixed(1)}% |`;
+        return `| ${label} | ${pct.toFixed(2)}% |`;
       })
       .filter(Boolean);
 
