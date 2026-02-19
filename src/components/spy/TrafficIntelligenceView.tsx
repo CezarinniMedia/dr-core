@@ -1,11 +1,11 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSpiedOffers } from "@/hooks/useSpiedOffers";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 // Parallel paginated fetch — gets row count first, then fetches pages 5 at a time
-async function fetchAllTrafficRows() {
+async function fetchAllTrafficRows(periodType: string) {
   type Row = { spied_offer_id: string; domain: string; period_date: string; visits: number | null };
   const pageSize = 1000;
   const PARALLEL = 5;
@@ -14,6 +14,7 @@ async function fetchAllTrafficRows() {
   const { data: first, error: firstErr, count } = await supabase
     .from("offer_traffic_data")
     .select("spied_offer_id, domain, period_date, visits", { count: "exact" })
+    .eq("period_type", periodType)
     .order("period_date", { ascending: true })
     .range(0, pageSize - 1);
 
@@ -33,6 +34,7 @@ async function fetchAllTrafficRows() {
         supabase
           .from("offer_traffic_data")
           .select("spied_offer_id, domain, period_date, visits")
+          .eq("period_type", periodType)
           .order("period_date", { ascending: true })
           .range(from, from + pageSize - 1)
       );
@@ -119,6 +121,7 @@ const ALL_COLUMNS: { key: string; label: string }[] = [
 
 const LS_KEY_COLUMNS = "traffic-intel-columns";
 const LS_KEY_PAGE_SIZE = "traffic-intel-page-size";
+const LS_KEY_TRAFFIC_SOURCE = "traffic-intel-traffic-source";
 
 function loadColumns(): Set<string> {
   try {
@@ -164,7 +167,18 @@ export function TrafficIntelligenceView() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { data: allOffers, refetch } = useSpiedOffers();
+  const { data: allOffers } = useSpiedOffers();
+
+  // Traffic data source
+  const [trafficDataSource, setTrafficDataSource] = useState<'similarweb' | 'semrush'>(() => {
+    return (localStorage.getItem(LS_KEY_TRAFFIC_SOURCE) as 'similarweb' | 'semrush') || 'similarweb';
+  });
+  const periodType = trafficDataSource === 'similarweb' ? 'monthly_sw' : 'monthly';
+
+  const handleTrafficSourceChange = (src: 'similarweb' | 'semrush') => {
+    setTrafficDataSource(src);
+    localStorage.setItem(LS_KEY_TRAFFIC_SOURCE, src);
+  };
 
   // Filters & state
   const [search, setSearch] = useState("");
@@ -198,8 +212,8 @@ export function TrafficIntelligenceView() {
 
   // Fetch ALL traffic data for the workspace (paginated to bypass 1000-row limit)
   const { data: allTraffic, isLoading: trafficLoading } = useQuery({
-    queryKey: ["all-traffic-data"],
-    queryFn: fetchAllTrafficRows,
+    queryKey: ["all-traffic-data", periodType],
+    queryFn: () => fetchAllTrafficRows(periodType),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -331,7 +345,7 @@ export function TrafficIntelligenceView() {
         if (!old) return old;
         return old.map((o: any) => o.id === offerId ? { ...o, status: newStatus } : o);
       });
-      refetch();
+      setTimeout(() => queryClient.invalidateQueries({ queryKey: ['spied-offers'] }), 1500);
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
     }
@@ -391,17 +405,23 @@ export function TrafficIntelligenceView() {
     });
   }, []);
 
+  // Scroll preservation for chart toggle
+  const savedScrollRef = useRef<number | null>(null);
+
+  useLayoutEffect(() => {
+    if (savedScrollRef.current !== null) {
+      window.scrollTo({ top: savedScrollRef.current, behavior: "instant" as ScrollBehavior });
+      savedScrollRef.current = null;
+    }
+  }, [chartIds]);
+
   const toggleChart = useCallback((id: string) => {
-    // Preserve scroll position to prevent layout jump when chart appears/disappears
-    const scrollY = window.scrollY;
+    savedScrollRef.current = window.scrollY;
     setChartIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => window.scrollTo({ top: scrollY, behavior: "instant" as ScrollBehavior }))
-    );
   }, []);
 
   const selectAll = useCallback(() => {
@@ -428,7 +448,7 @@ export function TrafficIntelligenceView() {
         return old.map((o: any) => ids.includes(o.id) ? { ...o, status: newStatus } : o);
       });
       setSelectedIds(new Set());
-      refetch();
+      setTimeout(() => queryClient.invalidateQueries({ queryKey: ['spied-offers'] }), 1500);
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
     }
@@ -514,6 +534,20 @@ export function TrafficIntelligenceView() {
       )}
       {/* Top controls */}
       <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center border rounded-md overflow-hidden text-xs" title="Fonte dos dados de tráfego">
+          <button
+            className={`px-2.5 py-1.5 transition-colors ${trafficDataSource === 'similarweb' ? 'bg-primary text-primary-foreground font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'}`}
+            onClick={() => handleTrafficSourceChange('similarweb')}
+          >
+            SimilarWeb
+          </button>
+          <button
+            className={`px-2.5 py-1.5 transition-colors ${trafficDataSource === 'semrush' ? 'bg-primary text-primary-foreground font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'}`}
+            onClick={() => handleTrafficSourceChange('semrush')}
+          >
+            SEMrush
+          </button>
+        </div>
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input

@@ -435,7 +435,7 @@ export default function SpyRadar() {
         if (!old) return old;
         return old.map((o: any) => o.id === offerId ? { ...o, status: newStatus } : o);
       });
-      refetch();
+      setTimeout(() => queryClient.invalidateQueries({ queryKey: ['spied-offers'] }), 1500);
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
     }
@@ -578,7 +578,7 @@ export default function SpyRadar() {
         return old.map((o: any) => ids.includes(o.id) ? { ...o, status: newStatus } : o);
       });
       setSelectedIds(new Set());
-      refetch();
+      setTimeout(() => queryClient.invalidateQueries({ queryKey: ['spied-offers'] }), 1500);
     } catch (err: any) {
       toast({ title: 'Erro', description: err.message, variant: 'destructive' });
     }
@@ -934,10 +934,10 @@ export default function SpyRadar() {
                               />
                             </TableCell>
 
-                            {/* Status — DropdownMenu fixes the click-through bug */}
+                            {/* Status — DropdownMenu with modal to avoid TooltipProvider conflict */}
                             {visibleColumns.has("status") && (
                               <TableCell onClick={(e) => e.stopPropagation()}>
-                                <DropdownMenu>
+                                <DropdownMenu modal={true}>
                                   <DropdownMenuTrigger asChild>
                                     <button className="cursor-pointer" title="Alterar status">
                                       <Badge variant="outline" className={sb.className}>

@@ -3,7 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ExternalLink, Copy, Eye, X, ZoomIn, ZoomOut } from "lucide-react";
+import { ExternalLink, Copy, Eye, X, ZoomIn, ZoomOut, MoreHorizontal, Pencil } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useUpdateSpiedOffer } from "@/hooks/useSpiedOffers";
@@ -225,25 +231,25 @@ function ScreenshotField({ offerId, value, onUpdated }: ScreenshotFieldProps) {
 
   return (
     <div className="flex items-center gap-1.5 min-w-0">
-      {/* URL text — click to edit */}
-      <button
-        className="text-xs text-muted-foreground truncate flex-1 text-left hover:text-foreground transition-colors"
-        title="Clique para editar"
-        onClick={handleStartEdit}
+      {/* URL text — non-clickable, truncated */}
+      <span
+        className="text-xs text-muted-foreground truncate flex-1 text-left"
+        title={value}
       >
         {value}
-      </button>
+      </span>
 
-      {/* Preview button with hover mini-preview */}
+      {/* Preview button (primary action) with hover mini-preview */}
       <div className="relative shrink-0" onMouseEnter={handlePreviewEnter} onMouseLeave={handlePreviewLeave}>
         <Button
-          size="icon"
-          variant="ghost"
-          className="h-6 w-6"
+          size="sm"
+          variant="outline"
+          className="h-6 text-xs px-2 gap-1"
           onClick={() => setShowLightbox(true)}
           title="Pré-visualizar screenshot"
         >
-          <Eye className="h-3.5 w-3.5" />
+          <Eye className="h-3 w-3" />
+          Preview
         </Button>
         {showPreview && (
           <div
@@ -260,27 +266,33 @@ function ScreenshotField({ offerId, value, onUpdated }: ScreenshotFieldProps) {
         )}
       </div>
 
-      {/* Copy button */}
-      <Button
-        size="icon"
-        variant="ghost"
-        className="h-6 w-6 shrink-0"
-        onClick={handleCopy}
-        title="Copiar URL"
-      >
-        <Copy className="h-3.5 w-3.5" />
-      </Button>
-
-      {/* Open in new tab */}
-      <Button
-        size="icon"
-        variant="ghost"
-        className="h-6 w-6 shrink-0"
-        onClick={handleOpenTab}
-        title="Abrir em nova aba"
-      >
-        <ExternalLink className="h-3.5 w-3.5" />
-      </Button>
+      {/* More actions dropdown */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-6 w-6 shrink-0"
+            title="Mais ações"
+          >
+            <MoreHorizontal className="h-3.5 w-3.5" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-44">
+          <DropdownMenuItem onClick={handleCopy}>
+            <Copy className="h-3.5 w-3.5 mr-2" />
+            Copiar URL
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleOpenTab}>
+            <ExternalLink className="h-3.5 w-3.5 mr-2" />
+            Abrir em nova aba
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleStartEdit}>
+            <Pencil className="h-3.5 w-3.5 mr-2" />
+            Editar URL
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {/* Lightbox */}
       {showLightbox && (
