@@ -44,6 +44,16 @@
 - **Comportamento:** Usa emojis iOS em vez de icones Lucide profissionais
 - **Impacto:** Visual amador/nao profissional
 
+### BUG-009: Popup com informações cortadas
+- **Onde:** Radar de ofertas
+- **Comportamento:** Quando abre um pop-up como do importador universal na hora do matching (por exemplo, mas não apenas esse pop-up e esse momento) as informações ficam cortadas desnecessáriamente obrigando a rolar para o lado.
+- **Impacto:** faz perder tempo e atrapalha a funcionalidade
+
+### BUG-010: Dimensionamento geral está horrível
+- **Onde:** todo o sistema
+- **Comportamento:** exemplo durante o importador universal de csv: na coluna 'Tipo CSV' a informação 'semrush: Bulk Analysis' que deveria estar em apenas uma linha, está em 3 linhas / 'ação' a informação está em duas linhas / 'Dados' em 4 linhas. Todas desnecessariamente mal configuradas, deveriam estar em apenas uma. E esse tipo de problema tem no sistema todo em diversas coisas, não apenas listas, mas botões também etc.
+- **Impacto:** faz perder tempo, atrapalha a funcionalidade e fica com Visual amador/nao profissional
+
 ## MENORES (incomodam mas nao bloqueiam)
 
 ### BUG-009: Filtros de ofertas (modulo Ofertas) muito pequenos

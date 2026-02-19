@@ -469,6 +469,33 @@ export function useBulkInsertTrafficData() {
   });
 }
 
+// Returns Map<spied_offer_id, latest_visits> for the selected traffic provider
+// provider="similarweb" → period_type="monthly_sw" | provider="semrush" → period_type="monthly"
+export function useLatestTrafficPerOffer(provider: 'similarweb' | 'semrush') {
+  return useQuery({
+    queryKey: ['latest-traffic-per-offer', provider],
+    queryFn: async () => {
+      const periodType = provider === 'similarweb' ? 'monthly_sw' : 'monthly';
+      const { data, error } = await supabase
+        .from('offer_traffic_data')
+        .select('spied_offer_id, visits, period_date')
+        .eq('period_type', periodType)
+        .order('period_date', { ascending: false });
+
+      if (error) throw error;
+
+      // Keep the most recent record per offer (data is already ordered by period_date desc)
+      const map = new Map<string, number>();
+      for (const record of data || []) {
+        if (!map.has(record.spied_offer_id)) {
+          map.set(record.spied_offer_id, record.visits ?? 0);
+        }
+      }
+      return map;
+    },
+  });
+}
+
 // ============================================
 // UPDATE HOOKS (for inline editing)
 // ============================================
