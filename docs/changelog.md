@@ -1,5 +1,76 @@
 # Changelog - DR OPS
 
+## 2026-02-19 - SimilarWeb: extração completa + screenshot + notas automáticas (Claude Sonnet 4.6)
+
+### Extração de dados SimilarWeb expandida (`csvClassifier.ts`)
+- **`countryRank/CountryCode`** → campo `geo` da oferta (país principal onde a oferta roda)
+- **`screenshot`** → `screenshot_url` na oferta (armazenado no banco, editável na UI)
+- **Notes appendix** composto automaticamente na ordem:
+  1. `topKeywords/0/name` → **Top Keyword**
+  2. `title` → **Título**
+  3. `description` → **Descrição**
+  4. `topKeywords/1–4/name` → **Mais Keywords** (lista)
+  5. `trafficSources/Direct|Social|Search|Referrals|Paid Referrals|Mail` → tabela markdown ao final
+- Novo tipo `ExtractedOfferUpdate` no classifier com campos: `domain`, `screenshot_url`, `notes_appendix`, `geo`
+- `ProcessedCsvResult` agora inclui campo `offerUpdates: ExtractedOfferUpdate[]`
+- Todos os processadores existentes (SEMrush, PublicWWW) atualizados para retornar `offerUpdates: []`
+
+### Phase 6 de importação (`UniversalImportModal.tsx`)
+- Nova fase após geo: aplica `offerUpdates` às ofertas matchadas (apenas CSVs do tipo `similarweb`)
+- `screenshot_url`: salvo apenas se a oferta ainda não tiver um (não sobrescreve)
+- `notas`: appended ao final das notas existentes (nunca sobrescreve)
+- `geo`: definido apenas se a oferta ainda não tiver geo
+
+### Campo screenshot na oferta (`SpyOverviewTab.tsx` + migration)
+- Nova migration: `ALTER TABLE spied_offers ADD COLUMN IF NOT EXISTS screenshot_url TEXT`
+- `types.ts` atualizado com `screenshot_url: string | null`
+- **Card "Screenshot"** adicionado como primeiro card (full width) no Overview da oferta
+- **Campo editável**: clicar no texto da URL ativa edição inline (input + Salvar/Cancelar)
+- **3 botões sempre visíveis**:
+  - **Preview** (olhinho): hover mostra mini-preview flutuante ~280px; clique abre lightbox
+  - **Copiar** URL
+  - **Abrir em nova aba**
+- **Lightbox modal** (centralizado, não fullscreen):
+  - Zoom com botões +/- e **Alt+scroll**
+  - Drag para mover a imagem (click e arrastar)
+  - Contador de % clicável para resetar zoom/posição
+  - Fechar: clique fora, botão X ou tecla Escape
+
+---
+
+## 2026-02-19 - SimilarWeb como fonte de tráfego + toggle no Radar (Claude Sonnet 4.6)
+
+### Contexto
+SEMrush mede apenas tráfego orgânico (busca). SimilarWeb mede tráfego total (paid, social, direct, referral) — essencial para sites de presell/native ads onde 99% do tráfego é pago. Adicionado suporte completo ao SimilarWeb como segunda fonte de dados de tráfego.
+
+### csvClassifier.ts
+- Novo tipo `"similarweb"` adicionado ao `CsvType`
+- Strip de BOM (`\uFEFF`) no início do texto CSV — comum em exports do SimilarWeb
+- `normalizeHeader` atualizado para remover BOM
+- `hasHeader` expandido para detectar headers SimilarWeb (`domain`, `bouncerate`, `visits`, `pagespervisit`, `timeonsite`)
+- **Detecção automática**: identifica CSV SimilarWeb via coluna `estimatedMonthlyVisits/YYYY-MM-DD`
+- **`processSimilarWeb()`**: extrai tráfego mensal de colunas `estimatedMonthlyVisits/YYYY-MM-DD`, bounce rate (decimal→%), pages/visit, time on site, domínios e geodistribuição com country codes
+- `getDefaultExcludedColumns` atualizado com colunas relevantes do SimilarWeb
+
+### UniversalImportModal.tsx
+- `"SimilarWeb"` adicionado ao seletor de tipo (cor roxa `bg-purple-500/20 text-purple-400`)
+- Registros SimilarWeb inseridos com `period_type = "monthly_sw"` — separados dos dados SEMrush (`period_type = "monthly"`) para evitar conflito de upsert entre fontes
+
+### useSpiedOffers.ts
+- Novo hook **`useLatestTrafficPerOffer(provider)`**: retorna `Map<offer_id, visits>` com o tráfego mais recente por oferta, filtrado por `period_type` (`"monthly_sw"` para SimilarWeb, `"monthly"` para SEMrush)
+
+### SpyRadar.tsx
+- **Toggle SimilarWeb / SEMrush** na linha de filtros — padrão: SimilarWeb, persistido em localStorage (`spy-radar-traffic-source`)
+- Coluna "Tráfego" exibe dados da fonte selecionada com indicador `(SW)` / `(SR)` no header
+- Fallback para `estimated_monthly_traffic` se não houver dados da fonte selecionada
+
+### Arquitetura de dados de tráfego
+- `period_type = "monthly"` → todos os dados SEMrush existentes (sem migração necessária)
+- `period_type = "monthly_sw"` → dados SimilarWeb importados a partir desta data
+- Unique constraint `(spied_offer_id, domain, period_type, period_date)` garante dedup por fonte
+
+---
+
 ## 2026-02-18 - CSV: Reconhecimento de formato ISO + "Aplicar a todos" (Claude Opus 4.6)
 - **Fix:** `extractPeriodFromFilename` agora reconhece formato ISO `YYYY-MM` (ex: `consolidado_2026-01.csv`) alem do formato Semrush (`Aug 2025`)
 - Regex adicionado em `csvClassifier.ts` e `UniversalImportModal.tsx`

@@ -66,6 +66,12 @@ import {
   TrendingUp, TrendingDown, Minus, Search, Eye, ArrowUpDown, BarChart3, X, Loader2,
   Archive, ChevronLeft, ChevronRight, Columns,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 
 const STATUS_OPTIONS = [
@@ -178,8 +184,8 @@ export function TrafficIntelligenceView() {
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(loadColumns);
   const [monthColumns, setMonthColumns] = useState<Set<string>>(new Set());
 
-  // Inline status edit
-  const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
+  // (no longer needed — using DropdownMenu which is self-managing)
+  // const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
 
   // Persist column prefs
   useEffect(() => {
@@ -316,14 +322,16 @@ export function TrafficIntelligenceView() {
     });
   };
 
-  // Inline status update
+  // Inline status update (optimistic)
   const handleInlineStatusChange = async (offerId: string, newStatus: string) => {
     try {
       const { error } = await supabase.from("spied_offers").update({ status: newStatus } as any).eq("id", offerId);
       if (error) throw error;
-      setEditingStatusId(null);
+      queryClient.setQueriesData({ queryKey: ['spied-offers'] }, (old: any) => {
+        if (!old) return old;
+        return old.map((o: any) => o.id === offerId ? { ...o, status: newStatus } : o);
+      });
       refetch();
-      queryClient.invalidateQueries({ queryKey: ["spied-offers"] });
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
     }
@@ -384,11 +392,16 @@ export function TrafficIntelligenceView() {
   }, []);
 
   const toggleChart = useCallback((id: string) => {
+    // Preserve scroll position to prevent layout jump when chart appears/disappears
+    const scrollY = window.scrollY;
     setChartIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => window.scrollTo({ top: scrollY, behavior: "instant" as ScrollBehavior }))
+    );
   }, []);
 
   const selectAll = useCallback(() => {
@@ -403,13 +416,17 @@ export function TrafficIntelligenceView() {
     setChartIds(new Set(sortedRows.filter(r => r.hasTrafficData).map(r => r.id)));
   }, [sortedRows]);
 
-  // Bulk status change
+  // Bulk status change (optimistic so filtered rows disappear immediately)
   const handleBulkStatus = async (newStatus: string) => {
     const ids = Array.from(selectedIds);
     try {
       const { error } = await supabase.from("spied_offers").update({ status: newStatus } as any).in("id", ids);
       if (error) throw error;
       toast({ title: `${ids.length} ofertas → ${newStatus}` });
+      queryClient.setQueriesData({ queryKey: ['spied-offers'] }, (old: any) => {
+        if (!old) return old;
+        return old.map((o: any) => ids.includes(o.id) ? { ...o, status: newStatus } : o);
+      });
       setSelectedIds(new Set());
       refetch();
     } catch (err: any) {
@@ -706,24 +723,23 @@ export function TrafficIntelligenceView() {
                   </TableCell>
                   {visibleColumns.has("status") && (
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      <Popover open={editingStatusId === row.id} onOpenChange={(open) => setEditingStatusId(open ? row.id : null)}>
-                        <PopoverTrigger asChild>
-                          <button className="cursor-pointer">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="cursor-pointer" title="Alterar status">
                             <Badge variant="outline" className={sb.className}>{sb.label}</Badge>
                           </button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-40 p-1" align="start">
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-40">
                           {STATUS_OPTIONS.map(s => (
-                            <button
+                            <DropdownMenuItem
                               key={s.value}
-                              className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted/50 transition-colors"
                               onClick={() => handleInlineStatusChange(row.id, s.value)}
                             >
                               {s.label}
-                            </button>
+                            </DropdownMenuItem>
                           ))}
-                        </PopoverContent>
-                      </Popover>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   )}
                   {visibleColumns.has("oferta") && (

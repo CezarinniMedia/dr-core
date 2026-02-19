@@ -88,11 +88,13 @@ const TYPE_COLORS: Record<CsvType, string> = {
   semrush_traffic_trend: "bg-destructive/20 text-destructive",
   semrush_summary: "bg-muted text-muted-foreground",
   semrush_bulk_historical: "bg-info/20 text-info",
+  similarweb: "bg-purple-500/20 text-purple-400",
   unknown: "bg-muted text-muted-foreground",
 };
 
 const ALL_TYPES: { value: CsvType; label: string }[] = [
   { value: "publicwww", label: "PublicWWW" },
+  { value: "similarweb", label: "SimilarWeb" },
   { value: "semrush_bulk", label: "Semrush Bulk" },
   { value: "semrush_geo", label: "Semrush Geo" },
   { value: "semrush_pages", label: "Semrush Páginas" },
@@ -588,10 +590,12 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
           const offerId = offerIdMap.get(domain) || findOfferForSubdomain(domain, offerIdMap);
           if (!offerId) continue;
           for (const r of records) {
+            const isSimilarWeb = r.source === "similarweb";
             allTrafficRecords.push({
               spied_offer_id: offerId,
               workspace_id: workspaceId,
               domain: r.domain,
+              period_type: isSimilarWeb ? "monthly_sw" : "monthly",
               period_date: r.period_date,
               visits: r.visits,
               unique_visitors: r.unique_visitors,
@@ -660,6 +664,69 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
             geo: geoValue,
             notas: newNotes.trim(),
           } as any).eq("id", offerId);
+        }
+      }
+
+      // ── Phase 6: SimilarWeb offer updates (screenshot, notes, geo) ──
+      setProgress(90);
+      setProgressLabel("Aplicando dados SimilarWeb...");
+
+      for (const file of files) {
+        if (file.classified.type !== "similarweb") continue;
+        for (const upd of file.processed.offerUpdates) {
+          const offerId = offerIdMap.get(upd.domain) || findOfferForSubdomain(upd.domain, offerIdMap);
+          if (!offerId) continue;
+
+          const updatePayload: Record<string, unknown> = {};
+
+          // Screenshot URL (only set if not empty and offer doesn't already have one)
+          if (upd.screenshot_url) {
+            const { data: existingOffer } = await supabase
+              .from("spied_offers")
+              .select("screenshot_url, notas, geo")
+              .eq("id", offerId)
+              .maybeSingle();
+            const existing = existingOffer as any;
+
+            if (!existing?.screenshot_url) {
+              updatePayload.screenshot_url = upd.screenshot_url;
+            }
+
+            // Append notes (never overwrite)
+            if (upd.notes_appendix) {
+              const existingNotes = existing?.notas || "";
+              updatePayload.notas = existingNotes
+                ? `${existingNotes}\n\n${upd.notes_appendix}`
+                : upd.notes_appendix;
+            }
+
+            // Set geo if not already set
+            if (upd.geo && !existing?.geo) {
+              updatePayload.geo = upd.geo;
+            }
+          } else {
+            // No screenshot but still update notes and geo
+            const { data: existingOffer } = await supabase
+              .from("spied_offers")
+              .select("notas, geo")
+              .eq("id", offerId)
+              .maybeSingle();
+            const existing = existingOffer as any;
+
+            if (upd.notes_appendix) {
+              const existingNotes = existing?.notas || "";
+              updatePayload.notas = existingNotes
+                ? `${existingNotes}\n\n${upd.notes_appendix}`
+                : upd.notes_appendix;
+            }
+            if (upd.geo && !existing?.geo) {
+              updatePayload.geo = upd.geo;
+            }
+          }
+
+          if (Object.keys(updatePayload).length > 0) {
+            await supabase.from("spied_offers").update(updatePayload as any).eq("id", offerId);
+          }
         }
       }
 

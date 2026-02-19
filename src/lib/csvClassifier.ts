@@ -10,6 +10,7 @@ export type CsvType =
   | "semrush_traffic_trend"
   | "semrush_summary"
   | "semrush_bulk_historical"
+  | "similarweb"
   | "unknown";
 
 export interface ClassifiedCsv {
@@ -52,7 +53,7 @@ export function detectDelimiter(csvText: string): string {
 }
 
 function normalizeHeader(h: string): string {
-  return h.trim().toLowerCase().replace(/^["']+|["']+$/g, "");
+  return h.trim().toLowerCase().replace(/^\uFEFF/, "").replace(/^["']+|["']+$/g, "");
 }
 
 function isDateHeader(h: string): boolean {
@@ -146,8 +147,10 @@ export function filterCsvData(
 }
 
 export function classifyCsv(csvText: string, fileName?: string, delimiterOverride?: string): ClassifiedCsv {
-  const delimiter = delimiterOverride || detectDelimiter(csvText);
-  const result = Papa.parse(csvText.trim(), {
+  // Strip BOM if present (common in SimilarWeb exports)
+  const csvTextClean = csvText.replace(/^\uFEFF/, "");
+  const delimiter = delimiterOverride || detectDelimiter(csvTextClean);
+  const result = Papa.parse(csvTextClean.trim(), {
     header: false,
     skipEmptyLines: true,
     delimiter,
@@ -159,7 +162,8 @@ export function classifyCsv(csvText: string, fileName?: string, delimiterOverrid
 
   const firstRow = allRows[0].map(normalizeHeader);
   const hasHeader = firstRow.some(h =>
-    ["target", "destino", "data", "página", "página", "subdomínio", "subpasta", "país", "período", "subdominio", "pagina", "pais", "periodo"].includes(h)
+    ["target", "destino", "data", "página", "página", "subdomínio", "subpasta", "país", "período", "subdominio", "pagina", "pais", "periodo",
+     "domain", "bouncerate", "visits", "pagespervisit", "timeonsite"].includes(h)
   );
 
   let headers: string[] = [];
@@ -242,6 +246,12 @@ export function classifyCsv(csvText: string, fileName?: string, delimiterOverrid
     }
   }
 
+  // similarweb: has domain + estimatedMonthlyVisits/* columns
+  if (type === "unknown" && headersLower.includes("domain") && headersLower.some(h => h.includes("estimatedmonthlyvisits/"))) {
+    type = "similarweb";
+    label = "SimilarWeb";
+  }
+
   // publicwww: headerless, col1 looks like URL/domain, col2 is numeric
   if (type === "unknown" && !hasHeader && dataRows.length > 0) {
     const firstVal = (dataRows[0][0] || "").trim();
@@ -252,7 +262,7 @@ export function classifyCsv(csvText: string, fileName?: string, delimiterOverrid
     }
   }
 
-  return { type, label, rawText: csvText, delimiter, headers, previewRows, periodDate, periodLabel, discoveryQuery, fileName };
+  return { type, label, rawText: csvTextClean, delimiter, headers, previewRows, periodDate, periodLabel, discoveryQuery, fileName };
 }
 
 // ─── Data extraction helpers ───
@@ -345,10 +355,18 @@ export interface ExtractedGeoData {
   geoNotes?: string;
 }
 
+export interface ExtractedOfferUpdate {
+  domain: string;
+  screenshot_url?: string;
+  notes_appendix?: string;
+  geo?: string;
+}
+
 export interface ProcessedCsvResult {
   trafficRecords: ExtractedTrafficRecord[];
   domains: ExtractedDomain[];
   geoData: ExtractedGeoData[];
+  offerUpdates: ExtractedOfferUpdate[];
   summary: {
     totalDomains: number;
     totalTrafficRecords: number;
@@ -369,12 +387,13 @@ export function processCsv(classified: ClassifiedCsv): ProcessedCsvResult {
     case "semrush_traffic_trend": return processSemrushTrafficTrend(classified);
     case "semrush_summary": return processSemrushSummary(classified);
     case "semrush_bulk_historical": return processSemrushBulkHistorical(classified);
+    case "similarweb": return processSimilarWeb(classified);
     default: return emptyResult();
   }
 }
 
 function emptyResult(): ProcessedCsvResult {
-  return { trafficRecords: [], domains: [], geoData: [], summary: { totalDomains: 0, totalTrafficRecords: 0, totalNewDomains: 0 } };
+  return { trafficRecords: [], domains: [], geoData: [], offerUpdates: [], summary: { totalDomains: 0, totalTrafficRecords: 0, totalNewDomains: 0 } };
 }
 
 function processPublicWWW(c: ClassifiedCsv): ProcessedCsvResult {
@@ -401,7 +420,7 @@ function processPublicWWW(c: ClassifiedCsv): ProcessedCsvResult {
     });
   }
 
-  return { trafficRecords: [], domains, geoData: [], summary: { totalDomains: domains.length, totalTrafficRecords: 0, totalNewDomains: domains.length } };
+  return { trafficRecords: [], domains, geoData: [], offerUpdates: [], summary: { totalDomains: domains.length, totalTrafficRecords: 0, totalNewDomains: domains.length } };
 }
 
 function processSemrushBulk(c: ClassifiedCsv): ProcessedCsvResult {
@@ -459,7 +478,7 @@ function processSemrushBulk(c: ClassifiedCsv): ProcessedCsvResult {
     }
   }
 
-  return { trafficRecords, domains, geoData: [], summary: { totalDomains: domains.length, totalTrafficRecords: trafficRecords.length, totalNewDomains: domains.length } };
+  return { trafficRecords, domains, geoData: [], offerUpdates: [], summary: { totalDomains: domains.length, totalTrafficRecords: trafficRecords.length, totalNewDomains: domains.length } };
 }
 
 function processSemrushGeo(c: ClassifiedCsv): ProcessedCsvResult {
@@ -506,7 +525,7 @@ function processSemrushGeo(c: ClassifiedCsv): ProcessedCsvResult {
     geo.geoNotes = `## Geodistribuição (${analysisPeriod})\n${countryLines}`;
   }
 
-  return { trafficRecords: [], domains: [], geoData, summary: { totalDomains: geoData.length, totalTrafficRecords: 0, totalNewDomains: 0 } };
+  return { trafficRecords: [], domains: [], geoData, offerUpdates: [], summary: { totalDomains: geoData.length, totalTrafficRecords: 0, totalNewDomains: 0 } };
 }
 
 function countryToCode(country: string): string {
@@ -563,7 +582,7 @@ function processSemrushPages(c: ClassifiedCsv): ProcessedCsvResult {
     }
   }
 
-  return { trafficRecords: [], domains, geoData: [], summary: { totalDomains: domains.length, totalTrafficRecords: 0, totalNewDomains: domains.length } };
+  return { trafficRecords: [], domains, geoData: [], offerUpdates: [], summary: { totalDomains: domains.length, totalTrafficRecords: 0, totalNewDomains: domains.length } };
 }
 
 function processSemrushSubdomains(c: ClassifiedCsv): ProcessedCsvResult {
@@ -593,7 +612,7 @@ function processSemrushSubdomains(c: ClassifiedCsv): ProcessedCsvResult {
     });
   }
 
-  return { trafficRecords: [], domains, geoData: [], summary: { totalDomains: domains.length, totalTrafficRecords: 0, totalNewDomains: domains.length } };
+  return { trafficRecords: [], domains, geoData: [], offerUpdates: [], summary: { totalDomains: domains.length, totalTrafficRecords: 0, totalNewDomains: domains.length } };
 }
 
 function processSemrushSubfolders(c: ClassifiedCsv): ProcessedCsvResult {
@@ -623,7 +642,7 @@ function processSemrushSubfolders(c: ClassifiedCsv): ProcessedCsvResult {
     });
   }
 
-  return { trafficRecords: [], domains, geoData: [], summary: { totalDomains: domains.length, totalTrafficRecords: 0, totalNewDomains: domains.length } };
+  return { trafficRecords: [], domains, geoData: [], offerUpdates: [], summary: { totalDomains: domains.length, totalTrafficRecords: 0, totalNewDomains: domains.length } };
 }
 
 function processSemrushTrafficTrend(c: ClassifiedCsv): ProcessedCsvResult {
@@ -655,7 +674,7 @@ function processSemrushTrafficTrend(c: ClassifiedCsv): ProcessedCsvResult {
     discovery_source: "semrush_trend",
   }));
 
-  return { trafficRecords, domains, geoData: [], summary: { totalDomains: domains.length, totalTrafficRecords: trafficRecords.length, totalNewDomains: domains.length } };
+  return { trafficRecords, domains, geoData: [], offerUpdates: [], summary: { totalDomains: domains.length, totalTrafficRecords: trafficRecords.length, totalNewDomains: domains.length } };
 }
 
 function processSemrushSummary(c: ClassifiedCsv): ProcessedCsvResult {
@@ -694,7 +713,7 @@ function processSemrushSummary(c: ClassifiedCsv): ProcessedCsvResult {
     });
   }
 
-  return { trafficRecords, domains: [], geoData: [], summary: { totalDomains: 0, totalTrafficRecords: trafficRecords.length, totalNewDomains: 0 } };
+  return { trafficRecords, domains: [], geoData: [], offerUpdates: [], summary: { totalDomains: 0, totalTrafficRecords: trafficRecords.length, totalNewDomains: 0 } };
 }
 
 function processSemrushBulkHistorical(c: ClassifiedCsv): ProcessedCsvResult {
@@ -714,7 +733,150 @@ function processSemrushBulkHistorical(c: ClassifiedCsv): ProcessedCsvResult {
     }
   }
 
-  return { trafficRecords, domains: [], geoData: [], summary: { totalDomains: 0, totalTrafficRecords: trafficRecords.length, totalNewDomains: 0 } };
+  return { trafficRecords, domains: [], geoData: [], offerUpdates: [], summary: { totalDomains: 0, totalTrafficRecords: trafficRecords.length, totalNewDomains: 0 } };
+}
+
+function processSimilarWeb(c: ClassifiedCsv): ProcessedCsvResult {
+  const result = Papa.parse(c.rawText.trim(), { header: true, skipEmptyLines: true, delimiter: c.delimiter });
+  const rows = result.data as Record<string, string>[];
+  const headers = result.meta.fields || [];
+  const trafficRecords: ExtractedTrafficRecord[] = [];
+  const domains: ExtractedDomain[] = [];
+  const geoData: ExtractedGeoData[] = [];
+  const offerUpdates: ExtractedOfferUpdate[] = [];
+  const seen = new Set<string>();
+
+  // Monthly visit columns: "estimatedMonthlyVisits/YYYY-MM-DD"
+  const monthlyVisitHeaders = headers.filter(h => h.toLowerCase().startsWith("estimatedmonthlyvisits/"));
+
+  for (const row of rows) {
+    const domain = extractDomain(row["domain"] || "");
+    if (!domain || !domain.includes(".")) continue;
+
+    const bounceRateRaw = parseNumber(row["bounceRate"] || "");
+    // SimilarWeb bounce rate is decimal (0–1), convert to percentage
+    const bounceRate = bounceRateRaw > 0 && bounceRateRaw <= 1 ? bounceRateRaw * 100 : bounceRateRaw;
+    const pagesPerVisit = parseNumber(row["pagesPerVisit"] || "");
+    const timeOnSite = parseIntNumber(row["timeOnSite"] || ""); // in seconds
+
+    // ── Traffic records (one per month) ──
+    for (const h of monthlyVisitHeaders) {
+      const datePart = h.split("/").slice(1).join("/");
+      if (!datePart) continue;
+      const dateMatch = datePart.match(/^(\d{4})-(\d{2})/);
+      if (!dateMatch) continue;
+      const periodDate = `${dateMatch[1]}-${dateMatch[2]}-01`;
+      const visits = parseIntNumber(row[h] || "");
+      trafficRecords.push({
+        domain,
+        period_date: periodDate,
+        visits,
+        pages_per_visit: pagesPerVisit || undefined,
+        avg_visit_duration: timeOnSite || undefined,
+        bounce_rate: bounceRate || undefined,
+        source: "similarweb",
+      });
+    }
+
+    // ── Domain ──
+    if (!seen.has(domain)) {
+      seen.add(domain);
+      domains.push({ domain, domain_type: "landing_page", discovery_source: "similarweb" });
+    }
+
+    // ── Geo from countryRank/CountryCode (primary country) ──
+    const primaryCountryCode = (row["countryRank/CountryCode"] || row["countryRank.countryCode"] || "").trim();
+
+    // ── Geo data from topCountryShares ──
+    const countries: Array<{ country: string; share: number; visits: number }> = [];
+    for (let i = 0; i < 5; i++) {
+      const code = (row[`topCountryShares/${i}/CountryCode`] || "").trim();
+      const name = (row[`topCountryShares/${i}/Country`] || "").trim();
+      const valueRaw = (row[`topCountryShares/${i}/Value`] || "").trim();
+      if ((!code && !name) || !valueRaw) continue;
+      const shareDecimal = parseNumber(valueRaw);
+      if (shareDecimal <= 0) continue;
+      const share = shareDecimal <= 1 ? shareDecimal * 100 : shareDecimal;
+      countries.push({ country: code || name, share, visits: 0 });
+    }
+    if (countries.length > 0) {
+      const sorted = [...countries].sort((a, b) => b.share - a.share);
+      const mainGeo = primaryCountryCode || sorted[0].country;
+      const secondary = sorted.slice(1).filter(cc => cc.share >= 15).map(cc => cc.country);
+      const countryLines = sorted.map(cc => `- ${cc.country}: ${cc.share.toFixed(1)}%`).join("\n");
+      geoData.push({
+        domain,
+        countries,
+        mainGeo,
+        secondaryGeos: secondary.length > 0 ? secondary : undefined,
+        geoNotes: `## Geodistribuição SimilarWeb\n${countryLines}`,
+      });
+    }
+
+    // ── Screenshot URL ──
+    const screenshotUrl = (row["screenshot"] || "").trim();
+
+    // ── Notes appendix (title, description, keywords, traffic sources) ──
+    const title = (row["title"] || "").trim();
+    const description = (row["description"] || "").trim();
+
+    const keywords: string[] = [];
+    for (let i = 0; i < 5; i++) {
+      const kw = (row[`topKeywords/${i}/name`] || "").trim();
+      if (kw) keywords.push(kw);
+    }
+
+    // trafficSources — decimal (0–1) → convert to %
+    const srcFields: Array<[string, string]> = [
+      ["Direct", row["trafficSources/Direct"] || ""],
+      ["Social", row["trafficSources/Social"] || ""],
+      ["Search", row["trafficSources/Search"] || ""],
+      ["Referrals", row["trafficSources/Referrals"] || ""],
+      ["Paid Referrals", row["trafficSources/Paid Referrals"] || ""],
+      ["Mail", row["trafficSources/Mail"] || ""],
+    ];
+    const srcRows = srcFields
+      .map(([label, raw]) => {
+        const val = parseNumber(raw);
+        if (!val) return null;
+        const pct = val <= 1 ? val * 100 : val;
+        return `| ${label} | ${pct.toFixed(1)}% |`;
+      })
+      .filter(Boolean);
+
+    const notesParts: string[] = [`## SimilarWeb — ${domain}`];
+    if (keywords[0]) notesParts.push(`**Top Keyword:** ${keywords[0]}`);
+    if (title) notesParts.push(`**Título:** ${title}`);
+    if (description) notesParts.push(`**Descrição:** ${description}`);
+    const moreKws = keywords.slice(1).filter(Boolean);
+    if (moreKws.length > 0) {
+      notesParts.push(`**Mais Keywords:**\n${moreKws.map(k => `- ${k}`).join("\n")}`);
+    }
+    if (srcRows.length > 0) {
+      notesParts.push(`**Fontes de Tráfego:**\n| Fonte | % |\n|-------|---|\n${srcRows.join("\n")}`);
+    }
+
+    const hasNoteContent = keywords.length > 0 || title || description || srcRows.length > 0;
+
+    offerUpdates.push({
+      domain,
+      screenshot_url: screenshotUrl || undefined,
+      notes_appendix: hasNoteContent ? notesParts.join("\n\n") : undefined,
+      geo: primaryCountryCode || undefined,
+    });
+  }
+
+  return {
+    trafficRecords,
+    domains,
+    geoData,
+    offerUpdates,
+    summary: {
+      totalDomains: domains.length,
+      totalTrafficRecords: trafficRecords.length,
+      totalNewDomains: domains.length,
+    },
+  };
 }
 
 // ─── Auto-exclude irrelevant columns per CSV type ───
@@ -730,6 +892,7 @@ export function getDefaultExcludedColumns(type: CsvType, headers: string[]): Set
     semrush_pages: ["destino", "página", "pagina", "proporção de tráfego", "proporcao de trafego", "visitas"],
     semrush_subdomains: ["destino", "subdomínio", "subdominio", "visitas"],
     semrush_subfolders: ["destino", "subpasta", "visitas"],
+    similarweb: ["domain", "visits", "bouncerate", "pagespervisit", "timeonsite", "globalrank", "category"],
   };
 
   const relevant = relevantMap[type];
