@@ -1,5 +1,37 @@
 # Changelog - DR OPS
 
+## 2026-02-19 - Radar lista: screenshot preview, notas inline, colunas expandidas + 3 bugfixes (Claude Sonnet 4.6)
+
+### Screenshot preview na lista (`SpyRadar.tsx`)
+- Ícone `Image` no final da linha — aparece apenas se a oferta tiver `screenshot_url`
+- **Hover**: thumbnail (140px) via Popover com delay de 120ms, hint "Clique para abrir em tela cheia"
+- **Click**: abre o `ScreenshotLightbox` centralizado com zoom+pan+Escape — idêntico ao existente na aba Overview
+
+### Notas inline na lista (`SpyRadar.tsx`)
+- Nova coluna **Notas** (habilitada por padrão) com texto truncado em 2 linhas (markdown stripped para preview)
+- Hover no texto: Tooltip mostra até 500 chars do conteúdo completo
+- Hover na linha: botão de edição (FileText) aparece; click abre Popover com textarea e botão Salvar
+- Salvar aplica update otimista ao cache React Query (sem esperar refetch)
+
+### Seletor de colunas expandido (`SpyRadar.tsx`)
+- **Todos os campos** da oferta agrupados em 6 grupos: Identificação, Produto, Tráfego, Operacional, Descoberta, Contagens
+- Campo de busca para filtrar colunas por nome ou key
+- **Presets**: salvar a configuração de colunas atual com nome → carregar ou apagar presets (persistido em localStorage via `spy-radar-presets`)
+
+### Bug: status dropdown não aceitava clique (`SpyRadar.tsx` + `TrafficIntelligenceView.tsx`)
+- **Causa**: Popover controlado com `open={editingStatusId === id}` tinha race condition entre `onOpenChange(false)` (disparado no pointer-down externo) e o `onClick` do botão interno
+- **Fix**: substituído por `DropdownMenu` do shadcn que gerencia open/close internamente, sem conflito com o sistema de eventos do Radix
+
+### Bug: delay ao alterar status em bulk (`SpyRadar.tsx` + `TrafficIntelligenceView.tsx`)
+- **Causa**: após update no banco, `refetch()` aguardava resposta do servidor antes de atualizar a UI; ofertas continuavam visíveis na view filtrada por vários segundos
+- **Fix**: `queryClient.setQueriesData({ queryKey: ['spied-offers'] })` aplicado imediatamente após o update — as linhas desaparecem do filtro sem esperar o refetch
+
+### Bug: scroll jump ao clicar no ícone de gráfico (`TrafficIntelligenceView.tsx`)
+- **Causa**: `toggleChart` alterava `chartIds`, o card do gráfico aparecia/sumia acima da tabela e empurrava o layout, mudando o scroll Y visível
+- **Fix**: scroll Y salvo antes de `setChartIds`, restaurado após dois `requestAnimationFrame` (aguarda dois ciclos de render)
+
+---
+
 ## 2026-02-19 - SimilarWeb: extração completa + screenshot + notas automáticas (Claude Sonnet 4.6)
 
 ### Extração de dados SimilarWeb expandida (`csvClassifier.ts`)
