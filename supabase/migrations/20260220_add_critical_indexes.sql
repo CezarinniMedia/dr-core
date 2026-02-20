@@ -8,12 +8,12 @@
 -- ============================================
 
 -- FK index MISSING - improves cascading deletes and lookups
-CREATE INDEX idx_offer_traffic_spied_offer
+CREATE INDEX IF NOT EXISTS idx_offer_traffic_spied_offer
   ON offer_traffic_data(spied_offer_id);
 
 -- Composite index for most common queries (offer + period range + source)
 -- Used by: radar queries, traffic intelligence, dashboard aggregations
-CREATE INDEX idx_offer_traffic_composite
+CREATE INDEX IF NOT EXISTS idx_offer_traffic_composite
   ON offer_traffic_data(spied_offer_id, period_date DESC, source);
 
 -- ============================================
@@ -21,12 +21,12 @@ CREATE INDEX idx_offer_traffic_composite
 -- ============================================
 
 -- Status + vertical combo is the most common filter pair in radar
-CREATE INDEX idx_spied_offers_status_vertical
+CREATE INDEX IF NOT EXISTS idx_spied_offers_status_vertical
   ON spied_offers(status, vertical, workspace_id);
 
 -- Full-text search on discovery_query (Portuguese support)
 -- Used for searching by keywords/footprints
-CREATE INDEX idx_spied_offers_discovery_gin
+CREATE INDEX IF NOT EXISTS idx_spied_offers_discovery_gin
   ON spied_offers USING GIN (to_tsvector('portuguese', COALESCE(discovery_query, '')));
 
 -- ============================================
@@ -34,7 +34,7 @@ CREATE INDEX idx_spied_offers_discovery_gin
 -- ============================================
 
 -- Missing workspace index for filtered queries
-CREATE INDEX idx_offer_domains_workspace
+CREATE INDEX IF NOT EXISTS idx_offer_domains_workspace
   ON offer_domains(workspace_id);
 
 -- ============================================
@@ -42,7 +42,7 @@ CREATE INDEX idx_offer_domains_workspace
 -- ============================================
 
 -- domain_id FK added in schema - needs index
-CREATE INDEX idx_offer_funnel_domain
+CREATE INDEX IF NOT EXISTS idx_offer_funnel_domain
   ON offer_funnel_steps(domain_id);
 
 -- ============================================
@@ -50,5 +50,5 @@ CREATE INDEX idx_offer_funnel_domain
 -- ============================================
 
 -- Supports querying by competitor OR spied_offer OR library source
-CREATE INDEX idx_ad_creatives_sources
+CREATE INDEX IF NOT EXISTS idx_ad_creatives_sources
   ON ad_creatives(competitor_id, spied_offer_id, library_id);
