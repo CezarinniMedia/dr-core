@@ -1,11 +1,23 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo, Suspense, lazy, CSSProperties } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSpiedOffers, useDeleteSpiedOffer, useUpdateSpiedOffer, useLatestTrafficPerOffer } from "@/hooks/useSpiedOffers";
-import { QuickAddOfferModal } from "@/components/spy/QuickAddOfferModal";
-import { FullOfferFormModal } from "@/components/spy/FullOfferFormModal";
-import { UniversalImportModal } from "@/components/spy/UniversalImportModal";
-import { TrafficIntelligenceView } from "@/components/spy/TrafficIntelligenceView";
+import { Loader2 } from "lucide-react";
+
+// Modais carregam sob demanda — não incluídos no bundle principal
+const QuickAddOfferModal = lazy(() => import("@/components/spy/QuickAddOfferModal").then(m => ({ default: m.QuickAddOfferModal })));
+const FullOfferFormModal = lazy(() => import("@/components/spy/FullOfferFormModal").then(m => ({ default: m.FullOfferFormModal })));
+const UniversalImportModal = lazy(() => import("@/components/spy/UniversalImportModal").then(m => ({ default: m.UniversalImportModal })));
+const TrafficIntelligenceView = lazy(() => import("@/components/spy/TrafficIntelligenceView").then(m => ({ default: m.TrafficIntelligenceView })));
+
+function ModalLoader() {
+  return (
+    <div className="flex items-center justify-center p-8">
+      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+    </div>
+  );
+}
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -496,6 +508,37 @@ export default function SpyRadar() {
     ? (offers ?? [])
     : (offers ?? []).slice(currentPage * pageSizeNum, (currentPage + 1) * pageSizeNum);
 
+  // Virtualização — ativa quando há mais de 100 rows visíveis (ex: modo "all" com 12k+ registros)
+  const VIRTUALIZE_THRESHOLD = 100;
+  const shouldVirtualize = visibleOffers.length > VIRTUALIZE_THRESHOLD;
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+  const virtualizer = useVirtualizer({
+    count: visibleOffers.length,
+    getScrollElement: () => tableScrollRef.current,
+    estimateSize: () => 48,
+    overscan: 10,
+    enabled: shouldVirtualize,
+  });
+  const virtualItems = shouldVirtualize ? virtualizer.getVirtualItems() : null;
+  const itemsToRender = virtualItems
+    ? virtualItems.map(vItem => ({
+        offer: visibleOffers[vItem.index] as any,
+        visibleIdx: vItem.index,
+        rowStyle: {
+          position: "absolute" as const,
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: `${vItem.size}px`,
+          transform: `translateY(${vItem.start}px)`,
+        } as CSSProperties,
+      }))
+    : visibleOffers.map((offer: any, idx: number) => ({
+        offer,
+        visibleIdx: idx,
+        rowStyle: undefined as CSSProperties | undefined,
+      }));
+
   // Reset page when filters change
   const handleFilterChange = useCallback(() => {
     setCurrentPage(0);
@@ -844,9 +887,13 @@ export default function SpyRadar() {
               </div>
             ) : (
               <>
-                <div className="border rounded-lg overflow-hidden">
-                  <Table>
-                    <TableHeader>
+                <div
+                  ref={tableScrollRef}
+                  className="border rounded-lg overflow-hidden"
+                  style={shouldVirtualize ? { overflowY: "auto", maxHeight: "70vh" } : undefined}
+                >
+                  <Table style={shouldVirtualize ? { tableLayout: "fixed" } : undefined}>
+                    <TableHeader className={shouldVirtualize ? "sticky top-0 z-10 bg-background" : ""}>
                       <TableRow>
                         <TableHead className="w-[40px]">
                           <Checkbox
@@ -895,8 +942,10 @@ export default function SpyRadar() {
                         <TableHead className="w-[100px]"></TableHead>
                       </TableRow>
                     </TableHeader>
-                    <TableBody>
-                      {visibleOffers.map((offer: any, visibleIdx: number) => {
+                    <TableBody
+                      style={shouldVirtualize ? { height: `${virtualizer.getTotalSize()}px`, position: "relative" } : undefined}
+                    >
+                      {itemsToRender.map(({ offer, visibleIdx, rowStyle }) => {
                         const sb = STATUS_BADGE[offer.status] || STATUS_BADGE.RADAR;
                         const domainsCount = getCount(offer, "offer_domains");
                         const adsCount = getCount(offer, "ad_creatives");
@@ -906,6 +955,7 @@ export default function SpyRadar() {
                         return (
                           <TableRow
                             key={offer.id}
+                            style={rowStyle}
                             className={`cursor-pointer transition-colors ${isSelected ? "bg-primary/10" : "hover:bg-muted/50"}`}
                             onClick={(e) => {
                               if (e.metaKey || e.ctrlKey || e.shiftKey) {
@@ -1392,7 +1442,9 @@ export default function SpyRadar() {
           </TabsContent>
 
           <TabsContent value="comparison" className="mt-4">
-            <TrafficIntelligenceView />
+            <Suspense fallback={<ModalLoader />}>
+              <TrafficIntelligenceView />
+            </Suspense>
           </TabsContent>
 
           <TabsContent value="about" className="mt-4">
@@ -1424,10 +1476,12 @@ export default function SpyRadar() {
           </TabsContent>
         </Tabs>
 
-        {/* Modals */}
-        <QuickAddOfferModal open={showQuickAdd} onClose={() => setShowQuickAdd(false)} />
-        <FullOfferFormModal open={showFullForm} onClose={() => setShowFullForm(false)} />
-        <UniversalImportModal open={showImport} onClose={() => setShowImport(false)} />
+        {/* Modals — lazy loaded, carregam apenas quando abertos */}
+        <Suspense fallback={<ModalLoader />}>
+          <QuickAddOfferModal open={showQuickAdd} onClose={() => setShowQuickAdd(false)} />
+          <FullOfferFormModal open={showFullForm} onClose={() => setShowFullForm(false)} />
+          <UniversalImportModal open={showImport} onClose={() => setShowImport(false)} />
+        </Suspense>
 
         {/* Screenshot lightbox */}
         {lightboxUrl && (
