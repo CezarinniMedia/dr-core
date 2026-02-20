@@ -79,16 +79,16 @@ const STATUS_OPTIONS = [
   { value: "NEVER_SCALED", label: "Never Scaled" },
 ];
 
-const STATUS_BADGE: Record<string, { label: string; className: string }> = {
-  RADAR: { label: "Radar", className: "bg-muted text-muted-foreground" },
-  ANALYZING: { label: "Analyzing", className: "bg-warning/20 text-warning" },
-  HOT: { label: "HOT", className: "bg-destructive/20 text-destructive" },
-  SCALING: { label: "Scaling", className: "bg-success/20 text-success animate-pulse" },
-  DYING: { label: "Dying", className: "bg-accent/20 text-accent" },
-  DEAD: { label: "Dead", className: "bg-muted text-muted-foreground line-through" },
-  CLONED: { label: "Cloned", className: "bg-primary/20 text-primary" },
-  VAULT: { label: "Vault", className: "bg-muted text-muted-foreground" },
-  NEVER_SCALED: { label: "Never Scaled", className: "bg-muted/50 text-muted-foreground" },
+const STATUS_BADGE: Record<string, { label: string; className: string; tip: string }> = {
+  RADAR: { label: "Radar", className: "bg-muted text-muted-foreground", tip: "Recém-descoberta, aguardando análise" },
+  ANALYZING: { label: "Analyzing", className: "bg-warning/20 text-warning", tip: "Sob investigação ativa" },
+  HOT: { label: "HOT", className: "bg-destructive/20 text-destructive", tip: "Sinais fortes — merece atenção imediata" },
+  SCALING: { label: "Scaling", className: "bg-success/20 text-success animate-pulse", tip: "Crescimento acelerado — hora de agir" },
+  DYING: { label: "Dying", className: "bg-accent/20 text-accent", tip: "Tráfego em queda, perdendo força" },
+  DEAD: { label: "Dead", className: "bg-muted text-muted-foreground line-through", tip: "Parou completamente, referência histórica" },
+  CLONED: { label: "Cloned", className: "bg-primary/20 text-primary", tip: "Já clonada/adaptada para sua operação" },
+  VAULT: { label: "Vault", className: "bg-muted text-muted-foreground", tip: "Sites irrelevantes (google, youtube, etc)" },
+  NEVER_SCALED: { label: "Never Scaled", className: "bg-muted/50 text-muted-foreground", tip: "Nunca escalou — mantido como referência" },
 };
 
 // ─── Column groups (all possible offer fields) ───────────────────────────────
@@ -601,7 +601,7 @@ export default function SpyRadar() {
   }, [colSearch]);
 
   return (
-    <TooltipProvider>
+    <TooltipProvider delayDuration={200}>
       <div className="max-w-7xl space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -937,37 +937,44 @@ export default function SpyRadar() {
                               />
                             </TableCell>
 
-                            {/* Status — DropdownMenu with modal to avoid TooltipProvider conflict */}
+                            {/* Status — DropdownMenu with tooltip */}
                             {visibleColumns.has("status") && (
                               <TableCell onClick={(e) => e.stopPropagation()}>
-                                <DropdownMenu modal={true}>
-                                  <DropdownMenuTrigger asChild>
-                                    <button className="cursor-pointer" title="Alterar status">
-                                      <Badge variant="outline" className={sb.className}>
-                                        {sb.label}
-                                      </Badge>
-                                    </button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="start" className="w-40">
-                                    {STATUS_OPTIONS.map(s => (
-                                      <DropdownMenuItem
-                                        key={s.value}
-                                        onClick={() => handleInlineStatusChange(offer.id, s.value)}
-                                      >
-                                        {s.label}
-                                      </DropdownMenuItem>
-                                    ))}
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
+                                <Tooltip>
+                                  <DropdownMenu modal={true}>
+                                    <TooltipTrigger asChild>
+                                      <DropdownMenuTrigger asChild>
+                                        <button className="cursor-pointer">
+                                          <Badge variant="outline" className={`${sb.className} whitespace-nowrap`}>
+                                            {sb.label}
+                                          </Badge>
+                                        </button>
+                                      </DropdownMenuTrigger>
+                                    </TooltipTrigger>
+                                    <DropdownMenuContent align="start" className="w-40">
+                                      {STATUS_OPTIONS.map(s => (
+                                        <DropdownMenuItem
+                                          key={s.value}
+                                          onClick={() => handleInlineStatusChange(offer.id, s.value)}
+                                        >
+                                          {s.label}
+                                        </DropdownMenuItem>
+                                      ))}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                  <TooltipContent side="right" className="text-xs max-w-[200px]">
+                                    {sb.tip}
+                                  </TooltipContent>
+                                </Tooltip>
                               </TableCell>
                             )}
 
                             {/* Nome */}
                             {visibleColumns.has("nome") && (
                               <TableCell>
-                                <p className="font-medium text-sm">{offer.nome}</p>
+                                <p className="font-medium text-sm truncate max-w-[190px]">{offer.nome}</p>
                                 {offer.main_domain && (
-                                  <p className="text-xs text-muted-foreground">{offer.main_domain}</p>
+                                  <p className="text-xs text-muted-foreground truncate max-w-[190px]">{offer.main_domain}</p>
                                 )}
                               </TableCell>
                             )}
@@ -1057,7 +1064,7 @@ export default function SpyRadar() {
                             {visibleColumns.has("vertical") && (
                               <TableCell>
                                 {offer.vertical && (
-                                  <Badge variant="outline" className={VERTICAL_BADGE[offer.vertical] || ""}>
+                                  <Badge variant="outline" className={`${VERTICAL_BADGE[offer.vertical] || ""} whitespace-nowrap`}>
                                     {offer.vertical}
                                   </Badge>
                                 )}
@@ -1066,14 +1073,14 @@ export default function SpyRadar() {
 
                             {/* Subnicho */}
                             {visibleColumns.has("subnicho") && (
-                              <TableCell className="text-xs text-muted-foreground">
+                              <TableCell className="text-xs text-muted-foreground truncate max-w-[80px]">
                                 {offer.subnicho || "—"}
                               </TableCell>
                             )}
 
                             {/* Product name */}
                             {visibleColumns.has("product_name") && (
-                              <TableCell className="text-xs">
+                              <TableCell className="text-xs truncate max-w-[130px]">
                                 {offer.product_name || "—"}
                               </TableCell>
                             )}
@@ -1143,14 +1150,14 @@ export default function SpyRadar() {
 
                             {/* Operator */}
                             {visibleColumns.has("operator") && (
-                              <TableCell className="text-xs text-muted-foreground">
+                              <TableCell className="text-xs text-muted-foreground truncate max-w-[90px]">
                                 {offer.operator_name || "—"}
                               </TableCell>
                             )}
 
                             {/* Checkout */}
                             {visibleColumns.has("checkout") && (
-                              <TableCell className="text-xs text-muted-foreground">
+                              <TableCell className="text-xs text-muted-foreground truncate max-w-[80px]">
                                 {offer.checkout_provider || "—"}
                               </TableCell>
                             )}
@@ -1164,7 +1171,7 @@ export default function SpyRadar() {
 
                             {/* Fonte */}
                             {visibleColumns.has("fonte") && (
-                              <TableCell className="text-xs text-muted-foreground">
+                              <TableCell className="text-xs text-muted-foreground truncate max-w-[90px]">
                                 {offer.discovery_source || "—"}
                               </TableCell>
                             )}
