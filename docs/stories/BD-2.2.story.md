@@ -1,5 +1,5 @@
 # Story BD-2.2: Create Service Layer
-**Epic:** EPIC-BD | **Sprint:** 2 | **Status:** InProgress | **Estimate:** 8h | **Priority:** ALTO
+**Epic:** EPIC-BD | **Sprint:** 2 | **Status:** Ready for Review | **Estimate:** 8h | **Priority:** ALTO
 
 ---
 
@@ -90,3 +90,4 @@ Atualmente logica de negocio esta misturada nos componentes React (parsing CSV, 
 - 2026-02-20: SpyRadar.tsx refatorado para usar updateOfferStatus, updateOfferNotes, bulkUpdateStatus, bulkDeleteOffers
 - 2026-02-20: Removidas funções duplicadas (formatCurrency, stripMarkdown, formatK, formatDate)
 - 2026-02-20: Build + typecheck passaram sem erros
+- 2026-02-20: Story marcada Ready for Review — implementação completa
