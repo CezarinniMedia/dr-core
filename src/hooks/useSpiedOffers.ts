@@ -594,17 +594,11 @@ export function useOfferTrafficSummary(offerId: string) {
   return useQuery({
     queryKey: ['offer-traffic-summary', offerId],
     queryFn: async () => {
-      const { data, error } = await (supabase
-        .from('mv_offer_traffic_summary' as never) as unknown as {
-          select: (cols: string) => {
-            eq: (col: string, val: string) => {
-              maybeSingle: () => Promise<{ data: OfferTrafficSummary | null; error: { message: string } | null }>;
-            };
-          };
-        })
+      const { data, error } = await supabase
+        .from('mv_offer_traffic_summary')
         .select('spied_offer_id, domain_count, total_visits, latest_period, earliest_period, latest_sw_visits, latest_sr_visits, avg_monthly_visits')
         .eq('spied_offer_id', offerId)
-        .maybeSingle();
+        .maybeSingle<OfferTrafficSummary>();
 
       if (error) throw new Error(error.message);
       return data;
