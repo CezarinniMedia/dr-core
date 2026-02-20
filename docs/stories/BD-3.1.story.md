@@ -92,3 +92,32 @@ claude-sonnet-4-6
 
 ### Change Log
 - 2026-02-20: @dev implementou todos os 9 bugs/fixes da BD-3.1 — commit 9bb258f
+- 2026-02-20: @qa revisou — PASS with CONCERNS (ver QA Results)
+
+---
+
+## QA Results
+
+### Verdict: PASS with CONCERNS
+**Reviewer:** Quinn (@qa) | **Date:** 2026-02-20
+
+### Checks
+- TypeScript: PASS (0 erros)
+- Build: PASS (12.6s)
+- AC Coverage: 9/9 PASS
+- Segurança: PASS
+- Regressoes: PASS
+
+### Issues
+
+**MEDIUM:**
+- M-1: `handleDragLeave` em KanbanBoard.tsx — cast `e.relatedTarget as Node` deveria ser `as Node | null`
+- M-2: `useNavigate` importado mas nao usado em KanbanBoard.tsx (dead code pre-existente)
+- M-3: `normalizeStr` em SpyRadar.tsx recriado a cada render — mover para fora do componente
+
+**LOW:**
+- L-1: `avoidCollisions` no PopoverContent redundante (ja e default no Radix UI)
+- L-2: Unidade `svh` no lightbox — suporte iOS 15.4+ apenas (impacto minimo)
+
+### Decision
+PASS — Story aprovada para merge. Issues M-1 a M-3 nao bloqueantes, recomendados para cleanup futuro.
