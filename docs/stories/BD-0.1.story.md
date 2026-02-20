@@ -51,9 +51,8 @@ O sistema tem 3 vulnerabilidades criticas de seguranca que precisam ser resolvid
 **OUT:** Refactor de storage logic, novas features
 
 ## File List
-- [x] supabase/migrations/20260220143000_restore_storage_rls_policies.sql (NEW)
-- [x] supabase/migrations/20260220143100_add_rls_legacy_tables.sql (NEW)
-- [x] .gitignore (unchanged, already had .env)
+- [x] supabase/migrations/20260220_fix_storage_rls.sql (NEW - Storage RLS + Legacy Tables RLS consolidado)
+- [x] .gitignore (MODIFIED - added AIOS tooling exclusions)
 - [x] .env.example (MODIFIED - added VITE_SUPABASE_* vars)
 - [x] src/lib/storage.ts (MODIFIED - added getWorkspaceId + auto workspace_id prefix)
 - [x] src/components/spy/AdCreativeFormDialog.tsx (MODIFIED - uses storage service instead of direct supabase)

@@ -42,7 +42,7 @@ offer_traffic_data tem 87k+ registros e esta FALTANDO o index no FK spied_offer_
 - [ ] 3. Verificar EXPLAIN ANALYZE nas queries principais
 
 ## File List
-- [x] supabase/migrations/20260220143200_add_critical_indexes.sql (NEW)
+- [x] supabase/migrations/20260220_add_critical_indexes.sql (NEW - com IF NOT EXISTS, 7 indexes)
 
 ## Dev Agent Record
 
