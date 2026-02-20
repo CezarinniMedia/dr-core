@@ -1,7 +1,7 @@
 # Story BD-0.2: Add Critical Database Indexes
 **Epic:** EPIC-BD (Brownfield Debt)
 **Sprint:** 0 - Security Foundation
-**Status:** Done
+**Status:** Ready
 **Estimate:** 1h
 **Priority:** CRITICO
 
