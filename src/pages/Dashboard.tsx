@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, Users, Sparkles, TrendingUp, ArrowRight, Rocket, CheckCircle, Clock, Search } from "lucide-react";
+import { Package, Users, Sparkles, TrendingUp, ArrowRight, Rocket, CheckCircle, Clock, Search, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +14,8 @@ function useDashboardStats() {
         supabase.from("ad_creatives").select("id", { count: "exact", head: true }),
         supabase.from("offer_traffic_data").select("id", { count: "exact", head: true }),
       ]);
+      const firstError = offersRes.error || avatarsRes.error || creativesRes.error || trafficRes.error;
+      if (firstError) throw new Error(firstError.message);
       return {
         offers: offersRes.count ?? 0,
         avatars: avatarsRes.count ?? 0,
@@ -22,6 +24,7 @@ function useDashboardStats() {
       };
     },
     staleTime: 60_000,
+    retry: 2,
   });
 }
 
@@ -40,7 +43,7 @@ const quickLinks = [
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const { data: stats, isLoading } = useDashboardStats();
+  const { data: stats, isLoading, isError } = useDashboardStats();
 
   const statCards = [
     { label: "Ofertas Espionadas", value: isLoading ? "..." : formatCount(stats?.offers ?? 0), icon: Package, color: "text-primary" },
@@ -59,6 +62,14 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Grid */}
+      {isError && (
+        <Card className="border-destructive/30 bg-destructive/5">
+          <CardContent className="flex items-center gap-2 py-3 text-sm text-destructive">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            Erro ao carregar estatísticas. Os dados podem estar desatualizados.
+          </CardContent>
+        </Card>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((stat) => (
           <Card key={stat.label} className="border-border/50">
