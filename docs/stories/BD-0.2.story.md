@@ -1,7 +1,7 @@
 # Story BD-0.2: Add Critical Database Indexes
 **Epic:** EPIC-BD (Brownfield Debt)
 **Sprint:** 0 - Security Foundation
-**Status:** Ready
+**Status:** InProgress
 **Estimate:** 1h
 **Priority:** CRITICO
 
@@ -23,7 +23,7 @@ offer_traffic_data tem 87k+ registros e esta FALTANDO o index no FK spied_offer_
 - [ ] Then: tempo de resposta < 2 segundos
 
 ## Tasks
-- [ ] 1. Criar migration com 6 indexes:
+- [x] 1. Criar migration com 6 indexes:
   ```sql
   -- FK index FALTANDO
   CREATE INDEX idx_offer_traffic_spied_offer ON offer_traffic_data(spied_offer_id);
@@ -42,4 +42,21 @@ offer_traffic_data tem 87k+ registros e esta FALTANDO o index no FK spied_offer_
 - [ ] 3. Verificar EXPLAIN ANALYZE nas queries principais
 
 ## File List
-- [ ] supabase/migrations/YYYYMMDD_add_critical_indexes.sql
+- [x] supabase/migrations/20260220143200_add_critical_indexes.sql (NEW)
+
+## Dev Agent Record
+
+### Debug Log
+- Migration criada com IF NOT EXISTS para seguranca
+- 6 indexes: 4 criticos + 2 altos (incluindo GIN full-text search)
+
+### Completion Notes
+- Task 1 implementada (migration criada)
+- Tasks 2-3 requerem deploy no Supabase e EXPLAIN ANALYZE
+
+### Agent Model Used
+claude-opus-4-6
+
+## Change Log
+- 2026-02-19: Story criada (Brownfield Discovery Phase 10)
+- 2026-02-20: @dev - Migration de indexes criada
