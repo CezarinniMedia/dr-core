@@ -1,7 +1,7 @@
 # Story BD-0.1: Fix Storage RLS + .env Security
 **Epic:** EPIC-BD (Brownfield Debt)
 **Sprint:** 0 - Security Foundation
-**Status:** Ready
+**Status:** InProgress
 **Estimate:** 2h
 **Priority:** BLOQUEANTE
 
@@ -39,10 +39,10 @@ O sistema tem 3 vulnerabilidades criticas de seguranca que precisam ser resolvid
 - [ ] And: arquivo fica acessivel na UI
 
 ## Tasks
-- [ ] 1. Criar migration SQL para restaurar Storage RLS com workspace isolation
-- [ ] 2. Adicionar .env ao .gitignore, git rm --cached .env
-- [ ] 3. Criar .env.example com todas as variaveis necessarias (sem valores reais)
-- [ ] 4. Criar RLS policies para 6 tabelas legacy
+- [x] 1. Criar migration SQL para restaurar Storage RLS com workspace isolation
+- [x] 2. Adicionar .env ao .gitignore, git rm --cached .env
+- [x] 3. Criar .env.example com todas as variaveis necessarias (sem valores reais)
+- [x] 4. Criar RLS policies para 6 tabelas legacy
 - [ ] 5. Testar upload de arquivo em spy-assets e creatives
 - [ ] 6. Verificar que usuario A nao acessa arquivos do workspace B
 
@@ -51,13 +51,32 @@ O sistema tem 3 vulnerabilidades criticas de seguranca que precisam ser resolvid
 **OUT:** Refactor de storage logic, novas features
 
 ## File List
-- [ ] supabase/migrations/YYYYMMDD_fix_storage_rls.sql
-- [ ] .gitignore
-- [ ] .env.example
+- [x] supabase/migrations/20260220143000_restore_storage_rls_policies.sql (NEW)
+- [x] supabase/migrations/20260220143100_add_rls_legacy_tables.sql (NEW)
+- [x] .gitignore (unchanged, already had .env)
+- [x] .env.example (MODIFIED - added VITE_SUPABASE_* vars)
+- [x] src/lib/storage.ts (MODIFIED - added getWorkspaceId + auto workspace_id prefix)
+- [x] src/components/spy/AdCreativeFormDialog.tsx (MODIFIED - uses storage service instead of direct supabase)
 
 ## Risks
 - Migration pode quebrar acesso existente se folders nao seguem convention workspace_id/
 - Backup de .env antes de remover do git
 
+## Dev Agent Record
+
+### Debug Log
+- Descoberto que upload em AdCreativeFormDialog.tsx usava supabase.storage direto sem workspace_id prefix
+- storage.ts agora faz auto-prefix com workspace_id para compliance com RLS folder-based policies
+- Build e typecheck passam sem erros
+
+### Completion Notes
+- Tasks 1-4 implementadas (migrations + code fix + .env security)
+- Tasks 5-6 requerem execucao das migrations no Supabase e teste manual no app
+- Arquivo .env removido do git tracking (git rm --cached)
+
+### Agent Model Used
+claude-opus-4-6
+
 ## Change Log
 - 2026-02-19: Story criada (Brownfield Discovery Phase 10)
+- 2026-02-20: @dev - Tasks 1-4 implementadas, migrations criadas, storage.ts corrigido

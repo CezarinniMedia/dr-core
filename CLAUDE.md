@@ -4,8 +4,7 @@
 - React 18 + Vite + TypeScript
 - Supabase (auth, database, storage, RLS)
 - TailwindCSS + shadcn/ui
-- Deploy: GitHub (CezarinniMedia/dr-core) → Hostinger (auto-deploy)
-- Lovable tambem commita neste repo (sincronizar com git pull antes de trabalhar)
+- Deploy: GitHub (CezarinniMedia/dr-core) → Hostinger (auto-deploy from main)
 
 ## Estrutura do Projeto
 ```
@@ -78,6 +77,69 @@ O modulo SPY e o mais importante e mais desenvolvido. Inclui:
 - Typecheck: `npx tsc --noEmit`
 - Test: `npx vitest run`
 
+## Git Branching Strategy
+
+### Branch Structure
+- **main** - Production. Auto-deploys to Hostinger. Protected (PR required).
+- **dev** - Staging. Base for all feature branches. Requires PR to merge.
+- **feature/*** - Development branches. Created from dev.
+- **lovable/*** - Lovable.dev branches only. Never commit to main directly.
+
+### Workflow
+
+#### Starting Work
+```bash
+git checkout dev
+git pull origin dev
+git checkout -b feature/bd-X-Y-description
+```
+
+#### Finishing Work
+```bash
+git add <files>
+git commit -m "feat: description [BD-X.Y]
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
+# Push handled by @devops agent or manual
+```
+
+#### Merge Flow
+```
+feature/* → PR → dev → PR → main (auto-deploy)
+lovable/* → PR → dev (never direct to main)
+```
+
+### Rules
+1. NEVER commit directly to main or dev
+2. ALWAYS create feature branches from dev
+3. ALWAYS include Co-Authored-By footer in commits
+4. Lovable MUST use lovable/* branches only
+5. Run build + typecheck before pushing
+
+## Regras de Comportamento do Agente
+
+### NUNCA
+- Implementar sem mostrar opcoes primeiro (sempre formato 1, 2, 3)
+- Deletar/remover conteudo sem perguntar primeiro
+- Deletar qualquer coisa criada nos ultimos 7 dias sem aprovacao explicita
+- Alterar algo que ja estava funcionando
+- Fingir que o trabalho esta concluido quando nao esta
+- Processar batch sem validar um primeiro
+- Adicionar funcionalidades que nao foram solicitadas
+- Usar mock data quando existem dados reais no banco
+- Explicar/justificar ao receber criticas (apenas corrigir)
+- Confiar em output de AI/subagente sem verificacao
+- Criar do zero quando algo similar existe em squads/
+
+### SEMPRE
+- Apresentar opcoes no formato "1. X, 2. Y, 3. Z"
+- Usar AskUserQuestion tool para esclarecimentos
+- Verificar squads/ e componentes existentes antes de criar novos
+- Ler o schema COMPLETO antes de propor mudancas no banco
+- Investigar causa raiz quando erro persiste
+- Commitar antes de passar para a proxima tarefa
+- Criar handoff em `docs/sessions/YYYY-MM/` ao final da sessao
+
 ## Regras de Codigo
 - NUNCA usar emojis iOS na interface, SEMPRE icones Lucide React
 - Dark mode e o tema padrao (dark background, light text)
@@ -93,7 +155,7 @@ O modulo SPY e o mais importante e mais desenvolvido. Inclui:
 - Ao adicionar campo novo ao banco: atualizar types.ts (ou avisar para rodar supabase gen types)
 
 ## Bugs Conhecidos (ver docs/bugs.md para lista completa)
-- Upload de arquivos falha com RLS policy error
+- Upload de arquivos falha com RLS policy error (FIX: BD-0.1 migration pendente deploy)
 - Sidebar collapse deixa lacuna a direita
 - Graficos de trafego nao respeitam todos os filtros de data
 - Dashboard mostra dados zerados
