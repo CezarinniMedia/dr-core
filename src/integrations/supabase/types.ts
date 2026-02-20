@@ -1727,7 +1727,28 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      mv_offer_traffic_summary: {
+        Row: {
+          spied_offer_id: string
+          domain_count: number
+          total_visits: number
+          latest_period: string | null
+          earliest_period: string | null
+          latest_sw_visits: number | null
+          latest_sr_visits: number | null
+          avg_monthly_visits: number | null
+        }
+      }
+      mv_dashboard_stats: {
+        Row: {
+          workspace_id: string
+          total_offers: number
+          unique_domains: number
+          active_offers: number
+          potential_offers: number
+          last_updated: string | null
+        }
+      }
     }
     Functions: {
       is_oferta_workspace_member: {

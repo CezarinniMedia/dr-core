@@ -19,9 +19,7 @@ function useDashboardStats() {
       // mv_dashboard_stats: pre-calculado, refresh a cada 15min
       // avatars e ad_creatives: tabelas pequenas, COUNT direto aceitavel
       const [dashboardRes, avatarsRes, creativesRes] = await Promise.all([
-        (supabase.from("mv_dashboard_stats" as never) as unknown as {
-          select: (cols: string) => { maybeSingle: () => Promise<{ data: MvDashboardStats | null; error: { message: string } | null }> };
-        }).select("total_offers, unique_domains, active_offers, potential_offers").maybeSingle(),
+        supabase.from("mv_dashboard_stats").select("total_offers, unique_domains, active_offers, potential_offers").maybeSingle<MvDashboardStats>(),
         supabase.from("avatars").select("id", { count: "exact", head: true }),
         supabase.from("ad_creatives").select("id", { count: "exact", head: true }),
       ]);
