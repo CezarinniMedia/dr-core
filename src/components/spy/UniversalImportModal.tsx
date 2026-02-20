@@ -1042,8 +1042,13 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
         {/* Step 3: Matching & Preview */}
         {step === 3 && (
           <div className="space-y-4">
-            <div className="border rounded-lg overflow-hidden max-h-[400px] overflow-y-auto">
-              <Table>
+            {domainMatches.length > 500 && (
+              <p className="text-xs text-muted-foreground bg-muted/50 rounded px-3 py-1.5">
+                Mostrando 500 de {domainMatches.length} domínios na prévia. Todos serão importados.
+              </p>
+            )}
+            <div className="border rounded-lg overflow-x-auto max-h-[400px] overflow-y-auto">
+              <Table style={{ minWidth: "710px" }}>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[180px]">Domínio</TableHead>
@@ -1054,7 +1059,7 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {domainMatches.map(m => (
+                  {domainMatches.slice(0, 500).map(m => (
                     <TableRow key={m.domain}>
                       <TableCell className="font-mono text-xs truncate max-w-[180px]">{m.domain}</TableCell>
                       <TableCell>

@@ -278,27 +278,26 @@ function ScreenshotLightbox({ url, onClose }: { url: string; onClose: () => void
       onClick={onClose}
     >
       <div
-        className="relative flex flex-col bg-background rounded-lg shadow-2xl overflow-hidden"
-        style={{ width: "min(85vw, 1200px)", height: "min(85vh, 900px)" }}
+        className="relative flex flex-col bg-background rounded-lg shadow-2xl overflow-hidden w-[90vw] max-w-5xl h-[85svh] max-h-[900px]"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/50 shrink-0">
-          <span className="text-xs text-muted-foreground truncate flex-1">{url}</span>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={zoomOut} title="Diminuir zoom">
-            <ZoomOut className="h-4 w-4" />
+          <span className="text-xs text-muted-foreground truncate flex-1 hidden sm:block">{url}</span>
+          <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-7 sm:w-7" onClick={zoomOut} title="Diminuir zoom">
+            <ZoomOut className="h-5 w-5 sm:h-4 sm:w-4" />
           </Button>
           <button
-            className="text-xs text-muted-foreground w-12 text-center hover:text-foreground transition-colors"
+            className="text-xs text-muted-foreground w-14 sm:w-12 text-center hover:text-foreground transition-colors py-1"
             onClick={resetZoom}
             title="Resetar zoom"
           >
             {Math.round(zoom * 100)}%
           </button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={zoomIn} title="Aumentar zoom">
-            <ZoomIn className="h-4 w-4" />
+          <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-7 sm:w-7" onClick={zoomIn} title="Aumentar zoom">
+            <ZoomIn className="h-5 w-5 sm:h-4 sm:w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose} title="Fechar">
-            <X className="h-4 w-4" />
+          <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-7 sm:w-7" onClick={onClose} title="Fechar">
+            <X className="h-5 w-5 sm:h-4 sm:w-4" />
           </Button>
         </div>
         <div
@@ -503,17 +502,16 @@ export default function SpyRadar() {
     setSelectedIds(new Set());
   }, []);
 
-  // Selection handlers
-  const handleRowSelect = useCallback((offerId: string, index: number, e: React.MouseEvent) => {
+  // Selection handlers — NEW-05: track absolute index for reliable shift+click cross-page
+  const handleRowSelect = useCallback((offerId: string, visibleIdx: number, e: React.MouseEvent) => {
     e.stopPropagation();
+    const absoluteIdx = isInfinite ? visibleIdx : currentPage * pageSizeNum + visibleIdx;
     setSelectedIds(prev => {
       const next = new Set(prev);
       if (e.shiftKey && lastClickedIndex.current !== null && offers) {
-        const start = Math.min(lastClickedIndex.current, index);
-        const end = Math.max(lastClickedIndex.current, index);
-        const globalStart = currentPage * pageSizeNum + start;
-        const globalEnd = currentPage * pageSizeNum + end;
-        for (let i = globalStart; i <= globalEnd; i++) {
+        const start = Math.min(lastClickedIndex.current, absoluteIdx);
+        const end = Math.max(lastClickedIndex.current, absoluteIdx);
+        for (let i = start; i <= end; i++) {
           if (offers[i]) next.add(offers[i].id);
         }
       } else if (e.metaKey || e.ctrlKey) {
@@ -527,10 +525,10 @@ export default function SpyRadar() {
           next.add(offerId);
         }
       }
-      lastClickedIndex.current = index;
+      lastClickedIndex.current = absoluteIdx;
       return next;
     });
-  }, [offers, currentPage, pageSizeNum]);
+  }, [offers, currentPage, pageSizeNum, isInfinite]);
 
   const handleSelectAll = useCallback(() => {
     if (!offers) return;
@@ -591,12 +589,16 @@ export default function SpyRadar() {
   const somePageChecked = visibleOffers.some(o => selectedIds.has(o.id));
 
   // Filtered column groups for search
+  // NEW-06: normalize string removing diacritics for accent-insensitive search
+  const normalizeStr = (s: string) =>
+    s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
   const filteredColumnGroups = useMemo(() => {
     if (!colSearch.trim()) return COLUMN_GROUPS;
-    const q = colSearch.toLowerCase();
+    const q = normalizeStr(colSearch);
     return COLUMN_GROUPS.map(g => ({
       ...g,
-      columns: g.columns.filter(c => c.label.toLowerCase().includes(q) || c.key.toLowerCase().includes(q)),
+      columns: g.columns.filter(c => normalizeStr(c.label).includes(q) || c.key.toLowerCase().includes(q)),
     })).filter(g => g.columns.length > 0);
   }, [colSearch]);
 
@@ -848,8 +850,8 @@ export default function SpyRadar() {
               </div>
             ) : (
               <>
-                <div className="border rounded-lg overflow-hidden">
-                  <Table>
+                <div className="border rounded-lg overflow-x-auto">
+                  <Table style={{ tableLayout: "fixed", minWidth: "800px" }}>
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-[40px]">
@@ -1029,7 +1031,7 @@ export default function SpyRadar() {
                                         <FileText className="h-3 w-3" />
                                       </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-80 p-3" side="right" align="start">
+                                    <PopoverContent className="w-80 p-3" side="left" align="start" avoidCollisions collisionPadding={16}>
                                       <p className="text-xs font-medium mb-2 flex items-center gap-1.5">
                                         <FileText className="h-3.5 w-3.5" />
                                         Notas — {offer.nome}
