@@ -822,7 +822,7 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
                   <div key={i} className="flex items-center gap-2 p-2 border rounded text-sm">
                     <FileSpreadsheet className="h-4 w-4 text-muted-foreground shrink-0" />
                     <span className="flex-1 truncate">{f.name}</span>
-                    <Badge variant="outline" className={TYPE_COLORS[f.classified.type]}>{f.classified.label}</Badge>
+                    <Badge variant="outline" className={`${TYPE_COLORS[f.classified.type]} whitespace-nowrap`}>{f.classified.label}</Badge>
                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeFile(i)}>
                       <X className="h-3 w-3" />
                     </Button>
@@ -1046,39 +1046,39 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Domínio</TableHead>
-                    <TableHead>Tipo CSV</TableHead>
-                    <TableHead>No Radar?</TableHead>
-                    <TableHead>Ação</TableHead>
-                    <TableHead className="text-right">Dados</TableHead>
+                    <TableHead className="w-[180px]">Domínio</TableHead>
+                    <TableHead className="w-[160px]">Tipo CSV</TableHead>
+                    <TableHead className="w-[150px]">No Radar?</TableHead>
+                    <TableHead className="w-[120px]">Ação</TableHead>
+                    <TableHead className="w-[100px] text-right">Dados</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {domainMatches.map(m => (
                     <TableRow key={m.domain}>
-                      <TableCell className="font-mono text-xs">{m.domain}</TableCell>
+                      <TableCell className="font-mono text-xs truncate max-w-[180px]">{m.domain}</TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {m.csvTypes.map(t => (
-                            <Badge key={t} variant="outline" className="text-[10px]">{t}</Badge>
+                            <Badge key={t} variant="outline" className="text-[10px] whitespace-nowrap">{t}</Badge>
                           ))}
                         </div>
                       </TableCell>
                       <TableCell>
                         {m.matched ? (
-                          <Badge variant="outline" className="bg-success/10 text-success text-[10px]">
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            {m.offerName}
+                          <Badge variant="outline" className="bg-success/10 text-success text-[10px] whitespace-nowrap max-w-[140px] truncate">
+                            <CheckCircle className="h-3 w-3 mr-1 shrink-0" />
+                            <span className="truncate">{m.offerName}</span>
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="bg-warning/10 text-warning text-[10px]">
-                            <AlertTriangle className="h-3 w-3 mr-1" />
+                          <Badge variant="outline" className="bg-warning/10 text-warning text-[10px] whitespace-nowrap">
+                            <AlertTriangle className="h-3 w-3 mr-1 shrink-0" />
                             Novo
                           </Badge>
                         )}
                       </TableCell>
-                      <TableCell className="text-xs">{m.action}</TableCell>
-                      <TableCell className="text-right text-xs text-muted-foreground">
+                      <TableCell className="text-xs whitespace-nowrap">{m.action}</TableCell>
+                      <TableCell className="text-right text-xs text-muted-foreground whitespace-nowrap">
                         {m.trafficRecords > 0 && `${m.trafficRecords} tráfego`}
                         {m.newDomains > 0 && ` · ${m.newDomains} dom.`}
                       </TableCell>

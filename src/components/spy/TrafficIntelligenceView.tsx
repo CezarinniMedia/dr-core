@@ -74,7 +74,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
+
+const CHART_LINE_COLORS = [
+  "hsl(217, 91%, 60%)", "hsl(0, 84%, 60%)", "hsl(142, 76%, 36%)",
+  "hsl(38, 92%, 50%)", "hsl(262, 83%, 58%)", "hsl(330, 81%, 60%)",
+  "hsl(199, 89%, 48%)", "hsl(24, 95%, 53%)",
+];
 
 const STATUS_OPTIONS = [
   { value: "RADAR", label: "Radar" },
@@ -88,16 +100,16 @@ const STATUS_OPTIONS = [
   { value: "NEVER_SCALED", label: "Never Scaled" },
 ];
 
-const STATUS_BADGE: Record<string, { label: string; className: string }> = {
-  RADAR: { label: "Radar", className: "bg-muted text-muted-foreground" },
-  ANALYZING: { label: "Analyzing", className: "bg-warning/20 text-warning" },
-  HOT: { label: "HOT", className: "bg-destructive/20 text-destructive" },
-  SCALING: { label: "Scaling", className: "bg-success/20 text-success" },
-  DYING: { label: "Dying", className: "bg-accent/20 text-accent" },
-  DEAD: { label: "Dead", className: "bg-muted text-muted-foreground" },
-  CLONED: { label: "Cloned", className: "bg-primary/20 text-primary" },
-  VAULT: { label: "Vault", className: "bg-muted text-muted-foreground" },
-  NEVER_SCALED: { label: "Never Scaled", className: "bg-muted/50 text-muted-foreground" },
+const STATUS_BADGE: Record<string, { label: string; className: string; tip: string }> = {
+  RADAR: { label: "Radar", className: "bg-muted text-muted-foreground", tip: "Recém-descoberta, aguardando análise" },
+  ANALYZING: { label: "Analyzing", className: "bg-warning/20 text-warning", tip: "Sob investigação ativa" },
+  HOT: { label: "HOT", className: "bg-destructive/20 text-destructive", tip: "Sinais fortes — merece atenção imediata" },
+  SCALING: { label: "Scaling", className: "bg-success/20 text-success", tip: "Crescimento acelerado — hora de agir" },
+  DYING: { label: "Dying", className: "bg-accent/20 text-accent", tip: "Tráfego em queda, perdendo força" },
+  DEAD: { label: "Dead", className: "bg-muted text-muted-foreground", tip: "Parou completamente, referência histórica" },
+  CLONED: { label: "Cloned", className: "bg-primary/20 text-primary", tip: "Já clonada/adaptada para sua operação" },
+  VAULT: { label: "Vault", className: "bg-muted text-muted-foreground", tip: "Sites irrelevantes (google, youtube, etc)" },
+  NEVER_SCALED: { label: "Never Scaled", className: "bg-muted/50 text-muted-foreground", tip: "Nunca escalou — mantido como referência" },
 };
 
 const PAGE_SIZE_OPTIONS = [
@@ -247,8 +259,9 @@ export function TrafficIntelligenceView() {
       const sorted = [...monthMap.entries()].sort((a, b) => a[0].localeCompare(b[0]));
 
       const filtered = sorted.filter(([date]) => {
-        if (rangeFrom && date < rangeFrom) return false;
-        if (rangeTo && date > rangeTo + "-31") return false;
+        const dateMonth = date.slice(0, 7); // normalize "YYYY-MM-DD" to "YYYY-MM"
+        if (rangeFrom && dateMonth < rangeFrom) return false;
+        if (rangeTo && dateMonth > rangeTo) return false;
         return true;
       });
 
@@ -272,7 +285,7 @@ export function TrafficIntelligenceView() {
         variation,
         peak,
         peakDate,
-        sparkline: vals.slice(-6),
+        sparkline: vals,
         hasTrafficData,
         monthlyData: monthMap,
       };
@@ -388,8 +401,9 @@ export function TrafficIntelligenceView() {
     const result: { period_date: string; visits: number; domain: string }[] = [];
     for (const [label, mm] of byOffer) {
       for (const [date, visits] of mm) {
-        if (rangeFrom && date < rangeFrom) continue;
-        if (rangeTo && date > rangeTo + "-31") continue;
+        const dateMonth = date.slice(0, 7); // normalize "YYYY-MM-DD" to "YYYY-MM"
+        if (rangeFrom && dateMonth < rangeFrom) continue;
+        if (rangeTo && dateMonth > rangeTo) continue;
         result.push({ period_date: date, visits, domain: label });
       }
     }
@@ -524,6 +538,7 @@ export function TrafficIntelligenceView() {
   );
 
   return (
+    <TooltipProvider delayDuration={200}>
     <div className="space-y-4">
       {/* Loading indicator */}
       {trafficLoading && (
@@ -665,11 +680,13 @@ export function TrafficIntelligenceView() {
             <div className="flex items-center justify-between mb-2">
               <div className="flex gap-1.5 flex-wrap items-center">
                 <span className="text-xs font-medium text-muted-foreground mr-1">No grafico:</span>
-                {[...chartIds].map(id => {
+                {[...chartIds].map((id, idx) => {
                   const offer = (allOffers as any[])?.find((o: any) => o.id === id);
+                  const color = CHART_LINE_COLORS[idx % CHART_LINE_COLORS.length];
                   return (
-                    <Badge key={id} variant="secondary" className="gap-1 pr-1 text-xs">
-                      {offer?.nome || id}
+                    <Badge key={id} variant="secondary" className="gap-1.5 pr-1 text-xs">
+                      <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: color }} />
+                      {offer?.main_domain || offer?.nome || id}
                       <button onClick={() => toggleChart(id)} className="ml-0.5 hover:text-destructive">
                         <X className="h-3 w-3" />
                       </button>
@@ -743,43 +760,56 @@ export function TrafficIntelligenceView() {
                     />
                   </TableCell>
                   <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={() => toggleChart(row.id)}
-                      className={`p-1 rounded transition-colors ${
-                        isCharted
-                          ? "bg-primary/20 text-primary"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                      title={isCharted ? "Remover do grafico" : "Adicionar ao grafico"}
-                    >
-                      <BarChart3 className="h-3.5 w-3.5" />
-                    </button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => toggleChart(row.id)}
+                          className={`p-1 rounded transition-colors ${
+                            isCharted
+                              ? "bg-primary/20 text-primary"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          <BarChart3 className="h-3.5 w-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-xs">
+                        {isCharted ? "Remover do gráfico" : "Adicionar ao gráfico"}
+                      </TooltipContent>
+                    </Tooltip>
                   </TableCell>
                   {visibleColumns.has("status") && (
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button className="cursor-pointer" title="Alterar status">
-                            <Badge variant="outline" className={sb.className}>{sb.label}</Badge>
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="w-40">
-                          {STATUS_OPTIONS.map(s => (
-                            <DropdownMenuItem
-                              key={s.value}
-                              onClick={() => handleInlineStatusChange(row.id, s.value)}
-                            >
-                              {s.label}
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <Tooltip>
+                        <DropdownMenu>
+                          <TooltipTrigger asChild>
+                            <DropdownMenuTrigger asChild>
+                              <button className="cursor-pointer">
+                                <Badge variant="outline" className={`${sb.className} whitespace-nowrap`}>{sb.label}</Badge>
+                              </button>
+                            </DropdownMenuTrigger>
+                          </TooltipTrigger>
+                          <DropdownMenuContent align="start" className="w-40">
+                            {STATUS_OPTIONS.map(s => (
+                              <DropdownMenuItem
+                                key={s.value}
+                                onClick={() => handleInlineStatusChange(row.id, s.value)}
+                              >
+                                {s.label}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                        <TooltipContent side="right" className="text-xs max-w-[200px]">
+                          {sb.tip}
+                        </TooltipContent>
+                      </Tooltip>
                     </TableCell>
                   )}
                   {visibleColumns.has("oferta") && (
                     <TableCell>
-                      <p className="font-medium text-sm">{row.nome}</p>
-                      <p className="text-xs text-muted-foreground">{row.domain}</p>
+                      <p className="font-medium text-sm truncate max-w-[170px]">{row.nome}</p>
+                      <p className="text-xs text-muted-foreground truncate max-w-[170px]">{row.domain}</p>
                     </TableCell>
                   )}
                   {visibleColumns.has("trend") && (
@@ -829,14 +859,21 @@ export function TrafficIntelligenceView() {
                     </TableCell>
                   ))}
                   <TableCell onClick={(e) => e.stopPropagation()}>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => navigate(`/spy/${row.id}`)}
-                    >
-                      <Eye className="h-3.5 w-3.5" />
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => navigate(`/spy/${row.id}`)}
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-xs">
+                        Ver detalhes
+                      </TooltipContent>
+                    </Tooltip>
                   </TableCell>
                 </TableRow>
               );
@@ -848,5 +885,6 @@ export function TrafficIntelligenceView() {
       {/* Pagination bottom */}
       <PaginationControls />
     </div>
+    </TooltipProvider>
   );
 }
