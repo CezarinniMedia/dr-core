@@ -3,6 +3,19 @@ import { useNavigate } from "react-router-dom";
 import { useSpiedOffers } from "@/hooks/useSpiedOffers";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  compareTraffic,
+  filterTrafficRows,
+  sortTrafficRows,
+  formatTrafficNumber,
+  formatPeriodDate,
+  getAvailableMonths,
+  updateOfferStatus,
+  bulkUpdateStatus,
+  type OfferTrafficRow,
+  type SortField,
+  type SortDir,
+} from "@/services";
 
 // Parallel paginated fetch — gets row count first, then fetches pages 5 at a time
 async function fetchAllTrafficRows(periodType: string) {
@@ -143,37 +156,8 @@ function loadColumns(): Set<string> {
   return new Set(DEFAULT_COLUMNS);
 }
 
-type SortField = "nome" | "lastMonth" | "variation" | "peak" | "status" | "discovered";
-type SortDir = "asc" | "desc";
-
-interface OfferTrafficRow {
-  id: string;
-  nome: string;
-  domain: string;
-  status: string;
-  vertical: string | null;
-  discovered_at: string | null;
-  lastMonth: number;
-  prevMonth: number;
-  variation: number;
-  peak: number;
-  peakDate: string;
-  sparkline: number[];
-  hasTrafficData: boolean;
-  monthlyData?: Map<string, number>;
-}
-
-function formatK(n: number) {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
-  return String(n);
-}
-
-function formatDate(d: string) {
-  const [y, m] = d.split("-");
-  const names = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-  return `${names[parseInt(m) - 1]} ${y.slice(2)}`;
-}
+// Types SortField, SortDir, OfferTrafficRow imported from @/services/trafficService
+// Utility functions formatTrafficNumber, formatPeriodDate imported from @/services
 
 export function TrafficIntelligenceView() {
   const navigate = useNavigate();
@@ -232,93 +216,34 @@ export function TrafficIntelligenceView() {
   // Available months from traffic data
   const availableMonths = useMemo(() => {
     if (!allTraffic) return [];
-    const months = new Set<string>();
-    for (const t of allTraffic) months.add(t.period_date);
-    return [...months].sort();
+    return getAvailableMonths(allTraffic);
   }, [allTraffic]);
 
-  // Build rows: one per offer, aggregating traffic across domains
+  // Build rows: one per offer, aggregating traffic across domains (via trafficService)
   const rows: OfferTrafficRow[] = useMemo(() => {
     if (!allOffers) return [];
-
-    const trafficByOffer = new Map<string, { date: string; visits: number }[]>();
-    for (const t of allTraffic || []) {
-      const key = t.spied_offer_id;
-      if (!trafficByOffer.has(key)) trafficByOffer.set(key, []);
-      trafficByOffer.get(key)!.push({ date: t.period_date, visits: t.visits ?? 0 });
-    }
-
-    return allOffers.map((o: any) => {
-      const records = trafficByOffer.get(o.id) || [];
-      const hasTrafficData = records.length > 0;
-
-      const monthMap = new Map<string, number>();
-      for (const r of records) {
-        monthMap.set(r.date, (monthMap.get(r.date) || 0) + r.visits);
-      }
-      const sorted = [...monthMap.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-
-      const filtered = sorted.filter(([date]) => {
-        const dateMonth = date.slice(0, 7); // normalize "YYYY-MM-DD" to "YYYY-MM"
-        if (rangeFrom && dateMonth < rangeFrom) return false;
-        if (rangeTo && dateMonth > rangeTo) return false;
-        return true;
-      });
-
-      const vals = filtered.map(([, v]) => v);
-      const last = vals.length > 0 ? vals[vals.length - 1] : 0;
-      const prev = vals.length >= 2 ? vals[vals.length - 2] : 0;
-      const variation = prev > 0 ? ((last - prev) / prev) * 100 : (last > 0 ? 100 : 0);
-      const peak = vals.length > 0 ? Math.max(...vals) : 0;
-      const peakIdx = vals.indexOf(peak);
-      const peakDate = filtered[peakIdx]?.[0] || "";
-
-      return {
+    return compareTraffic(
+      (allOffers as any[]).map((o: any) => ({
         id: o.id,
         nome: o.nome,
-        domain: o.main_domain || "—",
-        status: o.status || "RADAR",
+        main_domain: o.main_domain,
+        status: o.status,
         vertical: o.vertical,
         discovered_at: o.discovered_at,
-        lastMonth: last,
-        prevMonth: prev,
-        variation,
-        peak,
-        peakDate,
-        sparkline: vals,
-        hasTrafficData,
-        monthlyData: monthMap,
-      };
-    });
+      })),
+      allTraffic || [],
+      { from: rangeFrom, to: rangeTo }
+    );
   }, [allOffers, allTraffic, rangeFrom, rangeTo]);
 
-  // Filter
+  // Filter (via trafficService)
   const filteredRows = useMemo(() => {
-    let r = rows;
-    if (statusFilter.size > 0) r = r.filter(x => statusFilter.has(x.status));
-    if (search) {
-      const s = search.toLowerCase();
-      r = r.filter(x => x.nome.toLowerCase().includes(s) || x.domain.toLowerCase().includes(s));
-    }
-    return r;
+    return filterTrafficRows(rows, statusFilter, search);
   }, [rows, statusFilter, search]);
 
-  // Sort
+  // Sort (via trafficService)
   const sortedRows = useMemo(() => {
-    const arr = [...filteredRows];
-    const dir = sortDir === "asc" ? 1 : -1;
-    arr.sort((a, b) => {
-      switch (sortField) {
-        case "nome": return a.nome.localeCompare(b.nome) * dir;
-        case "lastMonth": return (a.lastMonth - b.lastMonth) * dir;
-        case "variation": return (a.variation - b.variation) * dir;
-        case "peak": return (a.peak - b.peak) * dir;
-        case "status": return a.status.localeCompare(b.status) * dir;
-        case "discovered": return (a.discovered_at || "").localeCompare(b.discovered_at || "") * dir;
-        default: return 0;
-      }
-    });
-    return arr;
+    return sortTrafficRows(filteredRows, sortField, sortDir);
   }, [filteredRows, sortField, sortDir]);
 
   // Pagination
@@ -349,19 +274,18 @@ export function TrafficIntelligenceView() {
     });
   };
 
-  // Inline status update (optimistic)
+  // Inline status update (optimistic, via offerService)
   const handleInlineStatusChange = async (offerId: string, newStatus: string) => {
-    try {
-      const { error } = await supabase.from("spied_offers").update({ status: newStatus } as any).eq("id", offerId);
-      if (error) throw error;
-      queryClient.setQueriesData({ queryKey: ['spied-offers'] }, (old: any) => {
-        if (!old) return old;
-        return old.map((o: any) => o.id === offerId ? { ...o, status: newStatus } : o);
-      });
-      setTimeout(() => queryClient.invalidateQueries({ queryKey: ['spied-offers'] }), 1500);
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    const { error } = await updateOfferStatus(offerId, newStatus);
+    if (error) {
+      toast({ title: "Erro", description: error, variant: "destructive" });
+      return;
     }
+    queryClient.setQueriesData({ queryKey: ['spied-offers'] }, (old: any) => {
+      if (!old) return old;
+      return old.map((o: any) => o.id === offerId ? { ...o, status: newStatus } : o);
+    });
+    setTimeout(() => queryClient.invalidateQueries({ queryKey: ['spied-offers'] }), 1500);
   };
 
   // Column toggle
@@ -450,22 +374,21 @@ export function TrafficIntelligenceView() {
     setChartIds(new Set(sortedRows.filter(r => r.hasTrafficData).map(r => r.id)));
   }, [sortedRows]);
 
-  // Bulk status change (optimistic so filtered rows disappear immediately)
+  // Bulk status change (optimistic, via offerService)
   const handleBulkStatus = async (newStatus: string) => {
     const ids = Array.from(selectedIds);
-    try {
-      const { error } = await supabase.from("spied_offers").update({ status: newStatus } as any).in("id", ids);
-      if (error) throw error;
-      toast({ title: `${ids.length} ofertas → ${newStatus}` });
-      queryClient.setQueriesData({ queryKey: ['spied-offers'] }, (old: any) => {
-        if (!old) return old;
-        return old.map((o: any) => ids.includes(o.id) ? { ...o, status: newStatus } : o);
-      });
-      setSelectedIds(new Set());
-      setTimeout(() => queryClient.invalidateQueries({ queryKey: ['spied-offers'] }), 1500);
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    const { error } = await bulkUpdateStatus(ids, newStatus);
+    if (error) {
+      toast({ title: "Erro", description: error, variant: "destructive" });
+      return;
     }
+    toast({ title: `${ids.length} ofertas → ${newStatus}` });
+    queryClient.setQueriesData({ queryKey: ['spied-offers'] }, (old: any) => {
+      if (!old) return old;
+      return old.map((o: any) => ids.includes(o.id) ? { ...o, status: newStatus } : o);
+    });
+    setSelectedIds(new Set());
+    setTimeout(() => queryClient.invalidateQueries({ queryKey: ['spied-offers'] }), 1500);
   };
 
   const allChecked = sortedRows.length > 0 && sortedRows.every(r => selectedIds.has(r.id));
@@ -520,7 +443,7 @@ export function TrafficIntelligenceView() {
         </Select>
         <span className="text-xs text-muted-foreground">
           {sortedRows.length} oferta(s) {sortedRows.filter(r => r.hasTrafficData).length > 0 && `• ${sortedRows.filter(r => r.hasTrafficData).length} com trafego`}
-          {rangeFrom && ` • ${formatDate(rangeFrom)} – ${rangeTo ? formatDate(rangeTo) : "..."}`}
+          {rangeFrom && ` • ${formatPeriodDate(rangeFrom)} – ${rangeTo ? formatPeriodDate(rangeTo) : "..."}`}
         </span>
       </div>
       {!isInfinite && totalPages > 1 && (
@@ -607,7 +530,7 @@ export function TrafficIntelligenceView() {
                         checked={monthColumns.has(m)}
                         onCheckedChange={() => toggleMonthColumn(m)}
                       />
-                      {formatDate(m)}
+                      {formatPeriodDate(m)}
                     </label>
                   ))}
                 </div>
@@ -731,7 +654,7 @@ export function TrafficIntelligenceView() {
               {visibleColumns.has("peak") && <SortHeader field="peak" label="Pico" className="text-right w-[90px]" />}
               {visibleColumns.has("discovered") && <SortHeader field="discovered" label="Descoberto" className="w-[90px]" />}
               {sortedMonthCols.map(m => (
-                <TableHead key={m} className="text-right w-[80px] text-xs">{formatDate(m)}</TableHead>
+                <TableHead key={m} className="text-right w-[80px] text-xs">{formatPeriodDate(m)}</TableHead>
               ))}
               <TableHead className="w-[60px]" />
             </TableRow>
@@ -829,7 +752,7 @@ export function TrafficIntelligenceView() {
                   )}
                   {visibleColumns.has("lastMonth") && (
                     <TableCell className="text-right font-medium text-sm">
-                      {row.hasTrafficData ? formatK(row.lastMonth) : <span className="text-muted-foreground">N/A</span>}
+                      {row.hasTrafficData ? formatTrafficNumber(row.lastMonth) : <span className="text-muted-foreground">N/A</span>}
                     </TableCell>
                   )}
                   {visibleColumns.has("variation") && (
@@ -851,7 +774,7 @@ export function TrafficIntelligenceView() {
                   {visibleColumns.has("peak") && (
                     <TableCell className="text-right text-xs">
                       {row.hasTrafficData && row.peak > 0
-                        ? <>{formatK(row.peak)} <span className="text-muted-foreground">({row.peakDate ? formatDate(row.peakDate) : ""})</span></>
+                        ? <>{formatTrafficNumber(row.peak)} <span className="text-muted-foreground">({row.peakDate ? formatPeriodDate(row.peakDate) : ""})</span></>
                         : <span className="text-muted-foreground">—</span>
                       }
                     </TableCell>
@@ -859,13 +782,13 @@ export function TrafficIntelligenceView() {
                   {visibleColumns.has("discovered") && (
                     <TableCell className="text-xs text-muted-foreground">
                       {row.discovered_at
-                        ? formatDate(row.discovered_at.slice(0, 7))
+                        ? formatPeriodDate(row.discovered_at.slice(0, 7))
                         : "—"}
                     </TableCell>
                   )}
                   {sortedMonthCols.map(m => (
                     <TableCell key={m} className="text-right text-xs">
-                      {row.monthlyData?.get(m) != null ? formatK(row.monthlyData.get(m)!) : <span className="text-muted-foreground">—</span>}
+                      {row.monthlyData?.get(m) != null ? formatTrafficNumber(row.monthlyData.get(m)!) : <span className="text-muted-foreground">—</span>}
                     </TableCell>
                   ))}
                   <TableCell onClick={(e) => e.stopPropagation()}>

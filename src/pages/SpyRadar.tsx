@@ -63,7 +63,15 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  filterOffers as filterOffersService,
+  updateOfferStatus,
+  updateOfferNotes,
+  bulkUpdateStatus,
+  bulkDeleteOffers,
+  stripMarkdown,
+  formatCurrency,
+} from "@/services";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -200,14 +208,7 @@ const PAGE_SIZE_OPTIONS = [
   { value: "all", label: "Todas (infinito)" },
 ];
 
-function formatCurrency(value: number | null | undefined) {
-  if (!value) return "—";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
-}
-
-function stripMarkdown(text: string) {
-  return text.replace(/[#*`>\[\]_~]/g, "").replace(/\n+/g, " ").trim();
-}
+// formatCurrency and stripMarkdown imported from @/services/offerService
 
 // ─── Screenshot Lightbox ─────────────────────────────────────────────────────
 
@@ -429,35 +430,33 @@ export default function SpyRadar() {
     savePresetsToStorage(newPresets);
   };
 
-  // Inline status change (optimistic)
+  // Inline status change (optimistic, via offerService)
   const handleInlineStatusChange = async (offerId: string, newStatus: string) => {
-    try {
-      const { error } = await supabase.from("spied_offers").update({ status: newStatus } as any).eq("id", offerId);
-      if (error) throw error;
-      queryClient.setQueriesData({ queryKey: ['spied-offers'] }, (old: any) => {
-        if (!old) return old;
-        return old.map((o: any) => o.id === offerId ? { ...o, status: newStatus } : o);
-      });
-      setTimeout(() => queryClient.invalidateQueries({ queryKey: ['spied-offers'] }), 1500);
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    const { error } = await updateOfferStatus(offerId, newStatus);
+    if (error) {
+      toast({ title: "Erro", description: error, variant: "destructive" });
+      return;
     }
+    queryClient.setQueriesData({ queryKey: ['spied-offers'] }, (old: any) => {
+      if (!old) return old;
+      return old.map((o: any) => o.id === offerId ? { ...o, status: newStatus } : o);
+    });
+    setTimeout(() => queryClient.invalidateQueries({ queryKey: ['spied-offers'] }), 1500);
   };
 
-  // Notes update
+  // Notes update (via offerService)
   const handleNotesUpdate = async (offerId: string) => {
-    try {
-      const { error } = await supabase.from("spied_offers").update({ notas: notesValue } as any).eq("id", offerId);
-      if (error) throw error;
-      queryClient.setQueriesData({ queryKey: ['spied-offers'] }, (old: any) => {
-        if (!old) return old;
-        return old.map((o: any) => o.id === offerId ? { ...o, notas: notesValue } : o);
-      });
-      setEditingNotesId(null);
-      toast({ title: "Notas salvas!" });
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    const { error } = await updateOfferNotes(offerId, notesValue);
+    if (error) {
+      toast({ title: "Erro", description: error, variant: "destructive" });
+      return;
     }
+    queryClient.setQueriesData({ queryKey: ['spied-offers'] }, (old: any) => {
+      if (!old) return old;
+      return old.map((o: any) => o.id === offerId ? { ...o, notas: notesValue } : o);
+    });
+    setEditingNotesId(null);
+    toast({ title: "Notas salvas!" });
   };
 
   const { data: allOffersRaw, isLoading, refetch } = useSpiedOffers({
@@ -473,11 +472,11 @@ export default function SpyRadar() {
     localStorage.setItem(LS_KEY_TRAFFIC_SOURCE, src);
   };
 
-  // Client-side multi-status filter
+  // Client-side multi-status filter (via offerService)
   const offers = useMemo(() => {
     if (!allOffersRaw) return allOffersRaw;
     if (statusFilter.size === 0) return allOffersRaw;
-    return allOffersRaw.filter((o: any) => statusFilter.has(o.status || "RADAR"));
+    return filterOffersService(allOffersRaw as any, { statusFilter });
   }, [allOffersRaw, statusFilter]);
 
   const getCount = (item: any, relation: string) => {
@@ -554,37 +553,34 @@ export default function SpyRadar() {
     });
   }, [visibleOffers]);
 
-  // Bulk actions
+  // Bulk actions (via offerService)
   const handleBulkDelete = async () => {
     const ids = Array.from(selectedIds);
-    try {
-      const { error } = await supabase.from('spied_offers').delete().in('id', ids);
-      if (error) throw error;
+    const { error } = await bulkDeleteOffers(ids);
+    if (error) {
+      toast({ title: 'Erro', description: error, variant: 'destructive' });
+    } else {
       toast({ title: `${ids.length} ofertas removidas!` });
       setSelectedIds(new Set());
       refetch();
-    } catch (err: any) {
-      toast({ title: 'Erro', description: err.message, variant: 'destructive' });
     }
     setDeleteTarget(null);
   };
 
   const handleBulkStatusChange = async (newStatus: string) => {
     const ids = Array.from(selectedIds);
-    try {
-      const { error } = await supabase.from('spied_offers').update({ status: newStatus } as any).in('id', ids);
-      if (error) throw error;
-      toast({ title: `${ids.length} ofertas → ${newStatus}` });
-      // Optimistic update: immediately apply to cache so status filter takes effect at once
-      queryClient.setQueriesData({ queryKey: ['spied-offers'] }, (old: any) => {
-        if (!old) return old;
-        return old.map((o: any) => ids.includes(o.id) ? { ...o, status: newStatus } : o);
-      });
-      setSelectedIds(new Set());
-      setTimeout(() => queryClient.invalidateQueries({ queryKey: ['spied-offers'] }), 1500);
-    } catch (err: any) {
-      toast({ title: 'Erro', description: err.message, variant: 'destructive' });
+    const { error } = await bulkUpdateStatus(ids, newStatus);
+    if (error) {
+      toast({ title: 'Erro', description: error, variant: 'destructive' });
+      return;
     }
+    toast({ title: `${ids.length} ofertas → ${newStatus}` });
+    queryClient.setQueriesData({ queryKey: ['spied-offers'] }, (old: any) => {
+      if (!old) return old;
+      return old.map((o: any) => ids.includes(o.id) ? { ...o, status: newStatus } : o);
+    });
+    setSelectedIds(new Set());
+    setTimeout(() => queryClient.invalidateQueries({ queryKey: ['spied-offers'] }), 1500);
   };
 
   const allPageChecked = visibleOffers.length > 0 && visibleOffers.every(o => selectedIds.has(o.id));
