@@ -972,9 +972,19 @@ export default function SpyRadar() {
                             {/* Nome */}
                             {visibleColumns.has("nome") && (
                               <TableCell>
-                                <p className="font-medium text-sm truncate max-w-[190px]">{offer.nome}</p>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <p className="font-medium text-sm truncate max-w-[190px]">{offer.nome}</p>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="text-xs max-w-xs">{offer.nome}</TooltipContent>
+                                </Tooltip>
                                 {offer.main_domain && (
-                                  <p className="text-xs text-muted-foreground truncate max-w-[190px]">{offer.main_domain}</p>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <p className="text-xs text-muted-foreground truncate max-w-[190px]">{offer.main_domain}</p>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom" className="text-xs">{offer.main_domain}</TooltipContent>
+                                  </Tooltip>
                                 )}
                               </TableCell>
                             )}
@@ -1073,15 +1083,25 @@ export default function SpyRadar() {
 
                             {/* Subnicho */}
                             {visibleColumns.has("subnicho") && (
-                              <TableCell className="text-xs text-muted-foreground truncate max-w-[80px]">
-                                {offer.subnicho || "—"}
+                              <TableCell className="text-xs text-muted-foreground max-w-[80px]">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="block truncate">{offer.subnicho || "—"}</span>
+                                  </TooltipTrigger>
+                                  {offer.subnicho && <TooltipContent side="top" className="text-xs">{offer.subnicho}</TooltipContent>}
+                                </Tooltip>
                               </TableCell>
                             )}
 
                             {/* Product name */}
                             {visibleColumns.has("product_name") && (
-                              <TableCell className="text-xs truncate max-w-[130px]">
-                                {offer.product_name || "—"}
+                              <TableCell className="text-xs max-w-[130px]">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="block truncate">{offer.product_name || "—"}</span>
+                                  </TooltipTrigger>
+                                  {offer.product_name && <TooltipContent side="top" className="text-xs">{offer.product_name}</TooltipContent>}
+                                </Tooltip>
                               </TableCell>
                             )}
 
@@ -1150,15 +1170,25 @@ export default function SpyRadar() {
 
                             {/* Operator */}
                             {visibleColumns.has("operator") && (
-                              <TableCell className="text-xs text-muted-foreground truncate max-w-[90px]">
-                                {offer.operator_name || "—"}
+                              <TableCell className="text-xs text-muted-foreground max-w-[90px]">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="block truncate">{offer.operator_name || "—"}</span>
+                                  </TooltipTrigger>
+                                  {offer.operator_name && <TooltipContent side="top" className="text-xs">{offer.operator_name}</TooltipContent>}
+                                </Tooltip>
                               </TableCell>
                             )}
 
                             {/* Checkout */}
                             {visibleColumns.has("checkout") && (
-                              <TableCell className="text-xs text-muted-foreground truncate max-w-[80px]">
-                                {offer.checkout_provider || "—"}
+                              <TableCell className="text-xs text-muted-foreground max-w-[80px]">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="block truncate">{offer.checkout_provider || "—"}</span>
+                                  </TooltipTrigger>
+                                  {offer.checkout_provider && <TooltipContent side="top" className="text-xs">{offer.checkout_provider}</TooltipContent>}
+                                </Tooltip>
                               </TableCell>
                             )}
 
@@ -1171,8 +1201,13 @@ export default function SpyRadar() {
 
                             {/* Fonte */}
                             {visibleColumns.has("fonte") && (
-                              <TableCell className="text-xs text-muted-foreground truncate max-w-[90px]">
-                                {offer.discovery_source || "—"}
+                              <TableCell className="text-xs text-muted-foreground max-w-[90px]">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="block truncate">{offer.discovery_source || "—"}</span>
+                                  </TooltipTrigger>
+                                  {offer.discovery_source && <TooltipContent side="top" className="text-xs">{offer.discovery_source}</TooltipContent>}
+                                </Tooltip>
                               </TableCell>
                             )}
 
@@ -1239,7 +1274,6 @@ export default function SpyRadar() {
                                           variant="ghost"
                                           size="icon"
                                           className="h-7 w-7"
-                                          title="Pré-visualizar screenshot"
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             setHoverScreenshotId(null);
@@ -1277,26 +1311,34 @@ export default function SpyRadar() {
                                 )}
 
                                 {/* Open offer detail */}
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7"
-                                  title="Abrir oferta"
-                                  onClick={() => navigate(`/spy/${offer.id}`)}
-                                >
-                                  <Eye className="h-3.5 w-3.5" />
-                                </Button>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7"
+                                      onClick={() => navigate(`/spy/${offer.id}`)}
+                                    >
+                                      <Eye className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="text-xs">Abrir oferta</TooltipContent>
+                                </Tooltip>
 
                                 {/* Delete */}
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 text-destructive"
-                                  title="Deletar oferta"
-                                  onClick={() => { setDeleteId(offer.id); setDeleteTarget("single"); }}
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 text-destructive"
+                                      onClick={() => { setDeleteId(offer.id); setDeleteTarget("single"); }}
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="text-xs">Deletar oferta</TooltipContent>
+                                </Tooltip>
                               </div>
                             </TableCell>
                           </TableRow>

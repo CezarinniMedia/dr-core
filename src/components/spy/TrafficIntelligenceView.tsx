@@ -104,7 +104,7 @@ const STATUS_BADGE: Record<string, { label: string; className: string; tip: stri
   RADAR: { label: "Radar", className: "bg-muted text-muted-foreground", tip: "Recém-descoberta, aguardando análise" },
   ANALYZING: { label: "Analyzing", className: "bg-warning/20 text-warning", tip: "Sob investigação ativa" },
   HOT: { label: "HOT", className: "bg-destructive/20 text-destructive", tip: "Sinais fortes — merece atenção imediata" },
-  SCALING: { label: "Scaling", className: "bg-success/20 text-success", tip: "Crescimento acelerado — hora de agir" },
+  SCALING: { label: "Scaling", className: "bg-success/20 text-success animate-pulse", tip: "Crescimento acelerado — hora de agir" },
   DYING: { label: "Dying", className: "bg-accent/20 text-accent", tip: "Tráfego em queda, perdendo força" },
   DEAD: { label: "Dead", className: "bg-muted text-muted-foreground", tip: "Parou completamente, referência histórica" },
   CLONED: { label: "Cloned", className: "bg-primary/20 text-primary", tip: "Já clonada/adaptada para sua operação" },
@@ -808,8 +808,18 @@ export function TrafficIntelligenceView() {
                   )}
                   {visibleColumns.has("oferta") && (
                     <TableCell>
-                      <p className="font-medium text-sm truncate max-w-[170px]">{row.nome}</p>
-                      <p className="text-xs text-muted-foreground truncate max-w-[170px]">{row.domain}</p>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <p className="font-medium text-sm truncate max-w-[170px]">{row.nome}</p>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="text-xs max-w-xs">{row.nome}</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <p className="text-xs text-muted-foreground truncate max-w-[170px]">{row.domain}</p>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="text-xs">{row.domain}</TooltipContent>
+                      </Tooltip>
                     </TableCell>
                   )}
                   {visibleColumns.has("trend") && (
