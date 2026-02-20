@@ -82,7 +82,7 @@ export function useExtractAvatar() {
     onSuccess: (avatar) => {
       queryClient.invalidateQueries({ queryKey: ["avatares"] });
       toast({
-        title: "✅ Avatar extraído!",
+        title: "Avatar extraído!",
         description: `Avatar "${avatar.nome}" criado com sucesso.`,
       });
     },

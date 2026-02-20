@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCreateCompetitor } from "@/hooks/useCompetitors";
+import { Flame, Zap, Snowflake } from "lucide-react";
 
 interface CompetitorFormDialogProps {
   open: boolean;
@@ -101,9 +102,9 @@ export function CompetitorFormDialog({ open, onClose }: CompetitorFormDialogProp
               <Select value={form.status_tracking} onValueChange={(v) => update("status_tracking", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="HOT">🔥 HOT</SelectItem>
-                  <SelectItem value="WARM">⚡ WARM</SelectItem>
-                  <SelectItem value="COLD">❄️ COLD</SelectItem>
+                  <SelectItem value="HOT"><span className="inline-flex items-center gap-1"><Flame className="h-3 w-3" /> HOT</span></SelectItem>
+                  <SelectItem value="WARM"><span className="inline-flex items-center gap-1"><Zap className="h-3 w-3" /> WARM</span></SelectItem>
+                  <SelectItem value="COLD"><span className="inline-flex items-center gap-1"><Snowflake className="h-3 w-3" /> COLD</span></SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -30,13 +30,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Edit, Trash2, ExternalLink } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, ExternalLink, Flame, Rocket, LayoutList, Globe, BookOpen, Palette, Map, BarChart3, FileText } from "lucide-react";
 
-const STATUS_BADGE: Record<string, { label: string; className: string }> = {
+const STATUS_BADGE: Record<string, { label: React.ReactNode; className: string }> = {
   RADAR: { label: "Radar", className: "bg-muted text-muted-foreground" },
   ANALYZING: { label: "Analyzing", className: "bg-warning/20 text-warning" },
-  HOT: { label: "🔥 HOT", className: "bg-destructive/20 text-destructive" },
-  SCALING: { label: "🚀 Scaling", className: "bg-success/20 text-success animate-pulse" },
+  HOT: { label: <><Flame className="h-3.5 w-3.5 inline" /> HOT</>, className: "bg-destructive/20 text-destructive" },
+  SCALING: { label: <><Rocket className="h-3.5 w-3.5 inline" /> Scaling</>, className: "bg-success/20 text-success animate-pulse" },
   DYING: { label: "Dying", className: "bg-accent/20 text-accent" },
   DEAD: { label: "Dead", className: "bg-muted text-muted-foreground line-through" },
   CLONED: { label: "Cloned", className: "bg-primary/20 text-primary" },
@@ -141,13 +141,13 @@ export default function SpyOfferDetail() {
       {/* Tabs */}
       <Tabs defaultValue="overview">
         <TabsList className="flex-wrap h-auto gap-1">
-          <TabsTrigger value="overview">📋 Overview</TabsTrigger>
-          <TabsTrigger value="domains">🌐 Domínios</TabsTrigger>
-          <TabsTrigger value="libraries">📚 Bibliotecas</TabsTrigger>
-          <TabsTrigger value="creatives">🎨 Ad Creatives</TabsTrigger>
-          <TabsTrigger value="funnel">🗺️ Funil</TabsTrigger>
-          <TabsTrigger value="traffic">📊 Tráfego</TabsTrigger>
-          <TabsTrigger value="notes">📝 Notas</TabsTrigger>
+          <TabsTrigger value="overview" className="flex items-center gap-1.5"><LayoutList className="h-4 w-4" /> Overview</TabsTrigger>
+          <TabsTrigger value="domains" className="flex items-center gap-1.5"><Globe className="h-4 w-4" /> Domínios</TabsTrigger>
+          <TabsTrigger value="libraries" className="flex items-center gap-1.5"><BookOpen className="h-4 w-4" /> Bibliotecas</TabsTrigger>
+          <TabsTrigger value="creatives" className="flex items-center gap-1.5"><Palette className="h-4 w-4" /> Ad Creatives</TabsTrigger>
+          <TabsTrigger value="funnel" className="flex items-center gap-1.5"><Map className="h-4 w-4" /> Funil</TabsTrigger>
+          <TabsTrigger value="traffic" className="flex items-center gap-1.5"><BarChart3 className="h-4 w-4" /> Tráfego</TabsTrigger>
+          <TabsTrigger value="notes" className="flex items-center gap-1.5"><FileText className="h-4 w-4" /> Notas</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-4">

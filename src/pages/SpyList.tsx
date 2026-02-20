@@ -4,7 +4,7 @@ import { CompetitorCard } from "@/components/spy/CompetitorCard";
 import { CompetitorFormDialog } from "@/components/spy/CompetitorFormDialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Flame, Zap, Snowflake } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,7 +27,7 @@ export default function SpyPage() {
     <div className="max-w-6xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">🔍 Espionagem</h1>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2"><Search className="h-6 w-6" /> Espionagem</h1>
           <p className="text-muted-foreground text-sm">
             Monitore concorrentes, salve ads e mapeie funis
           </p>
@@ -41,9 +41,9 @@ export default function SpyPage() {
       <Tabs defaultValue="all" onValueChange={(v) => setStatusFilter(v === "all" ? undefined : v)}>
         <TabsList>
           <TabsTrigger value="all">Todos</TabsTrigger>
-          <TabsTrigger value="HOT">🔥 HOT</TabsTrigger>
-          <TabsTrigger value="WARM">⚡ WARM</TabsTrigger>
-          <TabsTrigger value="COLD">❄️ COLD</TabsTrigger>
+          <TabsTrigger value="HOT" className="flex items-center gap-1.5"><Flame className="h-4 w-4" /> HOT</TabsTrigger>
+          <TabsTrigger value="WARM" className="flex items-center gap-1.5"><Zap className="h-4 w-4" /> WARM</TabsTrigger>
+          <TabsTrigger value="COLD" className="flex items-center gap-1.5"><Snowflake className="h-4 w-4" /> COLD</TabsTrigger>
         </TabsList>
 
         <TabsContent value="all" className="mt-4">

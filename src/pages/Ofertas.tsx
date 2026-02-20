@@ -4,7 +4,7 @@ import { OfertaCard } from "@/components/ofertas/OfertaCard";
 import { OfertaFormDialog } from "@/components/ofertas/OfertaFormDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Package, Loader2 } from "lucide-react";
+import { Plus, Package, Loader2, FlaskConical, Zap, Pause, Skull } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,13 +16,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-const statusFilters: { label: string; value: OfertaStatus | "ALL" }[] = [
+const statusFilters: { label: React.ReactNode; value: OfertaStatus | "ALL" }[] = [
   { label: "Todas", value: "ALL" },
-  { label: "🔬 Research", value: "RESEARCH" },
-  { label: "⚗️ Testando", value: "TEST" },
-  { label: "⚡ Ativas", value: "ATIVA" },
-  { label: "⏸️ Pausadas", value: "PAUSE" },
-  { label: "☠️ Mortas", value: "MORTA" },
+  { label: <><FlaskConical className="h-3.5 w-3.5 inline mr-1" />Research</>, value: "RESEARCH" },
+  { label: <><FlaskConical className="h-3.5 w-3.5 inline mr-1" />Testando</>, value: "TEST" },
+  { label: <><Zap className="h-3.5 w-3.5 inline mr-1" />Ativas</>, value: "ATIVA" },
+  { label: <><Pause className="h-3.5 w-3.5 inline mr-1" />Pausadas</>, value: "PAUSE" },
+  { label: <><Skull className="h-3.5 w-3.5 inline mr-1" />Mortas</>, value: "MORTA" },
 ];
 
 export default function OfertasPage() {
