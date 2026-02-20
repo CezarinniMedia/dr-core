@@ -75,7 +75,7 @@ export function SpyTrafficTab({ offerId, offerDomains, mainDomain }: SpyTrafficT
       });
       setManualVisits("");
       setManualMonth("");
-      toast({ title: "✅ Dado adicionado!" });
+      toast({ title: "Dado adicionado" });
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
     }
@@ -93,7 +93,7 @@ export function SpyTrafficTab({ offerId, offerDomains, mainDomain }: SpyTrafficT
       {
         onSuccess: () => {
           setEditingRecord(null);
-          toast({ title: "✅ Registro atualizado!" });
+          toast({ title: "Registro atualizado" });
         },
       }
     );
@@ -111,7 +111,7 @@ export function SpyTrafficTab({ offerId, offerDomains, mainDomain }: SpyTrafficT
     return (
       <div className="border border-dashed rounded-lg p-12 text-center space-y-4">
         <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto" />
-        <p className="text-muted-foreground">📊 Nenhum dado de tráfego ainda.</p>
+        <p className="text-muted-foreground">Nenhum dado de tráfego ainda.</p>
         <p className="text-sm text-muted-foreground">Importe dados do Semrush ou adicione manualmente.</p>
         <Button variant="outline" size="sm" onClick={() => setShowManual(true)}>
           <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar Manualmente
@@ -169,7 +169,7 @@ export function SpyTrafficTab({ offerId, offerDomains, mainDomain }: SpyTrafficT
           <CardHeader className="pb-2">
             <CollapsibleTrigger className="flex items-center gap-2 w-full">
               <CardTitle className="text-sm flex-1 text-left flex items-center gap-2">
-                📋 Dados Brutos ({filteredData.length} registros)
+                Dados Brutos ({filteredData.length} registros)
               </CardTitle>
               <ChevronDown className={`h-4 w-4 transition-transform ${showDataTable ? "rotate-180" : ""}`} />
             </CollapsibleTrigger>

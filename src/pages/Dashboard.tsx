@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, Users, Sparkles, TrendingUp, ArrowRight } from "lucide-react";
+import { Package, Users, Sparkles, TrendingUp, ArrowRight, Rocket, CheckCircle, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const stats = [
@@ -66,11 +66,11 @@ export default function DashboardPage() {
       {/* Setup Card */}
       <Card className="border-primary/20 bg-primary/5">
         <CardHeader>
-          <CardTitle className="text-lg">🚀 Bem-vindo ao DR Operations</CardTitle>
+          <CardTitle className="text-lg flex items-center gap-2"><Rocket className="h-5 w-5" /> Bem-vindo ao DR Operations</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm text-muted-foreground">
-          <p>✅ Foundation setup completo — Auth, Database, Layout</p>
-          <p>⏳ Próximo: Configure suas ofertas e comece a operar</p>
+          <p className="flex items-center gap-1.5"><CheckCircle className="h-4 w-4 inline" /> Foundation setup completo — Auth, Database, Layout</p>
+          <p className="flex items-center gap-1.5"><Clock className="h-4 w-4 inline" /> Próximo: Configure suas ofertas e comece a operar</p>
         </CardContent>
       </Card>
     </div>

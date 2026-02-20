@@ -172,7 +172,7 @@ export function SemrushImportModal({ open, onClose }: SemrushImportModalProps) {
         }
       }
 
-      toast({ title: `✅ Importação concluída! ${imported} registros para ${domainMatches.length} domínios` });
+      toast({ title: `Importação concluída! ${imported} registros para ${domainMatches.length} domínios` });
       handleReset();
       onClose();
     } catch (err: any) {

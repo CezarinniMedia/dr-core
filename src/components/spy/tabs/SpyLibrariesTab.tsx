@@ -15,7 +15,7 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Plus, Trash2, ExternalLink, Loader2, Edit } from "lucide-react";
+import { Plus, Trash2, ExternalLink, Loader2, Edit, Rocket } from "lucide-react";
 
 interface SpyLibrariesTabProps {
   offerId: string;
@@ -120,7 +120,7 @@ export function SpyLibrariesTab({ offerId }: SpyLibrariesTabProps) {
                   <TableCell className="text-xs text-muted-foreground">{lib.page_id || "—"}</TableCell>
                   <TableCell className="text-center text-sm">{lib.ad_count ?? "—"}</TableCell>
                   <TableCell className="text-center">
-                    {lib.is_scaled ? <Badge className="bg-success/20 text-success">🚀 Sim</Badge> : <span className="text-xs text-muted-foreground">Não</span>}
+                    {lib.is_scaled ? <Badge className="bg-success/20 text-success inline-flex items-center gap-1"><Rocket className="h-3 w-3" /> Sim</Badge> : <span className="text-xs text-muted-foreground">Não</span>}
                   </TableCell>
                   <TableCell>
                     {lib.library_url ? (

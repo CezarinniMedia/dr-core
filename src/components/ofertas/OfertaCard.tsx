@@ -1,17 +1,18 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, FlaskConical, Pause, Skull, Trash2, Zap } from "lucide-react";
+import { ReactNode } from "react";
 import { formatCurrency } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import type { Oferta } from "@/hooks/useOfertas";
 
-const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  RESEARCH: { label: "🔬 Research", variant: "secondary" },
-  TEST: { label: "⚗️ Testando", variant: "outline" },
-  ATIVA: { label: "⚡ Ativa", variant: "default" },
-  PAUSE: { label: "⏸️ Pausada", variant: "secondary" },
-  MORTA: { label: "☠️ Morta", variant: "destructive" },
+const statusConfig: Record<string, { label: string; icon: ReactNode; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+  RESEARCH: { label: "Research", icon: <FlaskConical className="h-3 w-3" />, variant: "secondary" },
+  TEST: { label: "Testando", icon: <FlaskConical className="h-3 w-3" />, variant: "outline" },
+  ATIVA: { label: "Ativa", icon: <Zap className="h-3 w-3" />, variant: "default" },
+  PAUSE: { label: "Pausada", icon: <Pause className="h-3 w-3" />, variant: "secondary" },
+  MORTA: { label: "Morta", icon: <Skull className="h-3 w-3" />, variant: "destructive" },
 };
 
 interface OfertaCardProps {
@@ -39,7 +40,7 @@ export function OfertaCard({ oferta, onDelete }: OfertaCardProps) {
             {oferta.mercado && <span>{oferta.mercado}</span>}
           </div>
         </div>
-        <Badge variant={status.variant}>{status.label}</Badge>
+        <Badge variant={status.variant} className="flex items-center gap-1">{status.icon} {status.label}</Badge>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm mb-4">

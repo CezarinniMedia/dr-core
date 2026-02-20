@@ -53,7 +53,7 @@ function extractPeriodFromFilename(fileName: string): { date: string; label: str
   return { date: `${match[2]}-${String(month).padStart(2, "0")}-01`, label: match[0].trim() };
 }
 import {
-  Upload, FileSpreadsheet, CheckCircle, AlertTriangle, ArrowRight, ArrowLeft, Loader2, X,
+  Upload, FileSpreadsheet, CheckCircle, AlertTriangle, ArrowRight, ArrowLeft, Loader2, X, BarChart3, RotateCw,
 } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 
@@ -735,7 +735,7 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
       setImportResult({ newOffers, updated, trafficRecords: trafficCount });
       queryClient.invalidateQueries({ queryKey: ["spied-offers"] });
       setStep(4);
-      toast({ title: "Importação concluída!" });
+      toast({ title: "Importação concluída" });
     } catch (err: any) {
       toast({ title: "Erro na importação", description: err.message, variant: "destructive" });
     } finally {
@@ -1089,7 +1089,7 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
             </div>
 
             <div className="text-sm text-muted-foreground space-y-1">
-              <p>📊 {totalDomains} domínios · {newDomains} novos · {matchedDomains} existentes · {totalTraffic} registros de tráfego</p>
+              <p className="flex items-center gap-1"><BarChart3 className="h-3.5 w-3.5" /> {totalDomains} domínios · {newDomains} novos · {matchedDomains} existentes · {totalTraffic} registros de tráfego</p>
             </div>
 
             {importing && (
@@ -1123,9 +1123,9 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
               <CheckCircle className="h-12 w-12 text-success mx-auto" />
               <h3 className="text-lg font-semibold">Importação Concluída!</h3>
               <div className="text-sm text-muted-foreground space-y-1">
-                <p>✅ {importResult.newOffers} ofertas criadas</p>
-                <p>🔄 {importResult.updated} ofertas atualizadas</p>
-                <p>📊 {importResult.trafficRecords} registros de tráfego importados</p>
+                <p>{importResult.newOffers} ofertas criadas</p>
+                <p className="flex items-center justify-center gap-1"><RotateCw className="h-3.5 w-3.5" /> {importResult.updated} ofertas atualizadas</p>
+                <p className="flex items-center justify-center gap-1"><BarChart3 className="h-3.5 w-3.5" /> {importResult.trafficRecords} registros de tráfego importados</p>
               </div>
             </div>
             <div className="flex justify-end">

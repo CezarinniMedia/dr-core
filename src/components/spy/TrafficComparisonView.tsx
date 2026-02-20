@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useSpiedOffers } from "@/hooks/useSpiedOffers";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -8,13 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { X, TrendingUp, TrendingDown, Minus, Flame, Rocket } from "lucide-react";
 
-const STATUS_BADGE: Record<string, { label: string; className: string }> = {
+const STATUS_BADGE: Record<string, { label: React.ReactNode; className: string }> = {
   RADAR: { label: "Radar", className: "bg-muted text-muted-foreground" },
   ANALYZING: { label: "Analyzing", className: "bg-warning/20 text-warning" },
-  HOT: { label: "🔥 HOT", className: "bg-destructive/20 text-destructive" },
-  SCALING: { label: "🚀 Scaling", className: "bg-success/20 text-success" },
+  HOT: { label: <span className="inline-flex items-center gap-1"><Flame className="h-3 w-3" /> HOT</span>, className: "bg-destructive/20 text-destructive" },
+  SCALING: { label: <span className="inline-flex items-center gap-1"><Rocket className="h-3 w-3" /> Scaling</span>, className: "bg-success/20 text-success" },
   DYING: { label: "Dying", className: "bg-accent/20 text-accent" },
   DEAD: { label: "Dead", className: "bg-muted text-muted-foreground" },
   CLONED: { label: "Cloned", className: "bg-primary/20 text-primary" },
@@ -151,8 +151,8 @@ export function TrafficComparisonView() {
                 ))}
               </SelectContent>
             </Select>
-            <Button variant="outline" size="sm" onClick={() => bulkAdd("HOT")}>🔥 Todos HOT</Button>
-            <Button variant="outline" size="sm" onClick={() => bulkAdd("SCALING")}>🚀 Todos SCALING</Button>
+            <Button variant="outline" size="sm" onClick={() => bulkAdd("HOT")} className="inline-flex items-center gap-1"><Flame className="h-3 w-3" /> Todos HOT</Button>
+            <Button variant="outline" size="sm" onClick={() => bulkAdd("SCALING")} className="inline-flex items-center gap-1"><Rocket className="h-3 w-3" /> Todos SCALING</Button>
           </div>
 
           {selectedOfferIds.length > 0 && (
@@ -228,7 +228,7 @@ export function TrafficComparisonView() {
                              row.variation < -5 ? <TrendingDown className="h-3 w-3" /> :
                              <Minus className="h-3 w-3" />}
                             {row.variation > 0 ? "+" : ""}{row.variation.toFixed(1)}%
-                            {row.variation > 100 && " 🚀"}
+                            {row.variation > 100 && <Rocket className="h-3 w-3 ml-1 inline" />}
                           </span>
                         </TableCell>
                         <TableCell className="text-right text-xs">

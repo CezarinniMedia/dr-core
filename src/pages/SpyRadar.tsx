@@ -56,6 +56,9 @@ import {
   Plus, Zap, Search, Eye, Trash2, Radar, FileSpreadsheet,
   ChevronLeft, ChevronRight, Columns, X, FileText,
   ZoomIn, ZoomOut, BookmarkPlus, Image as ImageIcon,
+  ArrowUpRight, ArrowDownRight, ArrowRight, Sparkles,
+  LayoutList, BarChart3, Info, Radio, Flame, Rocket,
+  TrendingDown, Skull, Dna, Archive, BarChart2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -181,12 +184,12 @@ const VERTICAL_BADGE: Record<string, string> = {
   tech: "bg-primary/20 text-primary",
 };
 
-const TREND_ICON: Record<string, string> = {
-  UP: "↗️",
-  DOWN: "↘️",
-  STABLE: "→",
-  SPIKE: "⚡",
-  NEW: "🆕",
+const TREND_ICON: Record<string, React.ReactNode> = {
+  UP: <ArrowUpRight className="h-3.5 w-3.5 text-green-500" />,
+  DOWN: <ArrowDownRight className="h-3.5 w-3.5 text-red-500" />,
+  STABLE: <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />,
+  SPIKE: <Zap className="h-3.5 w-3.5 text-yellow-500" />,
+  NEW: <Sparkles className="h-3.5 w-3.5 text-blue-500" />,
 };
 
 const PAGE_SIZE_OPTIONS = [
@@ -603,7 +606,7 @@ export default function SpyRadar() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">🔍 Radar de Ofertas</h1>
+            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2"><Search className="h-6 w-6" /> Radar de Ofertas</h1>
             <p className="text-muted-foreground text-sm">
               Monitore ofertas, espione funis e escale mais rápido
             </p>
@@ -627,9 +630,9 @@ export default function SpyRadar() {
         {/* Main Tabs */}
         <Tabs value={mainTab} onValueChange={setMainTab}>
           <TabsList>
-            <TabsTrigger value="offers">📋 Ofertas</TabsTrigger>
-            <TabsTrigger value="comparison">📊 Inteligência de Tráfego</TabsTrigger>
-            <TabsTrigger value="about">ℹ️ Sobre</TabsTrigger>
+            <TabsTrigger value="offers" className="flex items-center gap-1.5"><LayoutList className="h-4 w-4" /> Ofertas</TabsTrigger>
+            <TabsTrigger value="comparison" className="flex items-center gap-1.5"><BarChart3 className="h-4 w-4" /> Inteligencia de Trafego</TabsTrigger>
+            <TabsTrigger value="about" className="flex items-center gap-1.5"><Info className="h-4 w-4" /> Sobre</TabsTrigger>
           </TabsList>
 
           <TabsContent value="offers" className="mt-4 space-y-4">
@@ -1353,18 +1356,18 @@ export default function SpyRadar() {
               <p className="text-sm text-muted-foreground">Cada oferta no radar passa por um ciclo de qualificação. Use os status abaixo para organizar seu pipeline de espionagem:</p>
               <div className="space-y-3">
                 {[
-                  { status: "RADAR", emoji: "📡", title: "Radar", desc: "Oferta recém-descoberta. Ainda não foi analisada em detalhe. É o ponto de entrada — tudo que você encontra espionando começa aqui." },
-                  { status: "ANALYZING", emoji: "🔍", title: "Analyzing", desc: "Você está investigando ativamente: analisando funil, criativos, tráfego e viabilidade. A oferta está sob avaliação." },
-                  { status: "HOT", emoji: "🔥", title: "HOT", desc: "A oferta mostrou sinais fortes: tráfego crescente, múltiplos criativos ativos, funil validado. Merece atenção imediata e possível clone." },
-                  { status: "SCALING", emoji: "🚀", title: "Scaling", desc: "A oferta está em fase de crescimento acelerado. Tráfego subindo consistentemente, novos criativos aparecendo. É o momento de agir rápido." },
-                  { status: "DYING", emoji: "📉", title: "Dying", desc: "Tráfego em queda, criativos sendo pausados. A oferta está perdendo força. Ainda pode ter insights úteis, mas o timing já passou." },
-                  { status: "DEAD", emoji: "💀", title: "Dead", desc: "A oferta parou completamente. Sem tráfego, sem criativos ativos. Mantida no radar apenas como referência histórica." },
-                  { status: "CLONED", emoji: "🧬", title: "Cloned", desc: "Voce ja clonou/adaptou esta oferta. Indica que o ciclo de espionagem foi concluido e a inteligencia foi aplicada na sua propria operacao." },
-                  { status: "VAULT", emoji: "🗄️", title: "Vault", desc: "Bau de sites irrelevantes (google, youtube, hotmart, etc). Nao polui o radar nem os dados de trafego." },
-                  { status: "NEVER_SCALED", emoji: "📊", title: "Never Scaled", desc: "Sites que nunca escalaram. Mantidos para referencia mas separados dos dados ativos." },
+                  { status: "RADAR", icon: <Radio className="h-5 w-5 text-blue-400" />, title: "Radar", desc: "Oferta recém-descoberta. Ainda não foi analisada em detalhe. É o ponto de entrada — tudo que você encontra espionando começa aqui." },
+                  { status: "ANALYZING", icon: <Search className="h-5 w-5 text-yellow-400" />, title: "Analyzing", desc: "Você está investigando ativamente: analisando funil, criativos, tráfego e viabilidade. A oferta está sob avaliação." },
+                  { status: "HOT", icon: <Flame className="h-5 w-5 text-orange-500" />, title: "HOT", desc: "A oferta mostrou sinais fortes: tráfego crescente, múltiplos criativos ativos, funil validado. Merece atenção imediata e possível clone." },
+                  { status: "SCALING", icon: <Rocket className="h-5 w-5 text-green-500" />, title: "Scaling", desc: "A oferta está em fase de crescimento acelerado. Tráfego subindo consistentemente, novos criativos aparecendo. É o momento de agir rápido." },
+                  { status: "DYING", icon: <TrendingDown className="h-5 w-5 text-red-400" />, title: "Dying", desc: "Tráfego em queda, criativos sendo pausados. A oferta está perdendo força. Ainda pode ter insights úteis, mas o timing já passou." },
+                  { status: "DEAD", icon: <Skull className="h-5 w-5 text-gray-500" />, title: "Dead", desc: "A oferta parou completamente. Sem tráfego, sem criativos ativos. Mantida no radar apenas como referência histórica." },
+                  { status: "CLONED", icon: <Dna className="h-5 w-5 text-purple-400" />, title: "Cloned", desc: "Voce ja clonou/adaptou esta oferta. Indica que o ciclo de espionagem foi concluido e a inteligencia foi aplicada na sua propria operacao." },
+                  { status: "VAULT", icon: <Archive className="h-5 w-5 text-gray-400" />, title: "Vault", desc: "Bau de sites irrelevantes (google, youtube, hotmart, etc). Nao polui o radar nem os dados de trafego." },
+                  { status: "NEVER_SCALED", icon: <BarChart2 className="h-5 w-5 text-slate-400" />, title: "Never Scaled", desc: "Sites que nunca escalaram. Mantidos para referencia mas separados dos dados ativos." },
                 ].map(item => (
                   <div key={item.status} className="flex gap-3 p-3 rounded-lg bg-muted/30">
-                    <span className="text-xl">{item.emoji}</span>
+                    <span className="shrink-0 mt-0.5">{item.icon}</span>
                     <div>
                       <p className="font-medium text-sm">{item.title}</p>
                       <p className="text-xs text-muted-foreground">{item.desc}</p>

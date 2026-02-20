@@ -25,7 +25,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, Loader2 } from "lucide-react";
+import { ChevronDown, Loader2, Pencil, PlusCircle, LayoutList, Search, BarChart3, Network, FileText, Link, Banknote } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface FullOfferFormModalProps {
@@ -69,13 +69,13 @@ export function FullOfferFormModal({ open, onClose, editData }: FullOfferFormMod
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] p-0">
         <DialogHeader className="px-6 pt-6 pb-2">
-          <DialogTitle>{isEdit ? "✏️ Editar Oferta" : "➕ Nova Oferta Completa"}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">{isEdit ? <><Pencil className="h-4 w-4" /> Editar Oferta</> : <><PlusCircle className="h-4 w-4" /> Nova Oferta Completa</>}</DialogTitle>
         </DialogHeader>
 
         <ScrollArea className="max-h-[calc(90vh-140px)] px-6">
           <div className="space-y-4 pb-4">
             {/* Section 1: Dados Básicos */}
-            <Section title="📋 Dados Básicos" defaultOpen>
+            <Section title={<span className="flex items-center gap-1.5"><LayoutList className="h-4 w-4" /> Dados Básicos</span>} defaultOpen>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Nome *">
                   <Input value={form.nome || ""} onChange={(e) => set("nome", e.target.value)} placeholder="Ex: Chá Bariátrico" />
@@ -142,7 +142,7 @@ export function FullOfferFormModal({ open, onClose, editData }: FullOfferFormMod
             </Section>
 
             {/* Section 2: Descoberta */}
-            <Section title="🔍 Descoberta">
+            <Section title={<span className="flex items-center gap-1.5"><Search className="h-4 w-4" /> Descoberta</span>}>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Fonte">
                   <Select value={form.discovery_source || ""} onValueChange={(v) => set("discovery_source", v)}>
@@ -164,7 +164,7 @@ export function FullOfferFormModal({ open, onClose, editData }: FullOfferFormMod
             </Section>
 
             {/* Section 3: Produto */}
-            <Section title="💰 Produto & Oferta">
+            <Section title={<span className="flex items-center gap-1.5"><Banknote className="h-4 w-4" /> Produto & Oferta</span>}>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Nome do produto">
                   <Input value={form.product_name || ""} onChange={(e) => set("product_name", e.target.value)} />
@@ -212,7 +212,7 @@ export function FullOfferFormModal({ open, onClose, editData }: FullOfferFormMod
             </Section>
 
             {/* Section 4: Estimativas */}
-            <Section title="📊 Estimativas">
+            <Section title={<span className="flex items-center gap-1.5"><BarChart3 className="h-4 w-4" /> Estimativas</span>}>
               <div className="grid grid-cols-3 gap-3">
                 <Field label="Tráfego mensal">
                   <Input type="number" value={form.estimated_monthly_traffic || ""} onChange={(e) => set("estimated_monthly_traffic", e.target.value)} />
@@ -234,7 +234,7 @@ export function FullOfferFormModal({ open, onClose, editData }: FullOfferFormMod
             </Section>
 
             {/* Section 5: Operador */}
-            <Section title="🕸️ Operador">
+            <Section title={<span className="flex items-center gap-1.5"><Network className="h-4 w-4" /> Operador</span>}>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Nome do operador">
                   <Input value={form.operator_name || ""} onChange={(e) => set("operator_name", e.target.value)} />
@@ -246,7 +246,7 @@ export function FullOfferFormModal({ open, onClose, editData }: FullOfferFormMod
             </Section>
 
             {/* Section 6: Notas */}
-            <Section title="📝 Notas">
+            <Section title={<span className="flex items-center gap-1.5"><FileText className="h-4 w-4" /> Notas</span>}>
               <Textarea
                 value={form.notas || ""}
                 onChange={(e) => set("notas", e.target.value)}
@@ -257,7 +257,7 @@ export function FullOfferFormModal({ open, onClose, editData }: FullOfferFormMod
             </Section>
 
             {/* Section 7: Vincular */}
-            <Section title="🔗 Vincular à sua oferta">
+            <Section title={<span className="flex items-center gap-1.5"><Link className="h-4 w-4" /> Vincular à sua oferta</span>}>
               <Field label="Oferta vinculada">
                 <Select value={form.oferta_id || ""} onValueChange={(v) => set("oferta_id", v === "none" ? null : v)}>
                   <SelectTrigger><SelectValue placeholder="Nenhuma" /></SelectTrigger>
@@ -285,7 +285,7 @@ export function FullOfferFormModal({ open, onClose, editData }: FullOfferFormMod
   );
 }
 
-function Section({ title, children, defaultOpen = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
+function Section({ title, children, defaultOpen = false }: { title: React.ReactNode; children: React.ReactNode; defaultOpen?: boolean }) {
   return (
     <Collapsible defaultOpen={defaultOpen}>
       <CollapsibleTrigger className="flex items-center justify-between w-full py-2 text-sm font-semibold hover:text-primary transition-colors">

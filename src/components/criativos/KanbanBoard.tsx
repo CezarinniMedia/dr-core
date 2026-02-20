@@ -2,12 +2,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useUpdateCriativoStatus } from "@/hooks/useCriativos";
 import { useNavigate } from "react-router-dom";
+import { FileText, Film, Skull, Zap } from "lucide-react";
+import { ReactNode } from "react";
 
-const COLUMNS = [
-  { id: "DRAFT", label: "📝 Draft" },
-  { id: "PRODUCAO", label: "🎬 Produção" },
-  { id: "ATIVO", label: "⚡ Ativo" },
-  { id: "MORTO", label: "☠️ Morto" },
+const COLUMNS: { id: string; label: string; icon: ReactNode }[] = [
+  { id: "DRAFT", label: "Draft", icon: <FileText className="h-3.5 w-3.5 inline-block mr-1" /> },
+  { id: "PRODUCAO", label: "Produção", icon: <Film className="h-3.5 w-3.5 inline-block mr-1" /> },
+  { id: "ATIVO", label: "Ativo", icon: <Zap className="h-3.5 w-3.5 inline-block mr-1" /> },
+  { id: "MORTO", label: "Morto", icon: <Skull className="h-3.5 w-3.5 inline-block mr-1" /> },
 ];
 
 interface KanbanBoardProps {
@@ -53,8 +55,8 @@ export function KanbanBoard({ criativos }: KanbanBoardProps) {
             onDrop={(e) => handleDrop(e, col.id)}
             onDragOver={handleDragOver}
           >
-            <p className="text-sm font-semibold mb-3">
-              {col.label}{" "}
+            <p className="text-sm font-semibold mb-3 flex items-center">
+              {col.icon}{col.label}{" "}
               <span className="text-muted-foreground">({items.length})</span>
             </p>
 

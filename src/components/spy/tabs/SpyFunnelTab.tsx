@@ -14,7 +14,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, ExternalLink, ArrowDown, AlertTriangle, FileText, Loader2, Link2, Edit } from "lucide-react";
+import { Plus, Trash2, ExternalLink, ArrowDown, AlertTriangle, FileText, Loader2, Link2, Edit, Package, Banknote, MessageSquare } from "lucide-react";
 
 const STEP_TYPES = [
   "AD", "CLOAKER", "PRELAND", "QUIZ", "VSL_PAGE", "CHECKOUT",
@@ -178,9 +178,9 @@ export function SpyFunnelTab({ offerId }: SpyFunnelTabProps) {
                         </a>
                       )}
                       <div className="flex gap-4 text-xs text-muted-foreground">
-                        {step.product_name && <span>📦 {step.product_name}</span>}
-                        {step.price && <span>💰 R$ {Number(step.price).toFixed(2)}</span>}
-                        {step.product_promise && <span className="truncate max-w-[200px]">💬 {step.product_promise}</span>}
+                        {step.product_name && <span className="inline-flex items-center gap-1"><Package className="h-3 w-3" /> {step.product_name}</span>}
+                        {step.price && <span className="inline-flex items-center gap-1"><Banknote className="h-3 w-3" /> R$ {Number(step.price).toFixed(2)}</span>}
+                        {step.product_promise && <span className="truncate max-w-[200px] inline-flex items-center gap-1"><MessageSquare className="h-3 w-3 shrink-0" /> {step.product_promise}</span>}
                       </div>
                       {step.notas && <p className="text-xs text-muted-foreground mt-1">{step.notas}</p>}
                     </div>

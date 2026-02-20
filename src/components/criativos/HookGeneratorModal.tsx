@@ -19,7 +19,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { useGenerateHooks } from "@/hooks/useCriativos";
-import { Loader2, Sparkles } from "lucide-react";
+import { Crown, Gem, HelpCircle, Loader2, Sparkles, Target, Users } from "lucide-react";
 
 interface HookGeneratorModalProps {
   open: boolean;
@@ -68,11 +68,11 @@ export function HookGeneratorModal({ open, onClose, ofertaId }: HookGeneratorMod
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="DOR">🎯 DOR (Pain-driven)</SelectItem>
-                <SelectItem value="DESEJO">💎 DESEJO (Desire-driven)</SelectItem>
-                <SelectItem value="CURIOSIDADE">❓ CURIOSIDADE (Curiosity gap)</SelectItem>
-                <SelectItem value="PROVA_SOCIAL">👥 PROVA SOCIAL</SelectItem>
-                <SelectItem value="AUTORIDADE">👑 AUTORIDADE</SelectItem>
+                <SelectItem value="DOR" className="flex items-center gap-1.5"><Target className="h-3.5 w-3.5 inline-block mr-1" /> DOR (Pain-driven)</SelectItem>
+                <SelectItem value="DESEJO" className="flex items-center gap-1.5"><Gem className="h-3.5 w-3.5 inline-block mr-1" /> DESEJO (Desire-driven)</SelectItem>
+                <SelectItem value="CURIOSIDADE" className="flex items-center gap-1.5"><HelpCircle className="h-3.5 w-3.5 inline-block mr-1" /> CURIOSIDADE (Curiosity gap)</SelectItem>
+                <SelectItem value="PROVA_SOCIAL" className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 inline-block mr-1" /> PROVA SOCIAL</SelectItem>
+                <SelectItem value="AUTORIDADE" className="flex items-center gap-1.5"><Crown className="h-3.5 w-3.5 inline-block mr-1" /> AUTORIDADE</SelectItem>
               </SelectContent>
             </Select>
           </div>
