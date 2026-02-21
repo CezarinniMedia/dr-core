@@ -31,6 +31,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ArrowLeft, Edit, Trash2, ExternalLink, Flame, Rocket, LayoutList, Globe, BookOpen, Palette, Map, BarChart3, FileText } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const STATUS_BADGE: Record<string, { label: React.ReactNode; className: string }> = {
   RADAR: { label: "Radar", className: "bg-muted text-muted-foreground" },
@@ -56,7 +57,31 @@ export default function SpyOfferDetail() {
   const [showEdit, setShowEdit] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
 
-  if (isLoading) return <p className="text-muted-foreground p-6">Carregando...</p>;
+  if (isLoading) return (
+    <div className="p-6 space-y-6">
+      <div className="flex items-center gap-4">
+        <Skeleton className="h-9 w-9" />
+        <div className="space-y-2 flex-1">
+          <Skeleton className="h-7 w-64" />
+          <Skeleton className="h-4 w-40" />
+        </div>
+        <Skeleton className="h-6 w-20 rounded-full" />
+      </div>
+      <div className="flex gap-2">
+        {Array.from({ length: 7 }).map((_, i) => (
+          <Skeleton key={i} className="h-9 w-24 rounded-md" />
+        ))}
+      </div>
+      <Card>
+        <CardContent className="p-6 space-y-4">
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+        </CardContent>
+      </Card>
+    </div>
+  );
   if (!offer) {
     return (
       <div className="p-6 space-y-4">
