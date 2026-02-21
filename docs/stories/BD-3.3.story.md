@@ -1,5 +1,5 @@
 # Story BD-3.3: Add Skeleton Loaders and Empty States
-**Epic:** EPIC-BD | **Sprint:** 3 | **Status:** InProgress | **Estimate:** 5h | **Priority:** MEDIO
+**Epic:** EPIC-BD | **Sprint:** 3 | **Status:** Done | **Estimate:** 5h | **Priority:** MEDIO
 
 ---
 

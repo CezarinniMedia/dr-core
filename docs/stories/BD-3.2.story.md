@@ -1,5 +1,5 @@
 # Story BD-3.2: Accessibility Overhaul
-**Epic:** EPIC-BD | **Sprint:** 3 | **Status:** InProgress | **Estimate:** 3h | **Priority:** MEDIO
+**Epic:** EPIC-BD | **Sprint:** 3 | **Status:** Done | **Estimate:** 3h | **Priority:** MEDIO
 
 ---
 

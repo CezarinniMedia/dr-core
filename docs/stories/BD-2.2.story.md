@@ -1,5 +1,5 @@
 # Story BD-2.2: Create Service Layer
-**Epic:** EPIC-BD | **Sprint:** 2 | **Status:** Ready for Review | **Estimate:** 8h | **Priority:** ALTO
+**Epic:** EPIC-BD | **Sprint:** 2 | **Status:** Done | **Estimate:** 8h | **Priority:** ALTO
 
 ---
 

@@ -1,5 +1,5 @@
 # Story BD-3.1: Fix Remaining Bugs
-**Epic:** EPIC-BD | **Sprint:** 3 | **Status:** Ready for Review | **Estimate:** 4h | **Priority:** ALTO
+**Epic:** EPIC-BD | **Sprint:** 3 | **Status:** Done | **Estimate:** 4h | **Priority:** ALTO
 
 ---
 

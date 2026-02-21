@@ -1,7 +1,7 @@
 # Story BD-0.1: Fix Storage RLS + .env Security
 **Epic:** EPIC-BD (Brownfield Debt)
 **Sprint:** 0 - Security Foundation
-**Status:** InProgress
+**Status:** Done
 **Estimate:** 2h
 **Priority:** BLOQUEANTE
 
