@@ -1,3 +1,5 @@
+@import "./shared/design-system/tokens.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
