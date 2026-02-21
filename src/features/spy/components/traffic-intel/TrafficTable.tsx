@@ -38,19 +38,77 @@ interface TrafficTableProps {
   rangeTo: string | null;
 }
 
-// Sparkline SVG
+// --- Sparkline SVG (Feature Sagrada #2) ---
+// Spike detection: >100% = hot orange, positive = teal, negative = red, neutral = muted
+// Area fill + glow dot on peak for visual impact. <5ms render target.
+
 function Sparkline({ data, variation }: { data: number[]; variation: number }) {
   if (!data || data.length < 2) return <span className="text-muted-foreground text-xs">—</span>;
-  const color = variation > 5 ? "hsl(142, 76%, 36%)" : variation < -5 ? "hsl(0, 84%, 60%)" : "hsl(var(--muted-foreground))";
+
+  const isSpike = variation > 100;
+  const isUp = variation > 5;
+  const isDown = variation < -5;
+
+  // Design system semantic colors
+  const strokeColor = isSpike
+    ? "var(--semantic-spike, #F97316)"      // orange glow for spikes
+    : isUp
+      ? "var(--accent-teal, #00D4AA)"       // teal for positive
+      : isDown
+        ? "var(--semantic-error, #EF4444)"   // red for negative
+        : "var(--text-muted, #6B7280)";      // gray for stable
+
+  const fillOpacity = isSpike ? 0.15 : 0.08;
+
+  const h = 24;
+  const w = 64;
+  const padY = 2; // vertical padding so line doesn't clip
   const max = Math.max(...data);
   const min = Math.min(...data);
   const range = max - min || 1;
-  const h = 22;
-  const w = 56;
-  const points = data.map((v, i) => `${(i / (data.length - 1)) * w},${h - ((v - min) / range) * h}`).join(" ");
+
+  // Compute points
+  const pts = data.map((v, i) => ({
+    x: (i / (data.length - 1)) * w,
+    y: padY + (h - 2 * padY) - ((v - min) / range) * (h - 2 * padY),
+  }));
+
+  const linePoints = pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+
+  // Area fill path (line + close to bottom)
+  const areaPath = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ")
+    + ` L${w},${h} L0,${h} Z`;
+
+  // Peak dot position (last point if spike, otherwise skip)
+  const lastPt = pts[pts.length - 1];
+
   return (
-    <svg width={w} height={h} className="inline-block">
-      <polyline fill="none" stroke={color} strokeWidth={1.5} points={points} />
+    <svg width={w} height={h} className="inline-block" aria-label={`Trend: ${isSpike ? "spike" : isUp ? "up" : isDown ? "down" : "stable"} ${variation.toFixed(0)}%`}>
+      {/* Area fill */}
+      <path d={areaPath} fill={strokeColor} opacity={fillOpacity} />
+      {/* Main line */}
+      <polyline
+        fill="none"
+        stroke={strokeColor}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={linePoints}
+      />
+      {/* Glow dot on last point for spikes / significant trends */}
+      {(isSpike || isUp || isDown) && (
+        <circle
+          cx={lastPt.x}
+          cy={lastPt.y}
+          r={isSpike ? 3 : 2}
+          fill={strokeColor}
+          opacity={isSpike ? 1 : 0.8}
+        >
+          {isSpike && (
+            <animate attributeName="r" values="2;3.5;2" dur="1.5s" repeatCount="indefinite" />
+          )}
+        </circle>
+      )}
     </svg>
   );
 }
