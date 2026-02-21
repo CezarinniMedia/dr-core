@@ -120,7 +120,7 @@ export function ImportStepClassification({
                   <thead>
                     <tr className="bg-muted/50">
                       <th className="px-1 py-0.5 w-6"></th>
-                      {(f.classified.headers.length > 0 ? f.classified.headers : f.classified.previewRows[0]?.map((_, ci) => `Col ${ci + 1}`))
+                      {(f.classified.headers.length > 0 ? f.classified.headers : (f.classified.previewRows[0] ?? []).map((_, ci) => `Col ${ci + 1}`))
                         .map((h, hi) => (
                           <th
                             key={hi}
