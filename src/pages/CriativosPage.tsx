@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Sparkles } from "lucide-react";
+import { Plus, Sparkles, LayoutList, Target } from "lucide-react";
 
 export default function CriativosPage() {
   const [selectedOferta, setSelectedOferta] = useState<string>("");
@@ -27,7 +27,7 @@ export default function CriativosPage() {
     <div className="max-w-6xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">✨ Criativos</h1>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2"><Sparkles className="h-6 w-6" /> Criativos</h1>
           <p className="text-muted-foreground text-sm">
             Produza hooks em batch, gerencie criativos e acompanhe performance
           </p>
@@ -67,8 +67,8 @@ export default function CriativosPage() {
       {selectedOferta ? (
         <Tabs defaultValue="kanban">
           <TabsList>
-            <TabsTrigger value="kanban">📋 Kanban</TabsTrigger>
-            <TabsTrigger value="hooks">🎣 Hooks</TabsTrigger>
+            <TabsTrigger value="kanban" className="flex items-center gap-1.5"><LayoutList className="h-4 w-4" /> Kanban</TabsTrigger>
+            <TabsTrigger value="hooks" className="flex items-center gap-1.5"><Target className="h-4 w-4" /> Hooks</TabsTrigger>
           </TabsList>
 
           <TabsContent value="kanban" className="mt-4">

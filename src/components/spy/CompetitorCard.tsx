@@ -1,13 +1,14 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { ExternalLink, Eye, Trash2, TrendingUp } from "lucide-react";
+import { ExternalLink, Eye, Flame, Snowflake, Trash2, TrendingUp, Zap } from "lucide-react";
+import { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 
-const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  HOT: { label: "🔥 HOT", variant: "destructive" },
-  WARM: { label: "⚡ WARM", variant: "default" },
-  COLD: { label: "❄️ COLD", variant: "secondary" },
+const statusConfig: Record<string, { label: string; icon: ReactNode; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+  HOT: { label: "HOT", icon: <Flame className="h-3 w-3" />, variant: "destructive" },
+  WARM: { label: "WARM", icon: <Zap className="h-3 w-3" />, variant: "default" },
+  COLD: { label: "COLD", icon: <Snowflake className="h-3 w-3" />, variant: "secondary" },
 };
 
 interface CompetitorCardProps {
@@ -46,7 +47,7 @@ export function CompetitorCard({ competitor, onDelete }: CompetitorCardProps) {
               </a>
             )}
           </div>
-          <Badge variant={status.variant}>{status.label}</Badge>
+          <Badge variant={status.variant} className="flex items-center gap-1">{status.icon} {status.label}</Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">

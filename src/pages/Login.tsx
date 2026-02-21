@@ -71,7 +71,7 @@ export default function LoginPage() {
           {signupSuccess ? (
             <Alert>
               <AlertDescription>
-                ✅ Conta criada! Verifique seu email para confirmar e depois faça login.
+                Conta criada! Verifique seu email para confirmar e depois faca login.
               </AlertDescription>
             </Alert>
           ) : (

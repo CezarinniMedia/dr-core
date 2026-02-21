@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Plus, Save, ExternalLink } from "lucide-react";
+import { ArrowLeft, Plus, Save, ExternalLink, Flame, Zap, Snowflake, Camera, RotateCw, Info } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
 export default function SpyDetail() {
@@ -40,9 +40,9 @@ export default function SpyDetail() {
   }
 
   const statusConfig: Record<string, { label: string; variant: "default" | "destructive" | "secondary" }> = {
-    HOT: { label: "🔥 HOT", variant: "destructive" },
-    WARM: { label: "⚡ WARM", variant: "default" },
-    COLD: { label: "❄️ COLD", variant: "secondary" },
+    HOT: { label: "HOT", variant: "destructive" },
+    WARM: { label: "WARM", variant: "default" },
+    COLD: { label: "COLD", variant: "secondary" },
   };
   const status = statusConfig[competitor.status_tracking || "WARM"] || statusConfig.WARM;
 
@@ -81,9 +81,9 @@ export default function SpyDetail() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="HOT">🔥 HOT</SelectItem>
-            <SelectItem value="WARM">⚡ WARM</SelectItem>
-            <SelectItem value="COLD">❄️ COLD</SelectItem>
+            <SelectItem value="HOT"><span className="flex items-center gap-1.5"><Flame className="h-3.5 w-3.5" /> HOT</span></SelectItem>
+            <SelectItem value="WARM"><span className="flex items-center gap-1.5"><Zap className="h-3.5 w-3.5" /> WARM</span></SelectItem>
+            <SelectItem value="COLD"><span className="flex items-center gap-1.5"><Snowflake className="h-3.5 w-3.5" /> COLD</span></SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -123,9 +123,9 @@ export default function SpyDetail() {
       {/* Tabs */}
       <Tabs defaultValue="ads">
         <TabsList>
-          <TabsTrigger value="ads">📸 Ad Creatives</TabsTrigger>
-          <TabsTrigger value="funnels">🔄 Funnel Maps</TabsTrigger>
-          <TabsTrigger value="info">ℹ️ Info</TabsTrigger>
+          <TabsTrigger value="ads" className="flex items-center gap-1.5"><Camera className="h-4 w-4" /> Ad Creatives</TabsTrigger>
+          <TabsTrigger value="funnels" className="flex items-center gap-1.5"><RotateCw className="h-4 w-4" /> Funnel Maps</TabsTrigger>
+          <TabsTrigger value="info" className="flex items-center gap-1.5"><Info className="h-4 w-4" /> Info</TabsTrigger>
         </TabsList>
 
         <TabsContent value="ads" className="mt-4 space-y-4">

@@ -3,7 +3,7 @@ import { useAvatares, useDeleteAvatar } from "@/hooks/useAvatares";
 import { AvatarCard } from "@/components/avatar/AvatarCard";
 import { AvatarExtractionModal } from "@/components/avatar/AvatarExtractionModal";
 import { Button } from "@/components/ui/button";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Brain } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,7 +25,7 @@ export default function AvatarList() {
     <div className="max-w-6xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">🧠 Avatar & Research</h1>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2"><Brain className="h-6 w-6" /> Avatar & Research</h1>
           <p className="text-muted-foreground text-sm">
             Extraia avatares profundos com IA — Pain Matrix, desejos, objeções e linguagem
           </p>
