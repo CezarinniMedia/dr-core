@@ -1,34 +1,34 @@
 import { useState, useCallback, useMemo, useEffect, Suspense, lazy } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useSpiedOffers, useDeleteSpiedOffer, useLatestTrafficPerOffer } from "@/hooks/useSpiedOffers";
+import { useSpiedOffers, useDeleteSpiedOffer, useLatestTrafficPerOffer } from "@/features/spy/hooks/useSpiedOffers";
 import { Loader2, LayoutList, BarChart3, Info, Radio } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { ErrorState } from "@/components/ui/ErrorState";
-import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
+import { TooltipProvider } from "@/shared/components/ui/tooltip";
+import { EmptyState } from "@/shared/components/ui/EmptyState";
+import { ErrorState } from "@/shared/components/ui/ErrorState";
+import { useToast } from "@/shared/hooks/use-toast";
 import {
   filterOffers as filterOffersService,
   updateOfferStatus,
   updateOfferNotes,
   bulkUpdateStatus,
   bulkDeleteOffers,
-} from "@/services";
+} from "@/shared/services";
 import {
   loadSpyColumns, LS_KEY_SPY_COLUMNS, LS_KEY_TRAFFIC_SOURCE,
-} from "@/components/spy/spy-radar/constants";
-import { SpyFilterBar } from "@/components/spy/spy-radar/SpyFilterBar";
-import { SpyColumnSelector } from "@/components/spy/spy-radar/SpyColumnSelector";
-import { SpyBulkActionsBar } from "@/components/spy/spy-radar/SpyBulkActionsBar";
-import { SpyOffersTable } from "@/components/spy/spy-radar/SpyOffersTable";
-import { SpyAboutTab } from "@/components/spy/spy-radar/SpyAboutTab";
-import { SpyRadarHeader } from "@/components/spy/spy-radar/SpyRadarHeader";
-import { SpyDeleteDialog } from "@/components/spy/spy-radar/SpyDeleteDialog";
+} from "@/features/spy/components/spy-radar/constants";
+import { SpyFilterBar } from "@/features/spy/components/spy-radar/SpyFilterBar";
+import { SpyColumnSelector } from "@/features/spy/components/spy-radar/SpyColumnSelector";
+import { SpyBulkActionsBar } from "@/features/spy/components/spy-radar/SpyBulkActionsBar";
+import { SpyOffersTable } from "@/features/spy/components/spy-radar/SpyOffersTable";
+import { SpyAboutTab } from "@/features/spy/components/spy-radar/SpyAboutTab";
+import { SpyRadarHeader } from "@/features/spy/components/spy-radar/SpyRadarHeader";
+import { SpyDeleteDialog } from "@/features/spy/components/spy-radar/SpyDeleteDialog";
 
-const QuickAddOfferModal = lazy(() => import("@/components/spy/QuickAddOfferModal").then(m => ({ default: m.QuickAddOfferModal })));
-const FullOfferFormModal = lazy(() => import("@/components/spy/FullOfferFormModal").then(m => ({ default: m.FullOfferFormModal })));
-const UniversalImportModal = lazy(() => import("@/components/spy/UniversalImportModal").then(m => ({ default: m.UniversalImportModal })));
-const TrafficIntelligenceView = lazy(() => import("@/components/spy/TrafficIntelligenceView").then(m => ({ default: m.TrafficIntelligenceView })));
+const QuickAddOfferModal = lazy(() => import("@/features/spy/components/QuickAddOfferModal").then(m => ({ default: m.QuickAddOfferModal })));
+const FullOfferFormModal = lazy(() => import("@/features/spy/components/FullOfferFormModal").then(m => ({ default: m.FullOfferFormModal })));
+const UniversalImportModal = lazy(() => import("@/features/spy/components/UniversalImportModal").then(m => ({ default: m.UniversalImportModal })));
+const TrafficIntelligenceView = lazy(() => import("@/features/spy/components/TrafficIntelligenceView").then(m => ({ default: m.TrafficIntelligenceView })));
 
 const ModalLoader = () => (
   <div className="flex items-center justify-center p-8">

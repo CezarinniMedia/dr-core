@@ -1,12 +1,12 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/shared/components/ui/toaster";
+import { Toaster as Sonner } from "@/shared/components/ui/sonner";
+import { TooltipProvider } from "@/shared/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/hooks/useAuth";
+import { AuthProvider } from "@/shared/hooks/useAuth";
 import { ThemeProvider } from "@/shared/design-system/theme-provider";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
+import { DashboardLayout } from "@/shared/components/layout/DashboardLayout";
 import { Suspense, lazy } from "react";
 import { Loader2 } from "lucide-react";
 

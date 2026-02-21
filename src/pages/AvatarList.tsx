@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useAvatares, useDeleteAvatar } from "@/hooks/useAvatares";
-import { AvatarCard } from "@/components/avatar/AvatarCard";
-import { AvatarExtractionModal } from "@/components/avatar/AvatarExtractionModal";
-import { Button } from "@/components/ui/button";
+import { useAvatares, useDeleteAvatar } from "@/features/avatar/hooks/useAvatares";
+import { AvatarCard } from "@/features/avatar/components/AvatarCard";
+import { AvatarExtractionModal } from "@/features/avatar/components/AvatarExtractionModal";
+import { Button } from "@/shared/components/ui/button";
 import { Sparkles, Brain } from "lucide-react";
 import {
   AlertDialog,
@@ -13,7 +13,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/shared/components/ui/alert-dialog";
 
 export default function AvatarList() {
   const { data: avatares, isLoading } = useAvatares();

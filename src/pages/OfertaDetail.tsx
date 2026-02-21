@@ -1,22 +1,22 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useOferta, useUpdateOferta, useDeleteOferta } from "@/hooks/useOfertas";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { useOferta, useUpdateOferta, useDeleteOferta } from "@/features/offers/hooks/useOfertas";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
+import { Input } from "@/shared/components/ui/input";
+import { Label } from "@/shared/components/ui/label";
+import { Textarea } from "@/shared/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/shared/components/ui/select";
 import { Save, Trash2, Loader2, FlaskConical, Zap, Pause, Skull, Package } from "lucide-react";
 import { useState, useEffect } from "react";
-import { formatCurrency } from "@/lib/utils";
-import { PageBreadcrumb } from "@/components/ui/PageBreadcrumb";
+import { formatCurrency } from "@/shared/lib/utils";
+import { PageBreadcrumb } from "@/shared/components/ui/PageBreadcrumb";
 
 const statusOptions: { value: string; label: React.ReactNode }[] = [
   { value: "RESEARCH", label: <><FlaskConical className="h-4 w-4 inline mr-1" />Research</> },

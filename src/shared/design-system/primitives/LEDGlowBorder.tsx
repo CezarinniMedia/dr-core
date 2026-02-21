@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 
 type GlowVariant = "primary" | "amber" | "teal" | "success" | "error";
 type GlowPosition = "bottom" | "left" | "top" | "right";

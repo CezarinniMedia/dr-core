@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { useCompetitors, useDeleteCompetitor } from "@/hooks/useCompetitors";
-import { CompetitorCard } from "@/components/spy/CompetitorCard";
-import { CompetitorFormDialog } from "@/components/spy/CompetitorFormDialog";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useCompetitors, useDeleteCompetitor } from "@/features/spy/hooks/useCompetitors";
+import { CompetitorCard } from "@/features/spy/components/CompetitorCard";
+import { CompetitorFormDialog } from "@/features/spy/components/CompetitorFormDialog";
+import { Button } from "@/shared/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { Plus, Search, Flame, Zap, Snowflake } from "lucide-react";
 import {
   AlertDialog,
@@ -14,7 +14,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/shared/components/ui/alert-dialog";
 
 export default function SpyPage() {
   const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);

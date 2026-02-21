@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { useOfertas, useDeleteOferta, type OfertaStatus } from "@/hooks/useOfertas";
-import { OfertaCard } from "@/components/ofertas/OfertaCard";
-import { OfertaFormDialog } from "@/components/ofertas/OfertaFormDialog";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { useOfertas, useDeleteOferta, type OfertaStatus } from "@/features/offers/hooks/useOfertas";
+import { OfertaCard } from "@/features/offers/components/OfertaCard";
+import { OfertaFormDialog } from "@/features/offers/components/OfertaFormDialog";
+import { Button } from "@/shared/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
 import { Plus, Package, FlaskConical, Zap, Pause, Skull } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { Skeleton } from "@/shared/components/ui/skeleton";
+import { EmptyState } from "@/shared/components/ui/EmptyState";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,7 +16,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/shared/components/ui/alert-dialog";
 
 const statusFilters: { label: React.ReactNode; value: OfertaStatus | "ALL" }[] = [
   { label: "Todas", value: "ALL" },

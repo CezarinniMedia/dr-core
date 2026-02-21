@@ -1,25 +1,25 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useSpiedOffer, useUpdateSpiedOffer, useDeleteSpiedOffer } from "@/hooks/useSpiedOffers";
-import { FullOfferFormModal } from "@/components/spy/FullOfferFormModal";
-import { SpyOverviewTab } from "@/components/spy/tabs/SpyOverviewTab";
-import { SpyDomainsTab } from "@/components/spy/tabs/SpyDomainsTab";
-import { SpyLibrariesTab } from "@/components/spy/tabs/SpyLibrariesTab";
-import { SpyCreativesTab } from "@/components/spy/tabs/SpyCreativesTab";
-import { SpyFunnelTab } from "@/components/spy/tabs/SpyFunnelTab";
-import { SpyNotesTab } from "@/components/spy/tabs/SpyNotesTab";
-import { SpyTrafficTab } from "@/components/spy/tabs/SpyTrafficTab";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSpiedOffer, useUpdateSpiedOffer, useDeleteSpiedOffer } from "@/features/spy/hooks/useSpiedOffers";
+import { FullOfferFormModal } from "@/features/spy/components/FullOfferFormModal";
+import { SpyOverviewTab } from "@/features/spy/components/tabs/SpyOverviewTab";
+import { SpyDomainsTab } from "@/features/spy/components/tabs/SpyDomainsTab";
+import { SpyLibrariesTab } from "@/features/spy/components/tabs/SpyLibrariesTab";
+import { SpyCreativesTab } from "@/features/spy/components/tabs/SpyCreativesTab";
+import { SpyFunnelTab } from "@/features/spy/components/tabs/SpyFunnelTab";
+import { SpyNotesTab } from "@/features/spy/components/tabs/SpyNotesTab";
+import { SpyTrafficTab } from "@/features/spy/components/tabs/SpyTrafficTab";
+import { Button } from "@/shared/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
+import { Card, CardContent } from "@/shared/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/shared/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,10 +29,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/shared/components/ui/alert-dialog";
 import { Edit, Trash2, ExternalLink, Flame, Rocket, LayoutList, Globe, BookOpen, Palette, Map, BarChart3, FileText, Radar } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { PageBreadcrumb } from "@/components/ui/PageBreadcrumb";
+import { Skeleton } from "@/shared/components/ui/skeleton";
+import { PageBreadcrumb } from "@/shared/components/ui/PageBreadcrumb";
 
 const STATUS_BADGE: Record<string, { label: React.ReactNode; className: string }> = {
   RADAR: { label: "Radar", className: "bg-muted text-muted-foreground" },

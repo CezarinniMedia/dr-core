@@ -7,7 +7,7 @@ import {
   filterCsvData,
   getDefaultExcludedColumns,
   type CsvType,
-} from "@/lib/csvClassifier";
+} from "@/shared/lib/csvClassifier";
 
 // ─── Helper: build CSV string from rows ───
 function buildCsv(headers: string[], rows: string[][], delimiter = ","): string {

@@ -1,15 +1,15 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useAvatar, useUpdateAvatar } from "@/hooks/useAvatares";
-import { PainMatrixCanvas } from "@/components/avatar/PainMatrixCanvas";
-import { DesireMatrixPanel } from "@/components/avatar/DesireMatrixPanel";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
+import { useAvatar, useUpdateAvatar } from "@/features/avatar/hooks/useAvatares";
+import { PainMatrixCanvas } from "@/features/avatar/components/PainMatrixCanvas";
+import { DesireMatrixPanel } from "@/features/avatar/components/DesireMatrixPanel";
+import { Button } from "@/shared/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Badge } from "@/shared/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
+import { Textarea } from "@/shared/components/ui/textarea";
 import { Save, Zap, Frown, Star, Target, Gem, Shield, MessageCircle, Search, Users } from "lucide-react";
 import { useState, useEffect } from "react";
-import { PageBreadcrumb } from "@/components/ui/PageBreadcrumb";
+import { PageBreadcrumb } from "@/shared/components/ui/PageBreadcrumb";
 
 export default function AvatarDetail() {
   const { id } = useParams<{ id: string }>();
