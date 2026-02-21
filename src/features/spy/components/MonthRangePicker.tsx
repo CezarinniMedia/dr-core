@@ -124,15 +124,6 @@ export function MonthRangePicker({ from, to, onChange }: MonthRangePickerProps) 
 
   const currentMonth = toKey(now.getFullYear(), now.getMonth());
 
-  // Active preset detection
-  const activePreset = useMemo(() => {
-    if (!from || !to) return null;
-    return PRESETS.findIndex((p) => {
-      const r = p.getRange(now);
-      return r.from === from && r.to === to;
-    });
-  }, [from, to, now]);
-
   const getMonthState = useCallback((key: string) => {
     if (!tempFrom) return "none" as const;
     if (!tempTo) return key === tempFrom ? "single" as const : "none" as const;

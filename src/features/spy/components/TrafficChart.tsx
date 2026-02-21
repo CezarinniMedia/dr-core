@@ -15,24 +15,8 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
 } from "recharts";
-
-// Design system chart palette — 12 colors for N domains (cycles)
-const CHART_COLORS = [
-  "#00D4AA",  // accent-teal (primary data color)
-  "#7C3AED",  // accent-primary (violet)
-  "#F97316",  // accent-orange (spikes, urgent)
-  "#3B82F6",  // accent-blue
-  "#22C55E",  // accent-green
-  "#D4A574",  // accent-amber (LED signature)
-  "#06B6D4",  // accent-cyan
-  "#EF4444",  // semantic-error (red)
-  "#8B5CF6",  // accent-primary-light
-  "#EAB308",  // semantic-warning (yellow)
-  "#EC4899",  // pink
-  "#C4954A",  // accent-gold
-];
+import { CHART_LINE_COLORS as CHART_COLORS } from "./traffic-intel/types";
 
 const MONTH_NAMES_PT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
