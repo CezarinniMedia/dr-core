@@ -1,5 +1,5 @@
 # Story BD-2.4: Deprecate Legacy Database Tables
-**Epic:** EPIC-BD | **Sprint:** 2 | **Status:** Ready | **Estimate:** 4h | **Priority:** MEDIO
+**Epic:** EPIC-BD | **Sprint:** 2 | **Status:** Ready for Review | **Estimate:** 4h | **Priority:** MEDIO
 
 ---
 
@@ -19,33 +19,52 @@
 ## Acceptance Criteria
 
 ### AC-1: Migration de Campos Uteis
-- [ ] Given: campos uteis existem apenas em tabelas legacy
-- [ ] When: migration e executada
-- [ ] Then: campos sao adicionados a tabela moderna
-- [ ] And: dados existentes sao migrados corretamente
+- [x] Given: campos uteis existem apenas em tabelas legacy
+- [x] When: migration e executada
+- [x] Then: campos sao adicionados a tabela moderna
+- [x] And: dados existentes sao migrados corretamente
 
 ### AC-2: Application Updates
-- [ ] Given: codigo referencia tabelas legacy
-- [ ] When: deprecacao acontece
-- [ ] Then: todas as queries apontam para tabelas modernas
-- [ ] And: types.ts atualizado com novas colunas
+- [x] Given: codigo referencia tabelas legacy
+- [x] When: deprecacao acontece
+- [x] Then: todas as queries apontam para tabelas modernas
+- [x] And: types.ts atualizado com novas colunas
 
 ### AC-3: Safe Deprecation
-- [ ] Given: tabelas legacy estao deprecadas
-- [ ] When: migration DROP e executada
-- [ ] Then: backup dos dados legacy e salvo antes do DROP
-- [ ] And: aplicacao funciona normalmente sem tabelas legacy
+- [x] Given: tabelas legacy estao deprecadas
+- [x] When: migration DROP e executada
+- [x] Then: backup dos dados legacy e salvo antes do DROP
+- [x] And: aplicacao funciona normalmente sem tabelas legacy
 
 ### AC-4: RLS nas Tabelas Mantidas
-- [ ] Given: tabelas modernas recebem campos migrados
-- [ ] When: RLS policies sao verificadas
-- [ ] Then: todas as tabelas mantidas tem RLS correto
+- [x] Given: tabelas modernas recebem campos migrados
+- [x] When: RLS policies sao verificadas
+- [x] Then: todas as tabelas mantidas tem RLS correto
 
 ## Arquivos a Modificar
-- [ ] supabase/migrations/YYYYMMDD_deprecate_legacy_tables.sql
-- [ ] src/integrations/supabase/types.ts (atualizar tipos)
-- [ ] Qualquer componente que consulte tabelas legacy diretamente
-- [ ] src/hooks/ (queries que referenciam tabelas legacy)
+- [x] supabase/migrations/YYYYMMDD_deprecate_legacy_tables.sql
+- [x] src/integrations/supabase/types.ts (atualizar tipos)
+- [x] Qualquer componente que consulte tabelas legacy diretamente
+- [x] src/hooks/ (queries que referenciam tabelas legacy)
+
+## Dev Agent Record
+
+### Agent Model Used
+claude-sonnet-4-6
+
+### Completion Notes
+- Migration criada: `supabase/migrations/20260220212638_deprecate_legacy_tables.sql`
+- Estrategia: backup em `_backup_*` → ADD colunas → UPDATE (migrate) → DROP legacy
+- `offer_ad_libraries`: adicionado campo `page_url` (migrado de `ad_bibliotecas.pagina_url`)
+- `offer_domains`: adicionado `whois_registrar`, `whois_expiry`, `hosting_provider`, `ip_address` (migrado de `oferta_dominios`)
+- 5 tabelas dropadas: `ad_bibliotecas`, `oferta_dominios`, `funil_paginas`, `fontes_captura`, `trafego_historico`
+- Nenhum componente ou hook referenciava diretamente as tabelas legacy (confirmado via grep)
+- RLS nas tabelas modernas ja estava correto (BD-0.1 aplicado)
+- Typecheck e build: PASS
+
+### File List
+- `supabase/migrations/20260220212638_deprecate_legacy_tables.sql` (CREATED)
+- `src/integrations/supabase/types.ts` (MODIFIED - removidas 5 tabelas legacy, adicionados campos em offer_ad_libraries e offer_domains)
 
 ## Riscos
 - Dados em tabelas legacy podem ter registros que nao existem nas modernas

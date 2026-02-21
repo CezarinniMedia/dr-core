@@ -75,10 +75,36 @@ SELECT cron.schedule('refresh-traffic-summary', '*/15 * * * *',
 ```
 
 ## Arquivos a Modificar
-- [ ] supabase/migrations/YYYYMMDD_add_materialized_views.sql
-- [ ] src/pages/Dashboard.tsx (usar mv_dashboard_stats)
-- [ ] src/hooks/useSpiedOffers.ts (usar mv_offer_traffic_summary)
-- [ ] supabase/functions/refresh-materialized-views/ (se necessario)
+- [x] supabase/migrations/20260220220000_add_materialized_views.sql
+- [x] src/pages/Dashboard.tsx (usar mv_dashboard_stats)
+- [x] src/hooks/useSpiedOffers.ts (usar mv_offer_traffic_summary)
+- [ ] supabase/functions/refresh-materialized-views/ (nao necessario — pg_cron cobre o caso)
+
+---
+
+## Dev Agent Record
+
+### Status: Ready for Review
+
+### Agent Model Used
+claude-sonnet-4-6
+
+### File List
+- `supabase/migrations/20260220220000_add_materialized_views.sql` — CREATED
+- `src/pages/Dashboard.tsx` — MODIFIED
+- `src/hooks/useSpiedOffers.ts` — MODIFIED
+
+### Completion Notes
+- mv_offer_traffic_summary: agrupa offer_traffic_data por spied_offer_id com domain_count, total_visits, latest_period, earliest/latest por source (monthly_sw vs monthly)
+- mv_dashboard_stats: agrupa spied_offers por workspace_id com total_offers, unique_domains, active/potential counts
+- RLS aplicada explicitamente nas materialized views (nao herdada automaticamente)
+- pg_cron setup condicional — se nao disponivel, avisa sem quebrar a migration
+- Dashboard: staleTime elevado para 15min (alinhado ao refresh cycle)
+- useOfferTrafficSummary hook exportado para uso nos detalhes de oferta
+- Nota: branch feature/bd-2.4 — bd-2.5 pode ser separado se necessario
+
+### Change Log
+- 2026-02-20: Dex (claude-sonnet-4-6) — Implementacao completa. Build OK, typecheck OK.
 
 ## Dependencias
 - BD-0.2 concluido (indexes base necessarios)
