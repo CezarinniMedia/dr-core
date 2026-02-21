@@ -8,7 +8,6 @@ interface LEDGlowBorderProps {
   variant?: GlowVariant;
   position?: GlowPosition;
   className?: string;
-  intensity?: "subtle" | "normal" | "strong";
 }
 
 const glowStyles: Record<GlowVariant, Record<GlowPosition, string>> = {

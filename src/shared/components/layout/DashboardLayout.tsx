@@ -5,7 +5,7 @@ import { useKeyboardShortcuts } from "@/shared/hooks/useKeyboardShortcuts";
 import { SidebarProvider } from "@/shared/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { AppHeader } from "./AppHeader";
-import { CommandPalette } from "@/shared/components/command-palette/CommandPalette";
+import { CommandPalette } from "./command-palette/CommandPalette";
 import { Loader2 } from "lucide-react";
 
 export function DashboardLayout() {

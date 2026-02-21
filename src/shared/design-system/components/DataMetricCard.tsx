@@ -35,18 +35,18 @@ export function DataMetricCard({
       )}
     >
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[var(--text-label)] text-[var(--text-secondary)] font-[var(--font-regular)]">
+        <span className="text-[length:var(--text-label)] text-[color:var(--text-secondary)] [font-weight:var(--font-regular)]">
           {label}
         </span>
         {icon && (
-          <span className="text-[var(--text-muted)]">{icon}</span>
+          <span className="text-[color:var(--text-muted)]">{icon}</span>
         )}
       </div>
 
       <div className="flex items-end justify-between gap-3">
         <div>
           <div
-            className="text-[var(--text-page-title)] font-[var(--font-bold)] text-[var(--text-primary)] leading-none"
+            className="text-[length:var(--text-page-title)] [font-weight:var(--font-bold)] text-[color:var(--text-primary)] leading-none"
             style={{ fontVariantNumeric: "tabular-nums" }}
           >
             {value}
@@ -55,27 +55,27 @@ export function DataMetricCard({
           {change !== undefined && (
             <div className="flex items-center gap-1 mt-1.5">
               {isPositive && (
-                <TrendingUp className="w-3 h-3 text-[var(--semantic-success)]" />
+                <TrendingUp className="w-3 h-3 text-[color:var(--semantic-success)]" />
               )}
               {isNegative && (
-                <TrendingDown className="w-3 h-3 text-[var(--semantic-error)]" />
+                <TrendingDown className="w-3 h-3 text-[color:var(--semantic-error)]" />
               )}
               {isNeutral && (
-                <Minus className="w-3 h-3 text-[var(--text-muted)]" />
+                <Minus className="w-3 h-3 text-[color:var(--text-muted)]" />
               )}
               <span
                 className={cn(
-                  "text-[var(--text-caption)] font-[var(--font-medium)]",
-                  isPositive && "text-[var(--semantic-success)]",
-                  isNegative && "text-[var(--semantic-error)]",
-                  isNeutral && "text-[var(--text-muted)]"
+                  "text-[length:var(--text-caption)] [font-weight:var(--font-medium)]",
+                  isPositive && "text-[color:var(--semantic-success)]",
+                  isNegative && "text-[color:var(--semantic-error)]",
+                  isNeutral && "text-[color:var(--text-muted)]"
                 )}
               >
                 {isPositive ? "+" : ""}
                 {change}%
               </span>
               {changePeriod && (
-                <span className="text-[var(--text-caption)] text-[var(--text-muted)]">
+                <span className="text-[length:var(--text-caption)] text-[color:var(--text-muted)]">
                   {changePeriod}
                 </span>
               )}
