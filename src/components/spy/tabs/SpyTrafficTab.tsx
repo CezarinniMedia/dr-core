@@ -196,10 +196,10 @@ export function SpyTrafficTab({ offerId, offerDomains, mainDomain }: SpyTrafficT
                         <TableCell className="text-xs text-muted-foreground">{r.source || "—"}</TableCell>
                         <TableCell>
                           <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEditRecord(r)}>
+                            <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="Editar registro" onClick={() => openEditRecord(r)}>
                               <Edit className="h-3 w-3" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDeleteRecord(r.id)}>
+                            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" aria-label="Deletar registro" onClick={() => handleDeleteRecord(r.id)}>
                               <Trash2 className="h-3 w-3" />
                             </Button>
                           </div>

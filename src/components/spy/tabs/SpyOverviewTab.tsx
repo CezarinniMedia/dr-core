@@ -105,7 +105,7 @@ function ScreenshotLightbox({ url, onClose }: LightboxProps) {
         {/* Toolbar */}
         <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/50 shrink-0">
           <span className="text-xs text-muted-foreground truncate flex-1">{url}</span>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={zoomOut} title="Diminuir zoom">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={zoomOut} aria-label="Diminuir zoom" title="Diminuir zoom">
             <ZoomOut className="h-4 w-4" />
           </Button>
           <button
@@ -115,10 +115,10 @@ function ScreenshotLightbox({ url, onClose }: LightboxProps) {
           >
             {Math.round(zoom * 100)}%
           </button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={zoomIn} title="Aumentar zoom">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={zoomIn} aria-label="Aumentar zoom" title="Aumentar zoom">
             <ZoomIn className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose} title="Fechar">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose} aria-label="Fechar" title="Fechar">
             <X className="h-4 w-4" />
           </Button>
         </div>

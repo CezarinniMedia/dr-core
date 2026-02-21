@@ -287,20 +287,21 @@ function ScreenshotLightbox({ url, onClose }: { url: string; onClose: () => void
       >
         <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/50 shrink-0">
           <span className="text-xs text-muted-foreground truncate flex-1">{url}</span>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={zoomOut} title="Diminuir zoom">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={zoomOut} aria-label="Diminuir zoom" title="Diminuir zoom">
             <ZoomOut className="h-4 w-4" />
           </Button>
           <button
             className="text-xs text-muted-foreground w-12 text-center hover:text-foreground transition-colors"
             onClick={resetZoom}
+            aria-label="Resetar zoom"
             title="Resetar zoom"
           >
             {Math.round(zoom * 100)}%
           </button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={zoomIn} title="Aumentar zoom">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={zoomIn} aria-label="Aumentar zoom" title="Aumentar zoom">
             <ZoomIn className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose} title="Fechar">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose} aria-label="Fechar" title="Fechar">
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -742,6 +743,7 @@ export default function SpyRadar() {
                               size="icon"
                               className="h-5 w-5 text-destructive shrink-0"
                               onClick={() => handleDeletePreset(i)}
+                              aria-label={`Remover preset ${p.name}`}
                             >
                               <X className="h-3 w-3" />
                             </Button>
@@ -1058,6 +1060,7 @@ export default function SpyRadar() {
                                         variant="ghost"
                                         size="icon"
                                         className="h-5 w-5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        aria-label="Editar notas"
                                         title="Editar notas"
                                       >
                                         <FileText className="h-3 w-3" />
@@ -1308,6 +1311,7 @@ export default function SpyRadar() {
                                           variant="ghost"
                                           size="icon"
                                           className="h-7 w-7"
+                                          aria-label="Ver screenshot"
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             setHoverScreenshotId(null);
@@ -1351,6 +1355,7 @@ export default function SpyRadar() {
                                       variant="ghost"
                                       size="icon"
                                       className="h-7 w-7"
+                                      aria-label="Abrir oferta"
                                       onClick={() => navigate(`/spy/${offer.id}`)}
                                     >
                                       <Eye className="h-3.5 w-3.5" />
@@ -1366,6 +1371,7 @@ export default function SpyRadar() {
                                       variant="ghost"
                                       size="icon"
                                       className="h-7 w-7 text-destructive"
+                                      aria-label="Deletar oferta"
                                       onClick={() => { setDeleteId(offer.id); setDeleteTarget("single"); }}
                                     >
                                       <Trash2 className="h-3.5 w-3.5" />
@@ -1407,6 +1413,7 @@ export default function SpyRadar() {
                         className="h-8 w-8"
                         disabled={currentPage === 0}
                         onClick={() => setCurrentPage(p => p - 1)}
+                        aria-label="Pagina anterior"
                       >
                         <ChevronLeft className="h-4 w-4" />
                       </Button>
@@ -1419,6 +1426,7 @@ export default function SpyRadar() {
                         className="h-8 w-8"
                         disabled={currentPage >= totalPages - 1}
                         onClick={() => setCurrentPage(p => p + 1)}
+                        aria-label="Proxima pagina"
                       >
                         <ChevronRight className="h-4 w-4" />
                       </Button>
