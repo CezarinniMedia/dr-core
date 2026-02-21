@@ -544,7 +544,7 @@ export function TrafficIntelligenceView() {
       {trafficLoading && (
         <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
-          Carregando dados de trafego ({(allTraffic ?? []).length.toLocaleString("pt-BR")} registros)...
+          Carregando dados de trafego ({allTraffic?.length?.toLocaleString("pt-BR") || 0} registros)...
         </div>
       )}
       {/* Top controls */}
