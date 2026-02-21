@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCreateAdCreative } from "@/hooks/useCompetitors";
-import { supabase } from "@/integrations/supabase/client";
+import { storage } from "@/lib/storage";
 import { Loader2, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -54,11 +54,10 @@ export function AdCreativeFormDialog({ open, onClose, competitorId }: AdCreative
     try {
       const ext = file.name.split(".").pop();
       const path = `${competitorId}/${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from("spy-assets").upload(path, file);
-      if (error) throw error;
+      const result = await storage.uploadFile("spy-assets", path, file);
+      if ("error" in result) throw new Error(result.error);
 
-      const { data: urlData } = supabase.storage.from("spy-assets").getPublicUrl(path);
-      update("file_url", urlData.publicUrl);
+      update("file_url", result.url);
     } catch (err: any) {
       toast({ title: "Erro no upload", description: err.message, variant: "destructive" });
     } finally {

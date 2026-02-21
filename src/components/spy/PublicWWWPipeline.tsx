@@ -115,7 +115,7 @@ export function PublicWWWPipeline({ open, onClose }: PublicWWWPipelineProps) {
           discovery_query: query || undefined,
         });
       }
-      toast({ title: `✅ ${toAdd.length} ofertas adicionadas ao radar!` });
+      toast({ title: `${toAdd.length} ofertas adicionadas ao radar!` });
       setStep(3);
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
@@ -230,12 +230,12 @@ export function PublicWWWPipeline({ open, onClose }: PublicWWWPipelineProps) {
           <div className="space-y-4">
             <Card>
               <CardContent className="pt-4 space-y-3">
-                <p className="font-medium">📋 Próximos passos sugeridos:</p>
+                <p className="font-medium">Próximos passos sugeridos:</p>
                 <ol className="list-decimal list-inside space-y-1.5 text-sm text-muted-foreground">
                   <li>Copie os domínios adicionados (200 por vez)</li>
                   <li>Cole no Semrush Bulk Analysis</li>
                   <li>Exporte o CSV do Semrush</li>
-                  <li>Use "📊 Importar Tráfego" para importar os dados</li>
+                  <li>Use "Importar Tráfego" para importar os dados</li>
                   <li>Ordene por tráfego e analise os mais promissores</li>
                 </ol>
               </CardContent>

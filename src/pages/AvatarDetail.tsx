@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, Zap, Frown, Star, Target, Gem, Shield, MessageCircle, Search } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export default function AvatarDetail() {
@@ -93,7 +93,7 @@ export default function AvatarDetail() {
         <div className="flex flex-wrap gap-2">
           {gatilhos.map((g: string) => (
             <Badge key={g} variant="outline">
-              ⚡ {g}
+              <Zap className="h-3 w-3 inline mr-1" />{g}
             </Badge>
           ))}
         </div>
@@ -103,7 +103,7 @@ export default function AvatarDetail() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">😞 Estado Atual</CardTitle>
+            <CardTitle className="text-sm flex items-center gap-1.5"><Frown className="h-4 w-4 text-muted-foreground" /> Estado Atual</CardTitle>
           </CardHeader>
           <CardContent>
             <Textarea
@@ -117,7 +117,7 @@ export default function AvatarDetail() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">🌟 Estado Desejado</CardTitle>
+            <CardTitle className="text-sm flex items-center gap-1.5"><Star className="h-4 w-4 text-yellow-500" /> Estado Desejado</CardTitle>
           </CardHeader>
           <CardContent>
             <Textarea
@@ -134,11 +134,11 @@ export default function AvatarDetail() {
       {/* Tabs */}
       <Tabs defaultValue="pain">
         <TabsList className="w-full justify-start">
-          <TabsTrigger value="pain">🎯 Pain Matrix</TabsTrigger>
-          <TabsTrigger value="desire">💎 Desire Matrix</TabsTrigger>
-          <TabsTrigger value="objecoes">🛡️ Objeções</TabsTrigger>
-          <TabsTrigger value="linguagem">🗣️ Linguagem</TabsTrigger>
-          <TabsTrigger value="search1">🔍 SEARCH 1</TabsTrigger>
+          <TabsTrigger value="pain" className="flex items-center gap-1.5"><Target className="h-4 w-4" /> Pain Matrix</TabsTrigger>
+          <TabsTrigger value="desire" className="flex items-center gap-1.5"><Gem className="h-4 w-4" /> Desire Matrix</TabsTrigger>
+          <TabsTrigger value="objecoes" className="flex items-center gap-1.5"><Shield className="h-4 w-4" /> Objecoes</TabsTrigger>
+          <TabsTrigger value="linguagem" className="flex items-center gap-1.5"><MessageCircle className="h-4 w-4" /> Linguagem</TabsTrigger>
+          <TabsTrigger value="search1" className="flex items-center gap-1.5"><Search className="h-4 w-4" /> SEARCH 1</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pain">

@@ -22,14 +22,12 @@ export function DashboardLayout() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <AppSidebar />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <AppHeader />
-          <main className="flex-1 overflow-y-auto p-6 bg-background">
-            <Outlet />
-          </main>
-        </div>
+      <AppSidebar />
+      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+        <AppHeader />
+        <main className="flex-1 overflow-y-auto p-6 bg-background">
+          <Outlet />
+        </main>
       </div>
     </SidebarProvider>
   );

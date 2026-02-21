@@ -13,16 +13,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Save, Trash2, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Trash2, Loader2, FlaskConical, Zap, Pause, Skull } from "lucide-react";
 import { useState, useEffect } from "react";
 import { formatCurrency } from "@/lib/utils";
 
-const statusOptions = [
-  { value: "RESEARCH", label: "🔬 Research" },
-  { value: "TEST", label: "⚗️ Testando" },
-  { value: "ATIVA", label: "⚡ Ativa" },
-  { value: "PAUSE", label: "⏸️ Pausada" },
-  { value: "MORTA", label: "☠️ Morta" },
+const statusOptions: { value: string; label: React.ReactNode }[] = [
+  { value: "RESEARCH", label: <><FlaskConical className="h-4 w-4 inline mr-1" />Research</> },
+  { value: "TEST", label: <><FlaskConical className="h-4 w-4 inline mr-1" />Testando</> },
+  { value: "ATIVA", label: <><Zap className="h-4 w-4 inline mr-1" />Ativa</> },
+  { value: "PAUSE", label: <><Pause className="h-4 w-4 inline mr-1" />Pausada</> },
+  { value: "MORTA", label: <><Skull className="h-4 w-4 inline mr-1" />Morta</> },
 ];
 
 const verticais = ["Saúde", "Finanças", "Relacionamento", "Educação", "Negócios", "Outro"];

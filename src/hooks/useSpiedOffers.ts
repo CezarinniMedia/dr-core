@@ -153,7 +153,7 @@ export function useCreateSpiedOffer() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['spied-offers'] });
-      toast({ title: '✅ Oferta adicionada ao radar!' });
+      toast({ title: 'Oferta adicionada ao radar!' });
     },
     onError: (error: Error) => {
       toast({ title: 'Erro', description: error.message, variant: 'destructive' });
@@ -461,7 +461,7 @@ export function useBulkInsertTrafficData() {
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['offer-traffic', variables.offerId] });
-      toast({ title: `✅ ${data?.length ?? 0} registros de tráfego importados!` });
+      toast({ title: `${data?.length ?? 0} registros de tráfego importados!` });
     },
     onError: (error: Error) => {
       toast({ title: 'Erro na importação', description: error.message, variant: 'destructive' });

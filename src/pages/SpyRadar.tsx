@@ -56,6 +56,9 @@ import {
   Plus, Zap, Search, Eye, Trash2, Radar, FileSpreadsheet,
   ChevronLeft, ChevronRight, Columns, X, FileText,
   ZoomIn, ZoomOut, BookmarkPlus, Image as ImageIcon,
+  ArrowUpRight, ArrowDownRight, ArrowRight, Sparkles,
+  LayoutList, BarChart3, Info, Radio, Flame, Rocket,
+  TrendingDown, Skull, Dna, Archive, BarChart2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -76,16 +79,16 @@ const STATUS_OPTIONS = [
   { value: "NEVER_SCALED", label: "Never Scaled" },
 ];
 
-const STATUS_BADGE: Record<string, { label: string; className: string }> = {
-  RADAR: { label: "Radar", className: "bg-muted text-muted-foreground" },
-  ANALYZING: { label: "Analyzing", className: "bg-warning/20 text-warning" },
-  HOT: { label: "HOT", className: "bg-destructive/20 text-destructive" },
-  SCALING: { label: "Scaling", className: "bg-success/20 text-success animate-pulse" },
-  DYING: { label: "Dying", className: "bg-accent/20 text-accent" },
-  DEAD: { label: "Dead", className: "bg-muted text-muted-foreground line-through" },
-  CLONED: { label: "Cloned", className: "bg-primary/20 text-primary" },
-  VAULT: { label: "Vault", className: "bg-muted text-muted-foreground" },
-  NEVER_SCALED: { label: "Never Scaled", className: "bg-muted/50 text-muted-foreground" },
+const STATUS_BADGE: Record<string, { label: string; className: string; tip: string }> = {
+  RADAR: { label: "Radar", className: "bg-muted text-muted-foreground", tip: "Recém-descoberta, aguardando análise" },
+  ANALYZING: { label: "Analyzing", className: "bg-warning/20 text-warning", tip: "Sob investigação ativa" },
+  HOT: { label: "HOT", className: "bg-destructive/20 text-destructive", tip: "Sinais fortes — merece atenção imediata" },
+  SCALING: { label: "Scaling", className: "bg-success/20 text-success animate-pulse", tip: "Crescimento acelerado — hora de agir" },
+  DYING: { label: "Dying", className: "bg-accent/20 text-accent", tip: "Tráfego em queda, perdendo força" },
+  DEAD: { label: "Dead", className: "bg-muted text-muted-foreground line-through", tip: "Parou completamente, referência histórica" },
+  CLONED: { label: "Cloned", className: "bg-primary/20 text-primary", tip: "Já clonada/adaptada para sua operação" },
+  VAULT: { label: "Vault", className: "bg-muted text-muted-foreground", tip: "Sites irrelevantes (google, youtube, etc)" },
+  NEVER_SCALED: { label: "Never Scaled", className: "bg-muted/50 text-muted-foreground", tip: "Nunca escalou — mantido como referência" },
 };
 
 // ─── Column groups (all possible offer fields) ───────────────────────────────
@@ -181,12 +184,12 @@ const VERTICAL_BADGE: Record<string, string> = {
   tech: "bg-primary/20 text-primary",
 };
 
-const TREND_ICON: Record<string, string> = {
-  UP: "↗️",
-  DOWN: "↘️",
-  STABLE: "→",
-  SPIKE: "⚡",
-  NEW: "🆕",
+const TREND_ICON: Record<string, React.ReactNode> = {
+  UP: <ArrowUpRight className="h-3.5 w-3.5 text-green-500" />,
+  DOWN: <ArrowDownRight className="h-3.5 w-3.5 text-red-500" />,
+  STABLE: <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />,
+  SPIKE: <Zap className="h-3.5 w-3.5 text-yellow-500" />,
+  NEW: <Sparkles className="h-3.5 w-3.5 text-blue-500" />,
 };
 
 const PAGE_SIZE_OPTIONS = [
@@ -275,27 +278,26 @@ function ScreenshotLightbox({ url, onClose }: { url: string; onClose: () => void
       onClick={onClose}
     >
       <div
-        className="relative flex flex-col bg-background rounded-lg shadow-2xl overflow-hidden"
-        style={{ width: "min(85vw, 1200px)", height: "min(85vh, 900px)" }}
+        className="relative flex flex-col bg-background rounded-lg shadow-2xl overflow-hidden w-[90vw] max-w-5xl h-[85svh] max-h-[900px]"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/50 shrink-0">
-          <span className="text-xs text-muted-foreground truncate flex-1">{url}</span>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={zoomOut} title="Diminuir zoom">
-            <ZoomOut className="h-4 w-4" />
+          <span className="text-xs text-muted-foreground truncate flex-1 hidden sm:block">{url}</span>
+          <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-7 sm:w-7" onClick={zoomOut} title="Diminuir zoom">
+            <ZoomOut className="h-5 w-5 sm:h-4 sm:w-4" />
           </Button>
           <button
-            className="text-xs text-muted-foreground w-12 text-center hover:text-foreground transition-colors"
+            className="text-xs text-muted-foreground w-14 sm:w-12 text-center hover:text-foreground transition-colors py-1"
             onClick={resetZoom}
             title="Resetar zoom"
           >
             {Math.round(zoom * 100)}%
           </button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={zoomIn} title="Aumentar zoom">
-            <ZoomIn className="h-4 w-4" />
+          <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-7 sm:w-7" onClick={zoomIn} title="Aumentar zoom">
+            <ZoomIn className="h-5 w-5 sm:h-4 sm:w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose} title="Fechar">
-            <X className="h-4 w-4" />
+          <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-7 sm:w-7" onClick={onClose} title="Fechar">
+            <X className="h-5 w-5 sm:h-4 sm:w-4" />
           </Button>
         </div>
         <div
@@ -500,17 +502,16 @@ export default function SpyRadar() {
     setSelectedIds(new Set());
   }, []);
 
-  // Selection handlers
-  const handleRowSelect = useCallback((offerId: string, index: number, e: React.MouseEvent) => {
+  // Selection handlers — NEW-05: track absolute index for reliable shift+click cross-page
+  const handleRowSelect = useCallback((offerId: string, visibleIdx: number, e: React.MouseEvent) => {
     e.stopPropagation();
+    const absoluteIdx = isInfinite ? visibleIdx : currentPage * pageSizeNum + visibleIdx;
     setSelectedIds(prev => {
       const next = new Set(prev);
       if (e.shiftKey && lastClickedIndex.current !== null && offers) {
-        const start = Math.min(lastClickedIndex.current, index);
-        const end = Math.max(lastClickedIndex.current, index);
-        const globalStart = currentPage * pageSizeNum + start;
-        const globalEnd = currentPage * pageSizeNum + end;
-        for (let i = globalStart; i <= globalEnd; i++) {
+        const start = Math.min(lastClickedIndex.current, absoluteIdx);
+        const end = Math.max(lastClickedIndex.current, absoluteIdx);
+        for (let i = start; i <= end; i++) {
           if (offers[i]) next.add(offers[i].id);
         }
       } else if (e.metaKey || e.ctrlKey) {
@@ -524,10 +525,10 @@ export default function SpyRadar() {
           next.add(offerId);
         }
       }
-      lastClickedIndex.current = index;
+      lastClickedIndex.current = absoluteIdx;
       return next;
     });
-  }, [offers, currentPage, pageSizeNum]);
+  }, [offers, currentPage, pageSizeNum, isInfinite]);
 
   const handleSelectAll = useCallback(() => {
     if (!offers) return;
@@ -588,22 +589,26 @@ export default function SpyRadar() {
   const somePageChecked = visibleOffers.some(o => selectedIds.has(o.id));
 
   // Filtered column groups for search
+  // NEW-06: normalize string removing diacritics for accent-insensitive search
+  const normalizeStr = (s: string) =>
+    s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
   const filteredColumnGroups = useMemo(() => {
     if (!colSearch.trim()) return COLUMN_GROUPS;
-    const q = colSearch.toLowerCase();
+    const q = normalizeStr(colSearch);
     return COLUMN_GROUPS.map(g => ({
       ...g,
-      columns: g.columns.filter(c => c.label.toLowerCase().includes(q) || c.key.toLowerCase().includes(q)),
+      columns: g.columns.filter(c => normalizeStr(c.label).includes(q) || c.key.toLowerCase().includes(q)),
     })).filter(g => g.columns.length > 0);
   }, [colSearch]);
 
   return (
-    <TooltipProvider>
+    <TooltipProvider delayDuration={200}>
       <div className="max-w-7xl space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">🔍 Radar de Ofertas</h1>
+            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2"><Search className="h-6 w-6" /> Radar de Ofertas</h1>
             <p className="text-muted-foreground text-sm">
               Monitore ofertas, espione funis e escale mais rápido
             </p>
@@ -627,9 +632,9 @@ export default function SpyRadar() {
         {/* Main Tabs */}
         <Tabs value={mainTab} onValueChange={setMainTab}>
           <TabsList>
-            <TabsTrigger value="offers">📋 Ofertas</TabsTrigger>
-            <TabsTrigger value="comparison">📊 Inteligência de Tráfego</TabsTrigger>
-            <TabsTrigger value="about">ℹ️ Sobre</TabsTrigger>
+            <TabsTrigger value="offers" className="flex items-center gap-1.5"><LayoutList className="h-4 w-4" /> Ofertas</TabsTrigger>
+            <TabsTrigger value="comparison" className="flex items-center gap-1.5"><BarChart3 className="h-4 w-4" /> Inteligencia de Trafego</TabsTrigger>
+            <TabsTrigger value="about" className="flex items-center gap-1.5"><Info className="h-4 w-4" /> Sobre</TabsTrigger>
           </TabsList>
 
           <TabsContent value="offers" className="mt-4 space-y-4">
@@ -845,8 +850,8 @@ export default function SpyRadar() {
               </div>
             ) : (
               <>
-                <div className="border rounded-lg overflow-hidden">
-                  <Table>
+                <div className="border rounded-lg overflow-x-auto">
+                  <Table style={{ tableLayout: "fixed", minWidth: "800px" }}>
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-[40px]">
@@ -934,37 +939,54 @@ export default function SpyRadar() {
                               />
                             </TableCell>
 
-                            {/* Status — DropdownMenu with modal to avoid TooltipProvider conflict */}
+                            {/* Status — DropdownMenu with tooltip */}
                             {visibleColumns.has("status") && (
                               <TableCell onClick={(e) => e.stopPropagation()}>
-                                <DropdownMenu modal={true}>
-                                  <DropdownMenuTrigger asChild>
-                                    <button className="cursor-pointer" title="Alterar status">
-                                      <Badge variant="outline" className={sb.className}>
-                                        {sb.label}
-                                      </Badge>
-                                    </button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="start" className="w-40">
-                                    {STATUS_OPTIONS.map(s => (
-                                      <DropdownMenuItem
-                                        key={s.value}
-                                        onClick={() => handleInlineStatusChange(offer.id, s.value)}
-                                      >
-                                        {s.label}
-                                      </DropdownMenuItem>
-                                    ))}
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
+                                <Tooltip>
+                                  <DropdownMenu modal={true}>
+                                    <TooltipTrigger asChild>
+                                      <DropdownMenuTrigger asChild>
+                                        <button className="cursor-pointer">
+                                          <Badge variant="outline" className={`${sb.className} whitespace-nowrap`}>
+                                            {sb.label}
+                                          </Badge>
+                                        </button>
+                                      </DropdownMenuTrigger>
+                                    </TooltipTrigger>
+                                    <DropdownMenuContent align="start" className="w-40">
+                                      {STATUS_OPTIONS.map(s => (
+                                        <DropdownMenuItem
+                                          key={s.value}
+                                          onClick={() => handleInlineStatusChange(offer.id, s.value)}
+                                        >
+                                          {s.label}
+                                        </DropdownMenuItem>
+                                      ))}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                  <TooltipContent side="right" className="text-xs max-w-[200px]">
+                                    {sb.tip}
+                                  </TooltipContent>
+                                </Tooltip>
                               </TableCell>
                             )}
 
                             {/* Nome */}
                             {visibleColumns.has("nome") && (
                               <TableCell>
-                                <p className="font-medium text-sm">{offer.nome}</p>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <p className="font-medium text-sm truncate max-w-[190px]">{offer.nome}</p>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="text-xs max-w-xs">{offer.nome}</TooltipContent>
+                                </Tooltip>
                                 {offer.main_domain && (
-                                  <p className="text-xs text-muted-foreground">{offer.main_domain}</p>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <p className="text-xs text-muted-foreground truncate max-w-[190px]">{offer.main_domain}</p>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom" className="text-xs">{offer.main_domain}</TooltipContent>
+                                  </Tooltip>
                                 )}
                               </TableCell>
                             )}
@@ -1009,7 +1031,7 @@ export default function SpyRadar() {
                                         <FileText className="h-3 w-3" />
                                       </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-80 p-3" side="right" align="start">
+                                    <PopoverContent className="w-80 p-3" side="left" align="start" avoidCollisions collisionPadding={16}>
                                       <p className="text-xs font-medium mb-2 flex items-center gap-1.5">
                                         <FileText className="h-3.5 w-3.5" />
                                         Notas — {offer.nome}
@@ -1054,7 +1076,7 @@ export default function SpyRadar() {
                             {visibleColumns.has("vertical") && (
                               <TableCell>
                                 {offer.vertical && (
-                                  <Badge variant="outline" className={VERTICAL_BADGE[offer.vertical] || ""}>
+                                  <Badge variant="outline" className={`${VERTICAL_BADGE[offer.vertical] || ""} whitespace-nowrap`}>
                                     {offer.vertical}
                                   </Badge>
                                 )}
@@ -1063,15 +1085,25 @@ export default function SpyRadar() {
 
                             {/* Subnicho */}
                             {visibleColumns.has("subnicho") && (
-                              <TableCell className="text-xs text-muted-foreground">
-                                {offer.subnicho || "—"}
+                              <TableCell className="text-xs text-muted-foreground max-w-[80px]">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="block truncate">{offer.subnicho || "—"}</span>
+                                  </TooltipTrigger>
+                                  {offer.subnicho && <TooltipContent side="top" className="text-xs">{offer.subnicho}</TooltipContent>}
+                                </Tooltip>
                               </TableCell>
                             )}
 
                             {/* Product name */}
                             {visibleColumns.has("product_name") && (
-                              <TableCell className="text-xs">
-                                {offer.product_name || "—"}
+                              <TableCell className="text-xs max-w-[130px]">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="block truncate">{offer.product_name || "—"}</span>
+                                  </TooltipTrigger>
+                                  {offer.product_name && <TooltipContent side="top" className="text-xs">{offer.product_name}</TooltipContent>}
+                                </Tooltip>
                               </TableCell>
                             )}
 
@@ -1140,15 +1172,25 @@ export default function SpyRadar() {
 
                             {/* Operator */}
                             {visibleColumns.has("operator") && (
-                              <TableCell className="text-xs text-muted-foreground">
-                                {offer.operator_name || "—"}
+                              <TableCell className="text-xs text-muted-foreground max-w-[90px]">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="block truncate">{offer.operator_name || "—"}</span>
+                                  </TooltipTrigger>
+                                  {offer.operator_name && <TooltipContent side="top" className="text-xs">{offer.operator_name}</TooltipContent>}
+                                </Tooltip>
                               </TableCell>
                             )}
 
                             {/* Checkout */}
                             {visibleColumns.has("checkout") && (
-                              <TableCell className="text-xs text-muted-foreground">
-                                {offer.checkout_provider || "—"}
+                              <TableCell className="text-xs text-muted-foreground max-w-[80px]">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="block truncate">{offer.checkout_provider || "—"}</span>
+                                  </TooltipTrigger>
+                                  {offer.checkout_provider && <TooltipContent side="top" className="text-xs">{offer.checkout_provider}</TooltipContent>}
+                                </Tooltip>
                               </TableCell>
                             )}
 
@@ -1161,8 +1203,13 @@ export default function SpyRadar() {
 
                             {/* Fonte */}
                             {visibleColumns.has("fonte") && (
-                              <TableCell className="text-xs text-muted-foreground">
-                                {offer.discovery_source || "—"}
+                              <TableCell className="text-xs text-muted-foreground max-w-[90px]">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="block truncate">{offer.discovery_source || "—"}</span>
+                                  </TooltipTrigger>
+                                  {offer.discovery_source && <TooltipContent side="top" className="text-xs">{offer.discovery_source}</TooltipContent>}
+                                </Tooltip>
                               </TableCell>
                             )}
 
@@ -1229,7 +1276,6 @@ export default function SpyRadar() {
                                           variant="ghost"
                                           size="icon"
                                           className="h-7 w-7"
-                                          title="Pré-visualizar screenshot"
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             setHoverScreenshotId(null);
@@ -1267,26 +1313,34 @@ export default function SpyRadar() {
                                 )}
 
                                 {/* Open offer detail */}
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7"
-                                  title="Abrir oferta"
-                                  onClick={() => navigate(`/spy/${offer.id}`)}
-                                >
-                                  <Eye className="h-3.5 w-3.5" />
-                                </Button>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7"
+                                      onClick={() => navigate(`/spy/${offer.id}`)}
+                                    >
+                                      <Eye className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="text-xs">Abrir oferta</TooltipContent>
+                                </Tooltip>
 
                                 {/* Delete */}
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 text-destructive"
-                                  title="Deletar oferta"
-                                  onClick={() => { setDeleteId(offer.id); setDeleteTarget("single"); }}
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 text-destructive"
+                                      onClick={() => { setDeleteId(offer.id); setDeleteTarget("single"); }}
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="text-xs">Deletar oferta</TooltipContent>
+                                </Tooltip>
                               </div>
                             </TableCell>
                           </TableRow>
@@ -1353,18 +1407,18 @@ export default function SpyRadar() {
               <p className="text-sm text-muted-foreground">Cada oferta no radar passa por um ciclo de qualificação. Use os status abaixo para organizar seu pipeline de espionagem:</p>
               <div className="space-y-3">
                 {[
-                  { status: "RADAR", emoji: "📡", title: "Radar", desc: "Oferta recém-descoberta. Ainda não foi analisada em detalhe. É o ponto de entrada — tudo que você encontra espionando começa aqui." },
-                  { status: "ANALYZING", emoji: "🔍", title: "Analyzing", desc: "Você está investigando ativamente: analisando funil, criativos, tráfego e viabilidade. A oferta está sob avaliação." },
-                  { status: "HOT", emoji: "🔥", title: "HOT", desc: "A oferta mostrou sinais fortes: tráfego crescente, múltiplos criativos ativos, funil validado. Merece atenção imediata e possível clone." },
-                  { status: "SCALING", emoji: "🚀", title: "Scaling", desc: "A oferta está em fase de crescimento acelerado. Tráfego subindo consistentemente, novos criativos aparecendo. É o momento de agir rápido." },
-                  { status: "DYING", emoji: "📉", title: "Dying", desc: "Tráfego em queda, criativos sendo pausados. A oferta está perdendo força. Ainda pode ter insights úteis, mas o timing já passou." },
-                  { status: "DEAD", emoji: "💀", title: "Dead", desc: "A oferta parou completamente. Sem tráfego, sem criativos ativos. Mantida no radar apenas como referência histórica." },
-                  { status: "CLONED", emoji: "🧬", title: "Cloned", desc: "Voce ja clonou/adaptou esta oferta. Indica que o ciclo de espionagem foi concluido e a inteligencia foi aplicada na sua propria operacao." },
-                  { status: "VAULT", emoji: "🗄️", title: "Vault", desc: "Bau de sites irrelevantes (google, youtube, hotmart, etc). Nao polui o radar nem os dados de trafego." },
-                  { status: "NEVER_SCALED", emoji: "📊", title: "Never Scaled", desc: "Sites que nunca escalaram. Mantidos para referencia mas separados dos dados ativos." },
+                  { status: "RADAR", icon: <Radio className="h-5 w-5 text-blue-400" />, title: "Radar", desc: "Oferta recém-descoberta. Ainda não foi analisada em detalhe. É o ponto de entrada — tudo que você encontra espionando começa aqui." },
+                  { status: "ANALYZING", icon: <Search className="h-5 w-5 text-yellow-400" />, title: "Analyzing", desc: "Você está investigando ativamente: analisando funil, criativos, tráfego e viabilidade. A oferta está sob avaliação." },
+                  { status: "HOT", icon: <Flame className="h-5 w-5 text-orange-500" />, title: "HOT", desc: "A oferta mostrou sinais fortes: tráfego crescente, múltiplos criativos ativos, funil validado. Merece atenção imediata e possível clone." },
+                  { status: "SCALING", icon: <Rocket className="h-5 w-5 text-green-500" />, title: "Scaling", desc: "A oferta está em fase de crescimento acelerado. Tráfego subindo consistentemente, novos criativos aparecendo. É o momento de agir rápido." },
+                  { status: "DYING", icon: <TrendingDown className="h-5 w-5 text-red-400" />, title: "Dying", desc: "Tráfego em queda, criativos sendo pausados. A oferta está perdendo força. Ainda pode ter insights úteis, mas o timing já passou." },
+                  { status: "DEAD", icon: <Skull className="h-5 w-5 text-gray-500" />, title: "Dead", desc: "A oferta parou completamente. Sem tráfego, sem criativos ativos. Mantida no radar apenas como referência histórica." },
+                  { status: "CLONED", icon: <Dna className="h-5 w-5 text-purple-400" />, title: "Cloned", desc: "Voce ja clonou/adaptou esta oferta. Indica que o ciclo de espionagem foi concluido e a inteligencia foi aplicada na sua propria operacao." },
+                  { status: "VAULT", icon: <Archive className="h-5 w-5 text-gray-400" />, title: "Vault", desc: "Bau de sites irrelevantes (google, youtube, hotmart, etc). Nao polui o radar nem os dados de trafego." },
+                  { status: "NEVER_SCALED", icon: <BarChart2 className="h-5 w-5 text-slate-400" />, title: "Never Scaled", desc: "Sites que nunca escalaram. Mantidos para referencia mas separados dos dados ativos." },
                 ].map(item => (
                   <div key={item.status} className="flex gap-3 p-3 rounded-lg bg-muted/30">
-                    <span className="text-xl">{item.emoji}</span>
+                    <span className="shrink-0 mt-0.5">{item.icon}</span>
                     <div>
                       <p className="font-medium text-sm">{item.title}</p>
                       <p className="text-xs text-muted-foreground">{item.desc}</p>

@@ -53,7 +53,7 @@ function extractPeriodFromFilename(fileName: string): { date: string; label: str
   return { date: `${match[2]}-${String(month).padStart(2, "0")}-01`, label: match[0].trim() };
 }
 import {
-  Upload, FileSpreadsheet, CheckCircle, AlertTriangle, ArrowRight, ArrowLeft, Loader2, X,
+  Upload, FileSpreadsheet, CheckCircle, AlertTriangle, ArrowRight, ArrowLeft, Loader2, X, BarChart3, RotateCw,
 } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 
@@ -735,7 +735,7 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
       setImportResult({ newOffers, updated, trafficRecords: trafficCount });
       queryClient.invalidateQueries({ queryKey: ["spied-offers"] });
       setStep(4);
-      toast({ title: "Importação concluída!" });
+      toast({ title: "Importação concluída" });
     } catch (err: any) {
       toast({ title: "Erro na importação", description: err.message, variant: "destructive" });
     } finally {
@@ -822,7 +822,7 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
                   <div key={i} className="flex items-center gap-2 p-2 border rounded text-sm">
                     <FileSpreadsheet className="h-4 w-4 text-muted-foreground shrink-0" />
                     <span className="flex-1 truncate">{f.name}</span>
-                    <Badge variant="outline" className={TYPE_COLORS[f.classified.type]}>{f.classified.label}</Badge>
+                    <Badge variant="outline" className={`${TYPE_COLORS[f.classified.type]} whitespace-nowrap`}>{f.classified.label}</Badge>
                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeFile(i)}>
                       <X className="h-3 w-3" />
                     </Button>
@@ -1042,43 +1042,48 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
         {/* Step 3: Matching & Preview */}
         {step === 3 && (
           <div className="space-y-4">
-            <div className="border rounded-lg overflow-hidden max-h-[400px] overflow-y-auto">
-              <Table>
+            {domainMatches.length > 500 && (
+              <p className="text-xs text-muted-foreground bg-muted/50 rounded px-3 py-1.5">
+                Mostrando 500 de {domainMatches.length} domínios na prévia. Todos serão importados.
+              </p>
+            )}
+            <div className="border rounded-lg overflow-x-auto max-h-[400px] overflow-y-auto">
+              <Table style={{ minWidth: "710px" }}>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Domínio</TableHead>
-                    <TableHead>Tipo CSV</TableHead>
-                    <TableHead>No Radar?</TableHead>
-                    <TableHead>Ação</TableHead>
-                    <TableHead className="text-right">Dados</TableHead>
+                    <TableHead className="w-[180px]">Domínio</TableHead>
+                    <TableHead className="w-[160px]">Tipo CSV</TableHead>
+                    <TableHead className="w-[150px]">No Radar?</TableHead>
+                    <TableHead className="w-[120px]">Ação</TableHead>
+                    <TableHead className="w-[100px] text-right">Dados</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {domainMatches.map(m => (
+                  {domainMatches.slice(0, 500).map(m => (
                     <TableRow key={m.domain}>
-                      <TableCell className="font-mono text-xs">{m.domain}</TableCell>
+                      <TableCell className="font-mono text-xs truncate max-w-[180px]">{m.domain}</TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {m.csvTypes.map(t => (
-                            <Badge key={t} variant="outline" className="text-[10px]">{t}</Badge>
+                            <Badge key={t} variant="outline" className="text-[10px] whitespace-nowrap">{t}</Badge>
                           ))}
                         </div>
                       </TableCell>
                       <TableCell>
                         {m.matched ? (
-                          <Badge variant="outline" className="bg-success/10 text-success text-[10px]">
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            {m.offerName}
+                          <Badge variant="outline" className="bg-success/10 text-success text-[10px] whitespace-nowrap max-w-[140px] truncate">
+                            <CheckCircle className="h-3 w-3 mr-1 shrink-0" />
+                            <span className="truncate">{m.offerName}</span>
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="bg-warning/10 text-warning text-[10px]">
-                            <AlertTriangle className="h-3 w-3 mr-1" />
+                          <Badge variant="outline" className="bg-warning/10 text-warning text-[10px] whitespace-nowrap">
+                            <AlertTriangle className="h-3 w-3 mr-1 shrink-0" />
                             Novo
                           </Badge>
                         )}
                       </TableCell>
-                      <TableCell className="text-xs">{m.action}</TableCell>
-                      <TableCell className="text-right text-xs text-muted-foreground">
+                      <TableCell className="text-xs whitespace-nowrap">{m.action}</TableCell>
+                      <TableCell className="text-right text-xs text-muted-foreground whitespace-nowrap">
                         {m.trafficRecords > 0 && `${m.trafficRecords} tráfego`}
                         {m.newDomains > 0 && ` · ${m.newDomains} dom.`}
                       </TableCell>
@@ -1089,7 +1094,7 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
             </div>
 
             <div className="text-sm text-muted-foreground space-y-1">
-              <p>📊 {totalDomains} domínios · {newDomains} novos · {matchedDomains} existentes · {totalTraffic} registros de tráfego</p>
+              <p className="flex items-center gap-1"><BarChart3 className="h-3.5 w-3.5" /> {totalDomains} domínios · {newDomains} novos · {matchedDomains} existentes · {totalTraffic} registros de tráfego</p>
             </div>
 
             {importing && (
@@ -1123,9 +1128,9 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
               <CheckCircle className="h-12 w-12 text-success mx-auto" />
               <h3 className="text-lg font-semibold">Importação Concluída!</h3>
               <div className="text-sm text-muted-foreground space-y-1">
-                <p>✅ {importResult.newOffers} ofertas criadas</p>
-                <p>🔄 {importResult.updated} ofertas atualizadas</p>
-                <p>📊 {importResult.trafficRecords} registros de tráfego importados</p>
+                <p>{importResult.newOffers} ofertas criadas</p>
+                <p className="flex items-center justify-center gap-1"><RotateCw className="h-3.5 w-3.5" /> {importResult.updated} ofertas atualizadas</p>
+                <p className="flex items-center justify-center gap-1"><BarChart3 className="h-3.5 w-3.5" /> {importResult.trafficRecords} registros de tráfego importados</p>
               </div>
             </div>
             <div className="flex justify-end">

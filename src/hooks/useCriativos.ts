@@ -181,7 +181,7 @@ export function useGenerateHooks() {
     onSuccess: (hooks) => {
       queryClient.invalidateQueries({ queryKey: ["hooks"] });
       toast({
-        title: `✅ ${hooks.length} hooks gerados!`,
+        title: `${hooks.length} hooks gerados!`,
         description: "Hooks salvos com sucesso.",
       });
     },

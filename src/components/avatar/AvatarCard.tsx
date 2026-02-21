@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, Eye } from "lucide-react";
+import { Gem, Target, Trash2, Eye, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface AvatarCardProps {
@@ -42,10 +42,10 @@ export function AvatarCard({ avatar, onDelete }: AvatarCardProps) {
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex gap-4 text-xs text-muted-foreground">
-          <span>🎯 {painCount}/5 dores</span>
-          <span>💎 {desireCount}/3 desejos</span>
+          <span className="flex items-center gap-1"><Target className="h-3 w-3" /> {painCount}/5 dores</span>
+          <span className="flex items-center gap-1"><Gem className="h-3 w-3" /> {desireCount}/3 desejos</span>
           {avatar.gatilhos_emocionais && (
-            <span>⚡ {avatar.gatilhos_emocionais.length} gatilhos</span>
+            <span className="flex items-center gap-1"><Zap className="h-3 w-3" /> {avatar.gatilhos_emocionais.length} gatilhos</span>
           )}
         </div>
 
