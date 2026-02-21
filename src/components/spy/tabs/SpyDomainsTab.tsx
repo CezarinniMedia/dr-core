@@ -154,10 +154,10 @@ export function SpyDomainsTab({ offerId }: SpyDomainsTabProps) {
                   <TableCell className="text-xs text-muted-foreground max-w-[150px] truncate">{d.notas || "—"}</TableCell>
                   <TableCell>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(d)}>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Editar dominio" onClick={() => openEdit(d)}>
                         <Edit className="h-3.5 w-3.5" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteMutation.mutate({ id: d.id, offerId })}>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" aria-label="Deletar dominio" onClick={() => deleteMutation.mutate({ id: d.id, offerId })}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>

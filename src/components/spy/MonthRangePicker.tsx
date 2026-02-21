@@ -114,14 +114,14 @@ export function MonthRangePicker({ from, to, onChange }: MonthRangePickerProps) 
           {/* Month grids */}
           <div className="p-3">
             <div className="flex items-center justify-between mb-3">
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setBaseYear(baseYear - 1)}>
+              <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="Ano anterior" onClick={() => setBaseYear(baseYear - 1)}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <div className="flex gap-8">
                 <span className="text-sm font-semibold">{yearLeft}</span>
                 <span className="text-sm font-semibold">{yearRight}</span>
               </div>
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setBaseYear(baseYear + 1)}>
+              <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="Proximo ano" onClick={() => setBaseYear(baseYear + 1)}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
