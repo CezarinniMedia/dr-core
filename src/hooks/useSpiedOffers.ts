@@ -572,3 +572,38 @@ export function useDeleteTrafficData() {
     },
   });
 }
+
+// ============================================
+// MATERIALIZED VIEW: Traffic Summary (BD-2.5)
+// Pre-calculado via mv_offer_traffic_summary
+// Refresh automatico a cada 15min via pg_cron
+// ============================================
+
+export type OfferTrafficSummary = {
+  spied_offer_id: string;
+  domain_count: number;
+  total_visits: number;
+  latest_period: string | null;
+  earliest_period: string | null;
+  latest_sw_visits: number | null;
+  latest_sr_visits: number | null;
+  avg_monthly_visits: number | null;
+};
+
+export function useOfferTrafficSummary(offerId: string) {
+  return useQuery({
+    queryKey: ['offer-traffic-summary', offerId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('mv_offer_traffic_summary')
+        .select('spied_offer_id, domain_count, total_visits, latest_period, earliest_period, latest_sw_visits, latest_sr_visits, avg_monthly_visits')
+        .eq('spied_offer_id', offerId)
+        .maybeSingle<OfferTrafficSummary>();
+
+      if (error) throw new Error(error.message);
+      return data;
+    },
+    enabled: !!offerId,
+    staleTime: 15 * 60_000, // 15min — alinhado com refresh da materialized view
+  });
+}
