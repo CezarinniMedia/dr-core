@@ -7,8 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Save, Zap, Frown, Star, Target, Gem, Shield, MessageCircle, Search } from "lucide-react";
+import { Save, Zap, Frown, Star, Target, Gem, Shield, MessageCircle, Search, Users } from "lucide-react";
 import { useState, useEffect } from "react";
+import { PageBreadcrumb } from "@/components/ui/PageBreadcrumb";
 
 export default function AvatarDetail() {
   const { id } = useParams<{ id: string }>();
@@ -35,9 +36,13 @@ export default function AvatarDetail() {
   if (!avatar) {
     return (
       <div className="p-6 space-y-4">
+        <PageBreadcrumb items={[
+          { label: "Avatares", href: "/avatar", icon: Users },
+          { label: "Avatar não encontrado" },
+        ]} />
         <p className="text-muted-foreground">Avatar não encontrado.</p>
         <Button variant="outline" onClick={() => navigate("/avatar")}>
-          <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
+          Voltar aos Avatares
         </Button>
       </div>
     );
@@ -70,18 +75,19 @@ export default function AvatarDetail() {
 
   return (
     <div className="max-w-4xl space-y-6">
+      {/* Breadcrumb */}
+      <PageBreadcrumb items={[
+        { label: "Avatares", href: "/avatar", icon: Users },
+        { label: avatar.nome },
+      ]} />
+
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/avatar")}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">{avatar.nome}</h1>
-            <p className="text-sm text-muted-foreground">
-              {(avatar as any).ofertas?.nome || "—"} · v{avatar.versao}
-            </p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">{avatar.nome}</h1>
+          <p className="text-sm text-muted-foreground">
+            {(avatar as any).ofertas?.nome || "—"} · v{avatar.versao}
+          </p>
         </div>
         <Button onClick={handleSaveText} disabled={updateMutation.isPending}>
           <Save className="h-4 w-4 mr-2" /> Salvar

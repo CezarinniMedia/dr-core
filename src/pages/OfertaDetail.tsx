@@ -13,9 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Save, Trash2, Loader2, FlaskConical, Zap, Pause, Skull } from "lucide-react";
+import { Save, Trash2, Loader2, FlaskConical, Zap, Pause, Skull, Package } from "lucide-react";
 import { useState, useEffect } from "react";
 import { formatCurrency } from "@/lib/utils";
+import { PageBreadcrumb } from "@/components/ui/PageBreadcrumb";
 
 const statusOptions: { value: string; label: React.ReactNode }[] = [
   { value: "RESEARCH", label: <><FlaskConical className="h-4 w-4 inline mr-1" />Research</> },
@@ -104,28 +105,33 @@ export default function OfertaDetailPage() {
   if (!oferta) {
     return (
       <div className="space-y-4 max-w-4xl">
-        <Button variant="ghost" onClick={() => navigate("/ofertas")}>
-          <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
-        </Button>
+        <PageBreadcrumb items={[
+          { label: "Ofertas", href: "/ofertas", icon: Package },
+          { label: "Oferta não encontrada" },
+        ]} />
         <p className="text-muted-foreground">Oferta não encontrada.</p>
+        <Button variant="outline" onClick={() => navigate("/ofertas")}>
+          Voltar às Ofertas
+        </Button>
       </div>
     );
   }
 
   return (
     <div className="space-y-6 max-w-4xl">
+      {/* Breadcrumb */}
+      <PageBreadcrumb items={[
+        { label: "Ofertas", href: "/ofertas", icon: Package },
+        { label: oferta.nome },
+      ]} />
+
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/ofertas")}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">{oferta.nome}</h1>
-            <p className="text-sm text-muted-foreground">
-              Criada em {new Date(oferta.created_at).toLocaleDateString("pt-BR")}
-            </p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">{oferta.nome}</h1>
+          <p className="text-sm text-muted-foreground">
+            Criada em {new Date(oferta.created_at).toLocaleDateString("pt-BR")}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="destructive" size="sm" onClick={handleDelete} disabled={deleteMutation.isPending}>

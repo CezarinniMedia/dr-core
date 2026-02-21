@@ -4,7 +4,9 @@ import { OfertaCard } from "@/components/ofertas/OfertaCard";
 import { OfertaFormDialog } from "@/components/ofertas/OfertaFormDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Package, Loader2, FlaskConical, Zap, Pause, Skull } from "lucide-react";
+import { Plus, Package, FlaskConical, Zap, Pause, Skull } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/EmptyState";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -79,18 +81,27 @@ export default function OfertasPage() {
 
       {/* Content */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="border rounded-lg p-4 space-y-3">
+              <Skeleton className="h-5 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-20 w-full" />
+              <div className="flex gap-2">
+                <Skeleton className="h-6 w-16 rounded-full" />
+                <Skeleton className="h-6 w-12 rounded-full" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : !ofertas?.length ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <Package className="h-12 w-12 text-muted-foreground/50 mb-4" />
-          <h3 className="text-lg font-medium">Nenhuma oferta encontrada</h3>
-          <p className="text-sm text-muted-foreground mt-1 mb-4">Crie sua primeira oferta para começar.</p>
-          <Button onClick={() => setFormOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" /> Nova Oferta
-          </Button>
-        </div>
+        <EmptyState
+          icon={Package}
+          title="Nenhuma oferta encontrada"
+          description="Crie sua primeira oferta para começar."
+          actionLabel="Nova Oferta"
+          onAction={() => setFormOpen(true)}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {ofertas.map((oferta) => (
