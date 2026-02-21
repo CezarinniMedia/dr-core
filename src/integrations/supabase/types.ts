@@ -1838,7 +1838,6 @@ export type Database = {
           vsl_player: string | null
           vsl_url: string | null
           workspace_id: string
-          screenshot_url: string | null
         }
         Insert: {
           checkout_provider?: string | null
@@ -1873,7 +1872,6 @@ export type Database = {
           vsl_player?: string | null
           vsl_url?: string | null
           workspace_id: string
-          screenshot_url?: string | null
         }
         Update: {
           checkout_provider?: string | null
@@ -1908,7 +1906,6 @@ export type Database = {
           vsl_player?: string | null
           vsl_url?: string | null
           workspace_id?: string
-          screenshot_url?: string | null
         }
         Relationships: [
           {
