@@ -1,6 +1,7 @@
-import { useState, useCallback, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/shared/hooks/useAuth";
+import { useKeyboardShortcuts } from "@/shared/hooks/useKeyboardShortcuts";
 import { SidebarProvider } from "@/shared/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { AppHeader } from "./AppHeader";
@@ -11,20 +12,24 @@ export function DashboardLayout() {
   const { user, loading } = useAuth();
   const [commandOpen, setCommandOpen] = useState(false);
 
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-      e.preventDefault();
-      setCommandOpen((prev) => !prev);
-    }
-    if (e.key === "Escape") {
-      setCommandOpen(false);
-    }
-  }, []);
+  const shortcuts = useMemo(
+    () => [
+      {
+        key: "k",
+        meta: true,
+        handler: () => setCommandOpen((prev) => !prev),
+        description: "Toggle Command Palette",
+      },
+      {
+        key: "Escape",
+        handler: () => setCommandOpen(false),
+        description: "Close modals/palette",
+      },
+    ],
+    []
+  );
 
-  useEffect(() => {
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [handleKeyDown]);
+  useKeyboardShortcuts(shortcuts);
 
   if (loading) {
     return (
