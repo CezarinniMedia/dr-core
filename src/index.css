@@ -96,6 +96,10 @@
     @apply bg-background text-foreground antialiased transition-colors duration-200;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+  /* Focus ring visible e consistente para navegacao por teclado */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
 }
 
 @layer utilities {

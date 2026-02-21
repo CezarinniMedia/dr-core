@@ -64,6 +64,9 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { ErrorState } from "@/components/ui/ErrorState";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -283,20 +286,21 @@ function ScreenshotLightbox({ url, onClose }: { url: string; onClose: () => void
       >
         <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/50 shrink-0">
           <span className="text-xs text-muted-foreground truncate flex-1 hidden sm:block">{url}</span>
-          <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-7 sm:w-7" onClick={zoomOut} title="Diminuir zoom">
+          <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-7 sm:w-7" onClick={zoomOut} aria-label="Diminuir zoom" title="Diminuir zoom">
             <ZoomOut className="h-5 w-5 sm:h-4 sm:w-4" />
           </Button>
           <button
             className="text-xs text-muted-foreground w-14 sm:w-12 text-center hover:text-foreground transition-colors py-1"
             onClick={resetZoom}
+            aria-label="Resetar zoom"
             title="Resetar zoom"
           >
             {Math.round(zoom * 100)}%
           </button>
-          <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-7 sm:w-7" onClick={zoomIn} title="Aumentar zoom">
+          <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-7 sm:w-7" onClick={zoomIn} aria-label="Aumentar zoom" title="Aumentar zoom">
             <ZoomIn className="h-5 w-5 sm:h-4 sm:w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-7 sm:w-7" onClick={onClose} title="Fechar">
+          <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-7 sm:w-7" onClick={onClose} aria-label="Fechar" title="Fechar">
             <X className="h-5 w-5 sm:h-4 sm:w-4" />
           </Button>
         </div>
@@ -459,7 +463,7 @@ export default function SpyRadar() {
     }
   };
 
-  const { data: allOffersRaw, isLoading, refetch } = useSpiedOffers({
+  const { data: allOffersRaw, isLoading, isError, refetch } = useSpiedOffers({
     vertical: vertical || undefined,
     discovery_source: source || undefined,
     search: search || undefined,
@@ -741,6 +745,7 @@ export default function SpyRadar() {
                               size="icon"
                               className="h-5 w-5 text-destructive shrink-0"
                               onClick={() => handleDeletePreset(i)}
+                              aria-label={`Remover preset ${p.name}`}
                             >
                               <X className="h-3 w-3" />
                             </Button>
@@ -838,16 +843,47 @@ export default function SpyRadar() {
 
             {/* Table */}
             {isLoading ? (
-              <p className="text-muted-foreground">Carregando...</p>
-            ) : !offers || offers.length === 0 ? (
-              <div className="border border-dashed rounded-lg p-12 text-center space-y-4">
-                <Radar className="h-12 w-12 text-muted-foreground mx-auto" />
-                <p className="text-muted-foreground">Nenhuma oferta no radar ainda.</p>
-                <p className="text-sm text-muted-foreground">Comece adicionando ofertas que você encontrou espionando.</p>
-                <Button onClick={() => setShowQuickAdd(true)}>
-                  <Zap className="h-4 w-4 mr-2" /> Quick Add
-                </Button>
+              <div className="border rounded-lg overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[40px]"><Skeleton className="h-4 w-4" /></TableHead>
+                      <TableHead className="w-[90px]"><Skeleton className="h-4 w-14" /></TableHead>
+                      <TableHead className="w-[200px]"><Skeleton className="h-4 w-20" /></TableHead>
+                      <TableHead className="w-[200px]"><Skeleton className="h-4 w-16" /></TableHead>
+                      <TableHead className="w-[70px]"><Skeleton className="h-4 w-10" /></TableHead>
+                      <TableHead className="w-[80px]"><Skeleton className="h-4 w-14" /></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-4 w-4" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-8 mx-auto" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-14" /></TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
+            ) : isError ? (
+              <ErrorState
+                message="Erro ao carregar ofertas espionadas."
+                onRetry={() => refetch()}
+              />
+            ) : !offers || offers.length === 0 ? (
+              <EmptyState
+                icon={Radar}
+                title="Nenhuma oferta no radar ainda"
+                description="Comece importando um CSV do PublicWWW ou adicionando ofertas manualmente."
+                actionLabel="Importar CSV"
+                onAction={() => setShowImport(true)}
+                secondaryActionLabel="Quick Add"
+                onSecondaryAction={() => setShowQuickAdd(true)}
+              />
             ) : (
               <>
                 <div className="border rounded-lg overflow-x-auto">
@@ -1026,6 +1062,7 @@ export default function SpyRadar() {
                                         variant="ghost"
                                         size="icon"
                                         className="h-5 w-5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        aria-label="Editar notas"
                                         title="Editar notas"
                                       >
                                         <FileText className="h-3 w-3" />
@@ -1276,6 +1313,7 @@ export default function SpyRadar() {
                                           variant="ghost"
                                           size="icon"
                                           className="h-7 w-7"
+                                          aria-label="Ver screenshot"
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             setHoverScreenshotId(null);
@@ -1319,6 +1357,7 @@ export default function SpyRadar() {
                                       variant="ghost"
                                       size="icon"
                                       className="h-7 w-7"
+                                      aria-label="Abrir oferta"
                                       onClick={() => navigate(`/spy/${offer.id}`)}
                                     >
                                       <Eye className="h-3.5 w-3.5" />
@@ -1334,6 +1373,7 @@ export default function SpyRadar() {
                                       variant="ghost"
                                       size="icon"
                                       className="h-7 w-7 text-destructive"
+                                      aria-label="Deletar oferta"
                                       onClick={() => { setDeleteId(offer.id); setDeleteTarget("single"); }}
                                     >
                                       <Trash2 className="h-3.5 w-3.5" />
@@ -1375,6 +1415,7 @@ export default function SpyRadar() {
                         className="h-8 w-8"
                         disabled={currentPage === 0}
                         onClick={() => setCurrentPage(p => p - 1)}
+                        aria-label="Pagina anterior"
                       >
                         <ChevronLeft className="h-4 w-4" />
                       </Button>
@@ -1387,6 +1428,7 @@ export default function SpyRadar() {
                         className="h-8 w-8"
                         disabled={currentPage >= totalPages - 1}
                         onClick={() => setCurrentPage(p => p + 1)}
+                        aria-label="Proxima pagina"
                       >
                         <ChevronRight className="h-4 w-4" />
                       </Button>

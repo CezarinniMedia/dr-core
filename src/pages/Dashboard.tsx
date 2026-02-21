@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package, Users, Sparkles, TrendingUp, ArrowRight, Rocket, CheckCircle, Clock, Search, AlertTriangle } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,10 +47,10 @@ export default function DashboardPage() {
   const { data: stats, isLoading, isError } = useDashboardStats();
 
   const statCards = [
-    { label: "Ofertas Espionadas", value: isLoading ? "..." : formatCount(stats?.offers ?? 0), icon: Package, color: "text-primary" },
-    { label: "Avatares", value: isLoading ? "..." : formatCount(stats?.avatars ?? 0), icon: Users, color: "text-success" },
-    { label: "Criativos", value: isLoading ? "..." : formatCount(stats?.creatives ?? 0), icon: Sparkles, color: "text-accent" },
-    { label: "Registros Tráfego", value: isLoading ? "..." : formatCount(stats?.trafficRecords ?? 0), icon: TrendingUp, color: "text-warning" },
+    { label: "Ofertas Espionadas", value: formatCount(stats?.offers ?? 0), icon: Package, color: "text-primary" },
+    { label: "Avatares", value: formatCount(stats?.avatars ?? 0), icon: Users, color: "text-success" },
+    { label: "Criativos", value: formatCount(stats?.creatives ?? 0), icon: Sparkles, color: "text-accent" },
+    { label: "Registros Tráfego", value: formatCount(stats?.trafficRecords ?? 0), icon: TrendingUp, color: "text-warning" },
   ];
 
   return (
@@ -80,7 +81,11 @@ export default function DashboardPage() {
               <stat.icon className={`h-4 w-4 ${stat.color}`} />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
+              {isLoading ? (
+                <Skeleton className="h-8 w-16" />
+              ) : (
+                <div className="text-2xl font-bold">{stat.value}</div>
+              )}
             </CardContent>
           </Card>
         ))}
