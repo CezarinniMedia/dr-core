@@ -327,7 +327,7 @@ describe("Traffic Processing - SimilarWeb offer updates", () => {
     const result = processCsv(classified);
 
     expect(result.offerUpdates[0].notes_appendix).toContain("Direct");
-    expect(result.offerUpdates[0].notes_appendix).toContain("45.0%");
-    expect(result.offerUpdates[0].notes_appendix).toContain("30.0%");
+    expect(result.offerUpdates[0].notes_appendix).toContain("45.00%");
+    expect(result.offerUpdates[0].notes_appendix).toContain("30.00%");
   });
 });
