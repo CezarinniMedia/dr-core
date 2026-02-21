@@ -14,7 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Sparkles, LayoutList, Target } from "lucide-react";
+import { Plus, Sparkles, LayoutList, Target, Palette } from "lucide-react";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 export default function CriativosPage() {
   const [selectedOferta, setSelectedOferta] = useState<string>("");
@@ -75,19 +76,15 @@ export default function CriativosPage() {
             {criativos && criativos.length > 0 ? (
               <KanbanBoard criativos={criativos as any} />
             ) : (
-              <div className="border border-dashed rounded-lg p-12 text-center space-y-4">
-                <p className="text-muted-foreground">
-                  Nenhum criativo ainda. Crie o primeiro ou gere hooks para começar.
-                </p>
-                <div className="flex gap-2 justify-center">
-                  <Button variant="outline" onClick={() => setShowHookGenerator(true)}>
-                    <Sparkles className="h-4 w-4 mr-2" /> Gerar Hooks
-                  </Button>
-                  <Button onClick={() => setShowCriativoForm(true)}>
-                    <Plus className="h-4 w-4 mr-2" /> Novo Criativo
-                  </Button>
-                </div>
-              </div>
+              <EmptyState
+                icon={Sparkles}
+                title="Nenhum criativo ainda"
+                description="Crie o primeiro criativo ou gere hooks para começar."
+                actionLabel="Novo Criativo"
+                onAction={() => setShowCriativoForm(true)}
+                secondaryActionLabel="Gerar Hooks"
+                onSecondaryAction={() => setShowHookGenerator(true)}
+              />
             )}
           </TabsContent>
 
@@ -96,11 +93,11 @@ export default function CriativosPage() {
           </TabsContent>
         </Tabs>
       ) : (
-        <div className="border border-dashed rounded-lg p-12 text-center">
-          <p className="text-muted-foreground">
-            Selecione uma oferta para ver os criativos e hooks.
-          </p>
-        </div>
+        <EmptyState
+          icon={Palette}
+          title="Selecione uma oferta"
+          description="Escolha uma oferta acima para ver os criativos e hooks associados."
+        />
       )}
 
       {selectedOferta && (
