@@ -1,28 +1,42 @@
-import { useMemo } from "react";
+/**
+ * TrafficChart — Feature Sagrada #1: Grafico Comparativo Multi-Dominio
+ *
+ * N dominios no mesmo grafico, cores unicas do design system,
+ * hover tooltip glassmorphism, click toggle de series, area fill com gradient.
+ * Recharts-based, respeita MonthRangePicker.
+ */
+
+import { useMemo, useState, useCallback } from "react";
 import {
   ResponsiveContainer,
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
+  Legend,
 } from "recharts";
 
-const LINE_COLORS = [
-  "hsl(217, 91%, 60%)", // primary blue
-  "hsl(0, 84%, 60%)",   // red
-  "hsl(142, 76%, 36%)", // green
-  "hsl(38, 92%, 50%)",  // amber
-  "hsl(262, 83%, 58%)", // purple
-  "hsl(330, 81%, 60%)", // pink
-  "hsl(199, 89%, 48%)", // cyan
-  "hsl(24, 95%, 53%)",  // orange
+// Design system chart palette — 12 colors for N domains (cycles)
+const CHART_COLORS = [
+  "#00D4AA",  // accent-teal (primary data color)
+  "#7C3AED",  // accent-primary (violet)
+  "#F97316",  // accent-orange (spikes, urgent)
+  "#3B82F6",  // accent-blue
+  "#22C55E",  // accent-green
+  "#D4A574",  // accent-amber (LED signature)
+  "#06B6D4",  // accent-cyan
+  "#EF4444",  // semantic-error (red)
+  "#8B5CF6",  // accent-primary-light
+  "#EAB308",  // semantic-warning (yellow)
+  "#EC4899",  // pink
+  "#C4954A",  // accent-gold
 ];
 
 const MONTH_NAMES_PT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-interface TrafficDataPoint {
+export interface TrafficDataPoint {
   period_date: string;
   visits: number;
   domain: string;
@@ -35,13 +49,15 @@ interface TrafficChartProps {
 }
 
 function formatDateLabel(date: string) {
-  const [y, m] = date.split("-");
-  return `${MONTH_NAMES_PT[parseInt(m) - 1]} ${y.slice(2)}`;
+  const parts = date.split("-");
+  const m = parseInt(parts[1] || parts[0]);
+  const y = parts[0];
+  return `${MONTH_NAMES_PT[m - 1] || "?"} ${y.slice(2)}`;
 }
 
 function formatVisits(val: number) {
-  if (val >= 1000000) return `${(val / 1000000).toFixed(1)}M`;
-  if (val >= 1000) return `${(val / 1000).toFixed(0)}K`;
+  if (val >= 1_000_000) return `${(val / 1_000_000).toFixed(1)}M`;
+  if (val >= 1_000) return `${(val / 1_000).toFixed(0)}K`;
   return String(val);
 }
 
@@ -49,19 +65,129 @@ function formatVisitsFull(val: number) {
   return new Intl.NumberFormat("pt-BR").format(val);
 }
 
-export function TrafficChart({ data, domains, height = 300 }: TrafficChartProps) {
+// --- Custom Tooltip (glassmorphism style) ---
+
+function ChartTooltip({ active, payload }: any) {
+  if (!active || !payload?.length) return null;
+
+  const dateStr = payload[0]?.payload?._date;
+  if (!dateStr) return null;
+  const parts = dateStr.split("-");
+  const fullMonth = MONTH_NAMES_PT[parseInt(parts[1]) - 1];
+
+  // Sort by value descending
+  const sorted = [...payload]
+    .filter((e: any) => e.value != null)
+    .sort((a: any, b: any) => (b.value ?? 0) - (a.value ?? 0));
+
+  return (
+    <div
+      className="rounded-lg p-3 text-xs shadow-2xl"
+      style={{
+        background: "rgba(20, 20, 20, 0.92)",
+        backdropFilter: "blur(12px)",
+        border: "1px solid var(--border-subtle, #2D2D2D)",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05)",
+        minWidth: 180,
+      }}
+    >
+      <p className="font-semibold mb-2" style={{ color: "var(--text-primary, #fff)" }}>
+        {fullMonth} {parts[0]}
+      </p>
+      {sorted.map((entry: any, i: number) => (
+        <div key={i} className="flex items-center gap-2 py-0.5">
+          <span
+            className="w-2.5 h-2.5 rounded-sm shrink-0"
+            style={{
+              backgroundColor: entry.color,
+              boxShadow: `0 0 6px ${entry.color}40`,
+            }}
+          />
+          <span className="truncate max-w-[120px]" style={{ color: "var(--text-secondary, #949494)" }}>
+            {entry.dataKey}
+          </span>
+          <span className="ml-auto font-medium tabular-nums" style={{ color: "var(--text-primary, #fff)" }}>
+            {formatVisitsFull(entry.value)}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// --- Custom Legend with click toggle ---
+
+function ChartLegend({
+  domainList,
+  hiddenDomains,
+  onToggle,
+}: {
+  domainList: string[];
+  hiddenDomains: Set<string>;
+  onToggle: (domain: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-x-3 gap-y-1 justify-center mt-2">
+      {domainList.map((domain, i) => {
+        const color = CHART_COLORS[i % CHART_COLORS.length];
+        const hidden = hiddenDomains.has(domain);
+        return (
+          <button
+            key={domain}
+            onClick={() => onToggle(domain)}
+            className="flex items-center gap-1.5 px-1.5 py-0.5 rounded transition-all duration-150 hover:bg-[var(--bg-subtle)]"
+            style={{ opacity: hidden ? 0.35 : 1 }}
+          >
+            <span
+              className="w-3 h-1.5 rounded-sm shrink-0"
+              style={{
+                backgroundColor: color,
+                boxShadow: hidden ? "none" : `0 0 6px ${color}30`,
+              }}
+            />
+            <span
+              className="text-[11px] truncate max-w-[140px]"
+              style={{
+                color: hidden ? "var(--text-muted, #6B7280)" : "var(--text-body, #F5F0EB)",
+                textDecoration: hidden ? "line-through" : "none",
+              }}
+            >
+              {domain}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// --- Main Chart Component ---
+
+export function TrafficChart({ data, domains, height = 350 }: TrafficChartProps) {
+  const [hiddenDomains, setHiddenDomains] = useState<Set<string>>(new Set());
+
+  const toggleDomain = useCallback((domain: string) => {
+    setHiddenDomains((prev) => {
+      const next = new Set(prev);
+      if (next.has(domain)) next.delete(domain);
+      else next.add(domain);
+      return next;
+    });
+  }, []);
+
   const { chartData, domainList } = useMemo(() => {
     const allDomains = domains || [...new Set(data.map((d) => d.domain))];
     const dateMap = new Map<string, Record<string, number>>();
 
     for (const point of data) {
-      if (!dateMap.has(point.period_date)) dateMap.set(point.period_date, {});
-      dateMap.get(point.period_date)![point.domain] = point.visits;
+      const key = point.period_date;
+      if (!dateMap.has(key)) dateMap.set(key, {});
+      dateMap.get(key)![point.domain] = point.visits;
     }
 
     const sorted = [...dateMap.entries()].sort((a, b) => a[0].localeCompare(b[0]));
     const chartData = sorted.map(([date, values]) => ({
-      date,
+      _date: date, // raw date for tooltip
       label: formatDateLabel(date),
       ...values,
     }));
@@ -71,68 +197,101 @@ export function TrafficChart({ data, domains, height = 300 }: TrafficChartProps)
 
   if (chartData.length === 0) return null;
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (!active || !payload?.length) return null;
-    // Get full date from first payload
-    const dateStr = payload[0]?.payload?.date;
-    const [y, m] = (dateStr || "").split("-");
-    const fullMonth = MONTH_NAMES_PT[parseInt(m) - 1];
-    return (
-      <div className="rounded-lg border bg-popover p-2.5 text-xs shadow-xl">
-        <p className="font-medium mb-1.5">{fullMonth} {y}</p>
-        {payload.map((entry: any, i: number) => (
-          <div key={i} className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
-            <span className="text-muted-foreground">{entry.dataKey}:</span>
-            <span className="font-medium">{formatVisitsFull(entry.value)} visitas</span>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
   return (
-    <ResponsiveContainer width="100%" height={height}>
-      <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-        <XAxis
-          dataKey="label"
-          tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-          tickLine={false}
-          axisLine={false}
-        />
-        <YAxis
-          tickFormatter={formatVisits}
-          tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-          tickLine={false}
-          axisLine={false}
-          width={45}
-        />
-        <Tooltip content={<CustomTooltip />} />
-        {domainList.map((domain, i) => (
-          <Line
-            key={domain}
-            type="monotone"
-            dataKey={domain}
-            stroke={LINE_COLORS[i % LINE_COLORS.length]}
-            strokeWidth={2}
-            dot={{ r: 3 }}
-            activeDot={{ r: 5 }}
+    <div>
+      <ResponsiveContainer width="100%" height={height}>
+        <AreaChart data={chartData} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
+          <defs>
+            {domainList.map((domain, i) => {
+              const color = CHART_COLORS[i % CHART_COLORS.length];
+              return (
+                <linearGradient key={`grad-${domain}`} id={`grad-${i}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={color} stopOpacity={0.25} />
+                  <stop offset="100%" stopColor={color} stopOpacity={0.02} />
+                </linearGradient>
+              );
+            })}
+          </defs>
+
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="var(--border-default, #1F1F1F)"
+            opacity={0.6}
+            vertical={false}
           />
-        ))}
-      </LineChart>
-    </ResponsiveContainer>
+
+          <XAxis
+            dataKey="label"
+            tick={{ fontSize: 11, fill: "var(--text-muted, #6B7280)" }}
+            tickLine={false}
+            axisLine={false}
+            interval="preserveStartEnd"
+          />
+
+          <YAxis
+            tickFormatter={formatVisits}
+            tick={{ fontSize: 11, fill: "var(--text-muted, #6B7280)" }}
+            tickLine={false}
+            axisLine={false}
+            width={48}
+          />
+
+          <Tooltip
+            content={<ChartTooltip />}
+            cursor={{
+              stroke: "var(--border-interactive, #3D3D3D)",
+              strokeDasharray: "4 4",
+            }}
+          />
+
+          {domainList.map((domain, i) => {
+            const color = CHART_COLORS[i % CHART_COLORS.length];
+            const hidden = hiddenDomains.has(domain);
+
+            return (
+              <Area
+                key={domain}
+                type="monotone"
+                dataKey={domain}
+                stroke={color}
+                strokeWidth={hidden ? 0 : 2}
+                fill={`url(#grad-${i})`}
+                fillOpacity={hidden ? 0 : 1}
+                dot={hidden ? false : { r: 3, fill: color, strokeWidth: 0 }}
+                activeDot={hidden ? false : {
+                  r: 5,
+                  fill: color,
+                  stroke: "var(--bg-surface, #141414)",
+                  strokeWidth: 2,
+                  style: { filter: `drop-shadow(0 0 4px ${color})` },
+                }}
+                hide={hidden}
+                animationDuration={400}
+                animationEasing="ease-out"
+              />
+            );
+          })}
+        </AreaChart>
+      </ResponsiveContainer>
+
+      {/* Clickable legend */}
+      <ChartLegend
+        domainList={domainList}
+        hiddenDomains={hiddenDomains}
+        onToggle={toggleDomain}
+      />
+    </div>
   );
 }
 
-// Mini sparkline for table rows
+// Mini sparkline for table rows (legacy export, used by SpyTrafficTab)
 export function TrafficSparkline({ data, trending }: { data: number[]; trending?: string }) {
   if (!data || data.length < 2) return <span className="text-muted-foreground">—</span>;
 
   const last = data[data.length - 1];
   const prev = data[data.length - 2];
   const isUp = last >= prev;
-  const color = isUp ? "hsl(142, 76%, 36%)" : "hsl(0, 84%, 60%)";
+  const color = isUp ? "var(--accent-teal, #00D4AA)" : "var(--semantic-error, #EF4444)";
 
   const max = Math.max(...data);
   const min = Math.min(...data);
@@ -143,7 +302,7 @@ export function TrafficSparkline({ data, trending }: { data: number[]; trending?
 
   return (
     <svg width={w} height={h} className="inline-block">
-      <polyline fill="none" stroke={color} strokeWidth={1.5} points={points} />
+      <polyline fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" points={points} />
     </svg>
   );
 }

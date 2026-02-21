@@ -1,9 +1,19 @@
 import { supabase } from "@/integrations/supabase/client";
 
+// Design system chart palette — aligned with vision-architecture tokens
 export const CHART_LINE_COLORS = [
-  "hsl(217, 91%, 60%)", "hsl(0, 84%, 60%)", "hsl(142, 76%, 36%)",
-  "hsl(38, 92%, 50%)", "hsl(262, 83%, 58%)", "hsl(330, 81%, 60%)",
-  "hsl(199, 89%, 48%)", "hsl(24, 95%, 53%)",
+  "#00D4AA",  // accent-teal
+  "#7C3AED",  // accent-primary (violet)
+  "#F97316",  // accent-orange
+  "#3B82F6",  // accent-blue
+  "#22C55E",  // accent-green
+  "#D4A574",  // accent-amber (LED signature)
+  "#06B6D4",  // accent-cyan
+  "#EF4444",  // semantic-error
+  "#8B5CF6",  // accent-primary-light
+  "#EAB308",  // semantic-warning
+  "#EC4899",  // pink
+  "#C4954A",  // accent-gold
 ];
 
 export const STATUS_OPTIONS = [
