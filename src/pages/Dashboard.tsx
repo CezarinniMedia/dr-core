@@ -5,26 +5,36 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+type MvDashboardStats = {
+  total_offers: number;
+  unique_domains: number;
+  active_offers: number;
+  potential_offers: number;
+  last_updated: string | null;
+};
+
 function useDashboardStats() {
   return useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      const [offersRes, avatarsRes, creativesRes, trafficRes] = await Promise.all([
-        supabase.from("spied_offers").select("id", { count: "exact", head: true }),
+      // mv_dashboard_stats: pre-calculado, refresh a cada 15min
+      // avatars e ad_creatives: tabelas pequenas, COUNT direto aceitavel
+      const [dashboardRes, avatarsRes, creativesRes] = await Promise.all([
+        supabase.from("mv_dashboard_stats").select("total_offers, unique_domains, active_offers, potential_offers").maybeSingle<MvDashboardStats>(),
         supabase.from("avatars").select("id", { count: "exact", head: true }),
         supabase.from("ad_creatives").select("id", { count: "exact", head: true }),
-        supabase.from("offer_traffic_data").select("id", { count: "exact", head: true }),
       ]);
-      const firstError = offersRes.error || avatarsRes.error || creativesRes.error || trafficRes.error;
+      const firstError = dashboardRes.error || avatarsRes.error || creativesRes.error;
       if (firstError) throw new Error(firstError.message);
       return {
-        offers: offersRes.count ?? 0,
+        offers: dashboardRes.data?.total_offers ?? 0,
+        uniqueDomains: dashboardRes.data?.unique_domains ?? 0,
+        activeOffers: dashboardRes.data?.active_offers ?? 0,
         avatars: avatarsRes.count ?? 0,
         creatives: creativesRes.count ?? 0,
-        trafficRecords: trafficRes.count ?? 0,
       };
     },
-    staleTime: 60_000,
+    staleTime: 15 * 60_000, // 15min — alinhado com refresh da materialized view
     retry: 2,
   });
 }
@@ -48,9 +58,9 @@ export default function DashboardPage() {
 
   const statCards = [
     { label: "Ofertas Espionadas", value: formatCount(stats?.offers ?? 0), icon: Package, color: "text-primary" },
+    { label: "Domínios Únicos", value: formatCount(stats?.uniqueDomains ?? 0), icon: TrendingUp, color: "text-warning" },
     { label: "Avatares", value: formatCount(stats?.avatars ?? 0), icon: Users, color: "text-success" },
     { label: "Criativos", value: formatCount(stats?.creatives ?? 0), icon: Sparkles, color: "text-accent" },
-    { label: "Registros Tráfego", value: formatCount(stats?.trafficRecords ?? 0), icon: TrendingUp, color: "text-warning" },
   ];
 
   return (

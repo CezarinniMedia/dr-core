@@ -1,11 +1,23 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo, Suspense, lazy, CSSProperties } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSpiedOffers, useDeleteSpiedOffer, useUpdateSpiedOffer, useLatestTrafficPerOffer } from "@/hooks/useSpiedOffers";
-import { QuickAddOfferModal } from "@/components/spy/QuickAddOfferModal";
-import { FullOfferFormModal } from "@/components/spy/FullOfferFormModal";
-import { UniversalImportModal } from "@/components/spy/UniversalImportModal";
-import { TrafficIntelligenceView } from "@/components/spy/TrafficIntelligenceView";
+import { Loader2 } from "lucide-react";
+
+// Modais carregam sob demanda — não incluídos no bundle principal
+const QuickAddOfferModal = lazy(() => import("@/components/spy/QuickAddOfferModal").then(m => ({ default: m.QuickAddOfferModal })));
+const FullOfferFormModal = lazy(() => import("@/components/spy/FullOfferFormModal").then(m => ({ default: m.FullOfferFormModal })));
+const UniversalImportModal = lazy(() => import("@/components/spy/UniversalImportModal").then(m => ({ default: m.UniversalImportModal })));
+const TrafficIntelligenceView = lazy(() => import("@/components/spy/TrafficIntelligenceView").then(m => ({ default: m.TrafficIntelligenceView })));
+
+function ModalLoader() {
+  return (
+    <div className="flex items-center justify-center p-8">
+      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+    </div>
+  );
+}
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -67,6 +79,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
+import {
+  filterOffers as filterOffersService,
+  updateOfferStatus,
+  updateOfferNotes,
+  bulkUpdateStatus,
+  bulkDeleteOffers,
+  stripMarkdown,
+  formatCurrency,
+} from "@/services";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -203,14 +224,7 @@ const PAGE_SIZE_OPTIONS = [
   { value: "all", label: "Todas (infinito)" },
 ];
 
-function formatCurrency(value: number | null | undefined) {
-  if (!value) return "—";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
-}
-
-function stripMarkdown(text: string) {
-  return text.replace(/[#*`>\[\]_~]/g, "").replace(/\n+/g, " ").trim();
-}
+// formatCurrency and stripMarkdown imported from @/services/offerService
 
 // ─── Screenshot Lightbox ─────────────────────────────────────────────────────
 
@@ -432,35 +446,33 @@ export default function SpyRadar() {
     savePresetsToStorage(newPresets);
   };
 
-  // Inline status change (optimistic)
+  // Inline status change (optimistic, via offerService)
   const handleInlineStatusChange = async (offerId: string, newStatus: string) => {
-    try {
-      const { error } = await supabase.from("spied_offers").update({ status: newStatus } as any).eq("id", offerId);
-      if (error) throw error;
-      queryClient.setQueriesData({ queryKey: ['spied-offers'] }, (old: any) => {
-        if (!old) return old;
-        return old.map((o: any) => o.id === offerId ? { ...o, status: newStatus } : o);
-      });
-      setTimeout(() => queryClient.invalidateQueries({ queryKey: ['spied-offers'] }), 1500);
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    const { error } = await updateOfferStatus(offerId, newStatus);
+    if (error) {
+      toast({ title: "Erro", description: error, variant: "destructive" });
+      return;
     }
+    queryClient.setQueriesData({ queryKey: ['spied-offers'] }, (old: any) => {
+      if (!old) return old;
+      return old.map((o: any) => o.id === offerId ? { ...o, status: newStatus } : o);
+    });
+    setTimeout(() => queryClient.invalidateQueries({ queryKey: ['spied-offers'] }), 1500);
   };
 
-  // Notes update
+  // Notes update (via offerService)
   const handleNotesUpdate = async (offerId: string) => {
-    try {
-      const { error } = await supabase.from("spied_offers").update({ notas: notesValue } as any).eq("id", offerId);
-      if (error) throw error;
-      queryClient.setQueriesData({ queryKey: ['spied-offers'] }, (old: any) => {
-        if (!old) return old;
-        return old.map((o: any) => o.id === offerId ? { ...o, notas: notesValue } : o);
-      });
-      setEditingNotesId(null);
-      toast({ title: "Notas salvas!" });
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    const { error } = await updateOfferNotes(offerId, notesValue);
+    if (error) {
+      toast({ title: "Erro", description: error, variant: "destructive" });
+      return;
     }
+    queryClient.setQueriesData({ queryKey: ['spied-offers'] }, (old: any) => {
+      if (!old) return old;
+      return old.map((o: any) => o.id === offerId ? { ...o, notas: notesValue } : o);
+    });
+    setEditingNotesId(null);
+    toast({ title: "Notas salvas!" });
   };
 
   const { data: allOffersRaw, isLoading, isError, refetch } = useSpiedOffers({
@@ -476,11 +488,11 @@ export default function SpyRadar() {
     localStorage.setItem(LS_KEY_TRAFFIC_SOURCE, src);
   };
 
-  // Client-side multi-status filter
+  // Client-side multi-status filter (via offerService)
   const offers = useMemo(() => {
     if (!allOffersRaw) return allOffersRaw;
     if (statusFilter.size === 0) return allOffersRaw;
-    return allOffersRaw.filter((o: any) => statusFilter.has(o.status || "RADAR"));
+    return filterOffersService(allOffersRaw as any, { statusFilter });
   }, [allOffersRaw, statusFilter]);
 
   const getCount = (item: any, relation: string) => {
@@ -499,6 +511,37 @@ export default function SpyRadar() {
   const visibleOffers = isInfinite
     ? (offers ?? [])
     : (offers ?? []).slice(currentPage * pageSizeNum, (currentPage + 1) * pageSizeNum);
+
+  // Virtualização — ativa quando há mais de 100 rows visíveis (ex: modo "all" com 12k+ registros)
+  const VIRTUALIZE_THRESHOLD = 100;
+  const shouldVirtualize = visibleOffers.length > VIRTUALIZE_THRESHOLD;
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+  const virtualizer = useVirtualizer({
+    count: visibleOffers.length,
+    getScrollElement: () => tableScrollRef.current,
+    estimateSize: () => 48,
+    overscan: 10,
+    enabled: shouldVirtualize,
+  });
+  const virtualItems = shouldVirtualize ? virtualizer.getVirtualItems() : null;
+  const itemsToRender = virtualItems
+    ? virtualItems.map(vItem => ({
+        offer: visibleOffers[vItem.index] as any,
+        visibleIdx: vItem.index,
+        rowStyle: {
+          position: "absolute" as const,
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: `${vItem.size}px`,
+          transform: `translateY(${vItem.start}px)`,
+        } as CSSProperties,
+      }))
+    : visibleOffers.map((offer: any, idx: number) => ({
+        offer,
+        visibleIdx: idx,
+        rowStyle: undefined as CSSProperties | undefined,
+      }));
 
   // Reset page when filters change
   const handleFilterChange = useCallback(() => {
@@ -556,37 +599,34 @@ export default function SpyRadar() {
     });
   }, [visibleOffers]);
 
-  // Bulk actions
+  // Bulk actions (via offerService)
   const handleBulkDelete = async () => {
     const ids = Array.from(selectedIds);
-    try {
-      const { error } = await supabase.from('spied_offers').delete().in('id', ids);
-      if (error) throw error;
+    const { error } = await bulkDeleteOffers(ids);
+    if (error) {
+      toast({ title: 'Erro', description: error, variant: 'destructive' });
+    } else {
       toast({ title: `${ids.length} ofertas removidas!` });
       setSelectedIds(new Set());
       refetch();
-    } catch (err: any) {
-      toast({ title: 'Erro', description: err.message, variant: 'destructive' });
     }
     setDeleteTarget(null);
   };
 
   const handleBulkStatusChange = async (newStatus: string) => {
     const ids = Array.from(selectedIds);
-    try {
-      const { error } = await supabase.from('spied_offers').update({ status: newStatus } as any).in('id', ids);
-      if (error) throw error;
-      toast({ title: `${ids.length} ofertas → ${newStatus}` });
-      // Optimistic update: immediately apply to cache so status filter takes effect at once
-      queryClient.setQueriesData({ queryKey: ['spied-offers'] }, (old: any) => {
-        if (!old) return old;
-        return old.map((o: any) => ids.includes(o.id) ? { ...o, status: newStatus } : o);
-      });
-      setSelectedIds(new Set());
-      setTimeout(() => queryClient.invalidateQueries({ queryKey: ['spied-offers'] }), 1500);
-    } catch (err: any) {
-      toast({ title: 'Erro', description: err.message, variant: 'destructive' });
+    const { error } = await bulkUpdateStatus(ids, newStatus);
+    if (error) {
+      toast({ title: 'Erro', description: error, variant: 'destructive' });
+      return;
     }
+    toast({ title: `${ids.length} ofertas → ${newStatus}` });
+    queryClient.setQueriesData({ queryKey: ['spied-offers'] }, (old: any) => {
+      if (!old) return old;
+      return old.map((o: any) => ids.includes(o.id) ? { ...o, status: newStatus } : o);
+    });
+    setSelectedIds(new Set());
+    setTimeout(() => queryClient.invalidateQueries({ queryKey: ['spied-offers'] }), 1500);
   };
 
   const allPageChecked = visibleOffers.length > 0 && visibleOffers.every(o => selectedIds.has(o.id));
@@ -886,9 +926,13 @@ export default function SpyRadar() {
               />
             ) : (
               <>
-                <div className="border rounded-lg overflow-x-auto">
-                  <Table style={{ tableLayout: "fixed", minWidth: "800px" }}>
-                    <TableHeader>
+                <div
+                  ref={tableScrollRef}
+                  className="border rounded-lg overflow-hidden"
+                  style={shouldVirtualize ? { overflowY: "auto", maxHeight: "70vh" } : undefined}
+                >
+                  <Table style={shouldVirtualize ? { tableLayout: "fixed" } : undefined}>
+                    <TableHeader className={shouldVirtualize ? "sticky top-0 z-10 bg-background" : ""}>
                       <TableRow>
                         <TableHead className="w-[40px]">
                           <Checkbox
@@ -937,8 +981,10 @@ export default function SpyRadar() {
                         <TableHead className="w-[100px]"></TableHead>
                       </TableRow>
                     </TableHeader>
-                    <TableBody>
-                      {visibleOffers.map((offer: any, visibleIdx: number) => {
+                    <TableBody
+                      style={shouldVirtualize ? { height: `${virtualizer.getTotalSize()}px`, position: "relative" } : undefined}
+                    >
+                      {itemsToRender.map(({ offer, visibleIdx, rowStyle }) => {
                         const sb = STATUS_BADGE[offer.status] || STATUS_BADGE.RADAR;
                         const domainsCount = getCount(offer, "offer_domains");
                         const adsCount = getCount(offer, "ad_creatives");
@@ -948,6 +994,7 @@ export default function SpyRadar() {
                         return (
                           <TableRow
                             key={offer.id}
+                            style={rowStyle}
                             className={`cursor-pointer transition-colors ${isSelected ? "bg-primary/10" : "hover:bg-muted/50"}`}
                             onClick={(e) => {
                               if (e.metaKey || e.ctrlKey || e.shiftKey) {
@@ -1440,7 +1487,9 @@ export default function SpyRadar() {
           </TabsContent>
 
           <TabsContent value="comparison" className="mt-4">
-            <TrafficIntelligenceView />
+            <Suspense fallback={<ModalLoader />}>
+              <TrafficIntelligenceView />
+            </Suspense>
           </TabsContent>
 
           <TabsContent value="about" className="mt-4">
@@ -1472,10 +1521,12 @@ export default function SpyRadar() {
           </TabsContent>
         </Tabs>
 
-        {/* Modals */}
-        <QuickAddOfferModal open={showQuickAdd} onClose={() => setShowQuickAdd(false)} />
-        <FullOfferFormModal open={showFullForm} onClose={() => setShowFullForm(false)} />
-        <UniversalImportModal open={showImport} onClose={() => setShowImport(false)} />
+        {/* Modals — lazy loaded, carregam apenas quando abertos */}
+        <Suspense fallback={<ModalLoader />}>
+          <QuickAddOfferModal open={showQuickAdd} onClose={() => setShowQuickAdd(false)} />
+          <FullOfferFormModal open={showFullForm} onClose={() => setShowFullForm(false)} />
+          <UniversalImportModal open={showImport} onClose={() => setShowImport(false)} />
+        </Suspense>
 
         {/* Screenshot lightbox */}
         {lightboxUrl && (
