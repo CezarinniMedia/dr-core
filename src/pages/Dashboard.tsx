@@ -11,7 +11,7 @@ function useDashboardStats() {
     queryFn: async () => {
       const [offersRes, avatarsRes, creativesRes, trafficRes] = await Promise.all([
         supabase.from("spied_offers").select("id", { count: "exact", head: true }),
-        supabase.from("avatares").select("id", { count: "exact", head: true }),
+        supabase.from("avatars").select("id", { count: "exact", head: true }),
         supabase.from("ad_creatives").select("id", { count: "exact", head: true }),
         supabase.from("offer_traffic_data").select("id", { count: "exact", head: true }),
       ]);
