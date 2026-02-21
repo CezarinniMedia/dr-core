@@ -30,8 +30,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Edit, Trash2, ExternalLink, Flame, Rocket, LayoutList, Globe, BookOpen, Palette, Map, BarChart3, FileText } from "lucide-react";
+import { Edit, Trash2, ExternalLink, Flame, Rocket, LayoutList, Globe, BookOpen, Palette, Map, BarChart3, FileText, Radar } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageBreadcrumb } from "@/components/ui/PageBreadcrumb";
 
 const STATUS_BADGE: Record<string, { label: React.ReactNode; className: string }> = {
   RADAR: { label: "Radar", className: "bg-muted text-muted-foreground" },
@@ -85,9 +86,13 @@ export default function SpyOfferDetail() {
   if (!offer) {
     return (
       <div className="p-6 space-y-4">
+        <PageBreadcrumb items={[
+          { label: "Radar de Ofertas", href: "/spy", icon: Radar },
+          { label: "Oferta não encontrada" },
+        ]} />
         <p className="text-muted-foreground">Oferta não encontrada.</p>
         <Button variant="outline" onClick={() => navigate("/spy")}>
-          <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
+          Voltar ao Radar
         </Button>
       </div>
     );
@@ -104,17 +109,19 @@ export default function SpyOfferDetail() {
 
   return (
     <div className="max-w-6xl space-y-6">
+      {/* Breadcrumb */}
+      <PageBreadcrumb items={[
+        { label: "Radar de Ofertas", href: "/spy", icon: Radar },
+        { label: offer.nome || "Oferta" },
+      ]} />
+
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/spy")}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight">{offer.nome}</h1>
-              <Badge variant="outline" className={sb.className}>{sb.label}</Badge>
-            </div>
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight">{offer.nome}</h1>
+            <Badge variant="outline" className={sb.className}>{sb.label}</Badge>
+          </div>
             <div className="flex items-center gap-3">
               {offer.main_domain && (
                 <a
@@ -133,7 +140,6 @@ export default function SpyOfferDetail() {
               )}
             </div>
           </div>
-        </div>
         <div className="flex items-center gap-2">
           <Select value={offer.status || "RADAR"} onValueChange={handleStatusChange}>
             <SelectTrigger className="w-36">
