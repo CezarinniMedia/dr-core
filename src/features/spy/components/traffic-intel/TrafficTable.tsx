@@ -392,8 +392,9 @@ export function TrafficTable({
               <TableHead className="w-[40px]">
                 <Checkbox checked={allChecked} onCheckedChange={onSelectAll} />
               </TableHead>
-              <TableHead className="w-[36px] text-center" aria-label="Gráfico">
+              <TableHead className="w-[36px] text-center">
                 <BarChart3 className="h-3.5 w-3.5 mx-auto" />
+                <span className="sr-only">Gráfico</span>
               </TableHead>
               {visibleColumns.has("status") && <SortHeader field="status" label="Status" className="w-[90px]" sortField={sortField} onToggleSort={onToggleSort} />}
               {visibleColumns.has("oferta") && <SortHeader field="nome" label="Oferta" className="min-w-[180px]" sortField={sortField} onToggleSort={onToggleSort} />}

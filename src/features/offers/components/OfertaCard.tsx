@@ -28,11 +28,14 @@ export function OfertaCard({ oferta, onDelete }: OfertaCardProps) {
     <Card className="group hover:border-primary/30 transition-colors">
       <CardHeader className="flex flex-row items-start justify-between gap-2 pb-3 space-y-0">
         <div className="space-y-1 min-w-0">
-          <h3
-            className="font-semibold truncate cursor-pointer hover:text-primary transition-colors"
-            onClick={() => navigate(`/ofertas/${oferta.id}`)}
-          >
-            {oferta.nome}
+          <h3 className="font-semibold truncate">
+            <button
+              type="button"
+              className="cursor-pointer hover:text-primary transition-colors text-left"
+              onClick={() => navigate(`/ofertas/${oferta.id}`)}
+            >
+              {oferta.nome}
+            </button>
           </h3>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             {oferta.vertical && <span>{oferta.vertical}</span>}

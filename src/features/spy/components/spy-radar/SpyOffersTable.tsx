@@ -1,5 +1,5 @@
 // spy-radar/SpyOffersTable.tsx — Main offers table with row rendering (BD-2.1, BD-2.3)
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useMemo } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/shared/components/ui/button";
@@ -31,9 +31,10 @@ import {
   formatCurrency, stripMarkdown, getCount,
 } from "./constants";
 import { ScreenshotLightbox } from "./ScreenshotLightbox";
+import type { SpiedOffer } from "@/shared/services/offerService";
 
 interface SpyOffersTableProps {
-  offers: any[] | undefined;
+  offers: SpiedOffer[] | undefined;
   isLoading: boolean;
   visibleColumns: Set<string>;
   trafficDataSource: "similarweb" | "semrush";
@@ -76,9 +77,12 @@ export function SpyOffersTable({
   const isInfinite = pageSize === "all";
   const pageSizeNum = isInfinite ? totalOffers : parseInt(pageSize);
   const totalPages = isInfinite ? 1 : Math.max(1, Math.ceil(totalOffers / pageSizeNum));
-  const visibleOffers = isInfinite
-    ? (offers ?? [])
-    : (offers ?? []).slice(currentPage * pageSizeNum, (currentPage + 1) * pageSizeNum);
+  const visibleOffers = useMemo(
+    () => isInfinite
+      ? (offers ?? [])
+      : (offers ?? []).slice(currentPage * pageSizeNum, (currentPage + 1) * pageSizeNum),
+    [offers, isInfinite, currentPage, pageSizeNum],
+  );
 
   // Virtualização — ativa apenas quando lista > 100 rows (ex: modo "all" com 12k+ registros)
   const VIRTUALIZE_THRESHOLD = 100;
@@ -136,7 +140,7 @@ export function SpyOffersTable({
   const virtualItems = shouldVirtualize ? virtualizer.getVirtualItems() : null;
   const itemsToRender = virtualItems
     ? virtualItems.map(vItem => ({
-        offer: visibleOffers[vItem.index] as any,
+        offer: visibleOffers[vItem.index],
         visibleIdx: vItem.index,
         rowStyle: {
           position: "absolute" as const,
@@ -147,7 +151,7 @@ export function SpyOffersTable({
           transform: `translateY(${vItem.start}px)`,
         },
       }))
-    : visibleOffers.map((offer: any, idx: number) => ({
+    : visibleOffers.map((offer, idx) => ({
         offer,
         visibleIdx: idx,
         rowStyle: undefined,

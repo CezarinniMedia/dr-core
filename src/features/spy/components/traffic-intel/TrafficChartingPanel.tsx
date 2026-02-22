@@ -3,11 +3,12 @@ import { Badge } from "@/shared/components/ui/badge";
 import { X, BarChart3 } from "lucide-react";
 import { TrafficChart } from "@/features/spy/components/TrafficChart";
 import { CHART_LINE_COLORS } from "./types";
+import type { SpiedOffer } from "@/shared/services/offerService";
 
 interface TrafficChartingPanelProps {
   chartIds: Set<string>;
   chartData: { period_date: string; visits: number; domain: string }[];
-  allOffers: any[] | undefined;
+  allOffers: SpiedOffer[] | undefined;
   onToggleChart: (id: string) => void;
   onClearChart: () => void;
 }
@@ -48,7 +49,7 @@ export function TrafficChartingPanel({ chartIds, chartData, allOffers, onToggleC
             Comparando:
           </span>
           {[...chartIds].map((id, idx) => {
-            const offer = (allOffers as any[])?.find((o: any) => o.id === id);
+            const offer = allOffers?.find(o => o.id === id);
             const color = CHART_LINE_COLORS[idx % CHART_LINE_COLORS.length];
             return (
               <Badge
@@ -70,6 +71,7 @@ export function TrafficChartingPanel({ chartIds, chartData, allOffers, onToggleC
                 />
                 {offer?.main_domain || offer?.nome || id}
                 <button
+                  type="button"
                   onClick={() => onToggleChart(id)}
                   aria-label="Remover do gráfico"
                   className="ml-0.5 rounded-sm hover:opacity-70 transition-opacity"

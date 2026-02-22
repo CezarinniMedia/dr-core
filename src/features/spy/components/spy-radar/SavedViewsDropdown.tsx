@@ -54,8 +54,8 @@ export function SavedViewsDropdown({
       toast({ title: "View salva!" });
       setNewName("");
       setShowSaveDialog(false);
-    } catch (err: any) {
-      toast({ title: "Erro ao salvar view", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      toast({ title: "Erro ao salvar view", description: err instanceof Error ? err.message : String(err), variant: "destructive" });
     }
   };
 
@@ -64,8 +64,8 @@ export function SavedViewsDropdown({
     try {
       await deleteView.mutateAsync(deleteConfirm.id);
       toast({ title: `View "${deleteConfirm.name}" removida` });
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      toast({ title: "Erro", description: err instanceof Error ? err.message : String(err), variant: "destructive" });
     } finally {
       setDeleteConfirm(null);
     }
@@ -219,6 +219,7 @@ function ViewItem({
       <span className="flex-1 truncate text-sm">{view.name}</span>
       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
         <button
+          type="button"
           className={`p-0.5 rounded hover:bg-[var(--bg-subtle)] ${view.is_pinned ? "text-[var(--accent-amber)]" : "text-[var(--text-muted)]"}`}
           onClick={(e) => { e.stopPropagation(); onTogglePin(); }}
           title={view.is_pinned ? "Desafixar" : "Fixar"}
@@ -227,6 +228,7 @@ function ViewItem({
           <Pin className="h-3 w-3" />
         </button>
         <button
+          type="button"
           className="p-0.5 rounded hover:bg-[var(--bg-subtle)] text-[var(--text-muted)] hover:text-[var(--semantic-error)]"
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
           title="Remover view"
