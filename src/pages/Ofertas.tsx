@@ -207,9 +207,13 @@ export default function OfertasPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const { data: ofertas, isLoading } = useOfertas(statusFilter === "ALL" ? undefined : statusFilter);
+  const { data: allOfertas, isLoading } = useOfertas();
   const deleteMutation = useDeleteOferta();
   const updateMutation = useUpdateOferta();
+
+  const ofertas = statusFilter === "ALL"
+    ? allOfertas
+    : allOfertas?.filter((o) => o.status === statusFilter);
 
   const handleDelete = () => {
     if (!deleteId) return;
@@ -219,8 +223,6 @@ export default function OfertasPage() {
   const handleStatusChange = (id: string, status: OfertaStatus) => {
     updateMutation.mutate({ id, data: { status } });
   };
-
-  const allOfertas = useOfertas();
 
   return (
     <div className="space-y-6 max-w-[1400px]">
@@ -296,7 +298,7 @@ export default function OfertasPage() {
         </div>
       ) : viewMode === "kanban" ? (
         <OfertaKanbanView
-          ofertas={allOfertas.data || []}
+          ofertas={allOfertas || []}
           onDelete={setDeleteId}
           onStatusChange={handleStatusChange}
         />

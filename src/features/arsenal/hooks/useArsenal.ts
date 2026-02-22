@@ -46,7 +46,8 @@ export function useArsenalDorks(search?: string) {
         .order("created_at", { ascending: false });
 
       if (search) {
-        query = query.or(`dork_query.ilike.%${search}%,nome.ilike.%${search}%,objetivo.ilike.%${search}%`);
+        const sanitized = search.replace(/[%_\\]/g, '\\$&');
+        query = query.or(`dork_query.ilike.%${sanitized}%,nome.ilike.%${sanitized}%,objetivo.ilike.%${sanitized}%`);
       }
 
       const { data, error } = await query;
@@ -144,7 +145,8 @@ export function useArsenalFootprints(search?: string) {
         .order("created_at", { ascending: false });
 
       if (search) {
-        query = query.or(`footprint.ilike.%${search}%,nome.ilike.%${search}%,categoria.ilike.%${search}%`);
+        const sanitized = search.replace(/[%_\\]/g, '\\$&');
+        query = query.or(`footprint.ilike.%${sanitized}%,nome.ilike.%${sanitized}%,categoria.ilike.%${sanitized}%`);
       }
 
       const { data, error } = await query;
@@ -238,7 +240,8 @@ export function useArsenalKeywords(search?: string) {
         .order("created_at", { ascending: false });
 
       if (search) {
-        query = query.or(`keyword.ilike.%${search}%,tipo.ilike.%${search}%`);
+        const sanitized = search.replace(/[%_\\]/g, '\\$&');
+        query = query.or(`keyword.ilike.%${sanitized}%,tipo.ilike.%${sanitized}%`);
       }
 
       const { data, error } = await query;

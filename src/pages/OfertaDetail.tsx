@@ -13,6 +13,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/shared/components/ui/alert-dialog";
 import { Save, Trash2, Loader2, FlaskConical, Zap, Pause, Skull, Package } from "lucide-react";
 import { useState, useEffect } from "react";
 import { PageBreadcrumb } from "@/shared/components/ui/PageBreadcrumb";
@@ -37,6 +47,7 @@ export default function OfertaDetailPage() {
   const updateMutation = useUpdateOferta();
   const deleteMutation = useDeleteOferta();
 
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [form, setForm] = useState({
     nome: "",
     vertical: "",
@@ -160,7 +171,7 @@ export default function OfertaDetailPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="destructive" size="sm" onClick={handleDelete} disabled={deleteMutation.isPending}>
+          <Button variant="destructive" size="sm" onClick={() => setShowDeleteConfirm(true)} disabled={deleteMutation.isPending}>
             <Trash2 className="h-4 w-4 mr-1" /> Deletar
           </Button>
           <Button onClick={handleSave} disabled={updateMutation.isPending}>
@@ -341,6 +352,26 @@ export default function OfertaDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Deletar oferta?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Todos os dados da oferta serão removidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Deletar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
