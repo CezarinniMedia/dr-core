@@ -7,6 +7,23 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Alert, AlertTitle, AlertDescription } from "@/shared/components/ui/alert";
 import { Label } from "@/shared/components/ui/label";
 import { Textarea } from "@/shared/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogTrigger,
+} from "@/shared/components/ui/dialog";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/shared/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/components/ui/tabs";
 
 // ─── Button ───
 describe("Button a11y", () => {
@@ -107,6 +124,120 @@ describe("Alert a11y", () => {
         <AlertTitle>Erro</AlertTitle>
         <AlertDescription>Algo deu errado.</AlertDescription>
       </Alert>
+    );
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+  });
+});
+
+// ─── Dialog ───
+describe("Dialog a11y", () => {
+  it("dialog aberto com titulo e descricao nao tem violacoes", async () => {
+    const { baseElement } = render(
+      <Dialog open>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar exclusao</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja remover esta oferta?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="destructive">Deletar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+    const results = await axe(baseElement);
+    expect(results).toHaveNoViolations();
+  });
+
+  it("dialog com trigger nao tem violacoes quando fechado", async () => {
+    const { container } = render(
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button>Abrir modal</Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modal</DialogTitle>
+            <DialogDescription>Conteudo do modal</DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+    );
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+  });
+});
+
+// ─── Select ───
+describe("Select a11y", () => {
+  it("select com label nao tem violacoes", async () => {
+    const { container } = render(
+      <div>
+        <Label htmlFor="status-select">Status</Label>
+        <Select>
+          <SelectTrigger id="status-select" aria-label="Selecionar status">
+            <SelectValue placeholder="Selecione..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="monitoring">Monitorando</SelectItem>
+            <SelectItem value="active">Ativo</SelectItem>
+            <SelectItem value="paused">Pausado</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    );
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+  });
+
+  it("select desabilitado nao tem violacoes", async () => {
+    const { container } = render(
+      <Select disabled>
+        <SelectTrigger aria-label="Selecionar vertical">
+          <SelectValue placeholder="Desabilitado" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="health">Saude</SelectItem>
+        </SelectContent>
+      </Select>
+    );
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+  });
+});
+
+// ─── Tabs ───
+describe("Tabs a11y", () => {
+  it("tabs com multiplos paineis nao tem violacoes", async () => {
+    const { container } = render(
+      <Tabs defaultValue="overview">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="dominios">Dominios</TabsTrigger>
+          <TabsTrigger value="trafego">Trafego</TabsTrigger>
+        </TabsList>
+        <TabsContent value="overview">Conteudo overview</TabsContent>
+        <TabsContent value="dominios">Conteudo dominios</TabsContent>
+        <TabsContent value="trafego">Conteudo trafego</TabsContent>
+      </Tabs>
+    );
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+  });
+
+  it("tabs com tab desabilitada nao tem violacoes", async () => {
+    const { container } = render(
+      <Tabs defaultValue="overview">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="notas" disabled>Notas</TabsTrigger>
+        </TabsList>
+        <TabsContent value="overview">Conteudo overview</TabsContent>
+        <TabsContent value="notas">Conteudo notas</TabsContent>
+      </Tabs>
     );
     const results = await axe(container);
     expect(results).toHaveNoViolations();
