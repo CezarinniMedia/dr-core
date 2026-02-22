@@ -53,6 +53,7 @@ export function AdCreativeGallery({ adCreatives, onDelete }: AdCreativeGalleryPr
                 size="icon"
                 variant="destructive"
                 className="absolute top-2 right-2 h-7 w-7"
+                aria-label="Deletar criativo"
                 onClick={() => onDelete(ad.id)}
               >
                 <Trash2 className="h-3.5 w-3.5" />

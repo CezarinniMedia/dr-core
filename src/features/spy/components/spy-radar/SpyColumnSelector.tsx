@@ -122,7 +122,7 @@ export function SpyColumnSelector({ visibleColumns, onToggleColumn }: SpyColumnS
                 autoFocus
               />
               <Button size="sm" className="h-7 px-2 text-xs" onClick={handleSavePreset}>OK</Button>
-              <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => { setShowSavePreset(false); setPresetName(""); }}>
+              <Button variant="ghost" size="sm" className="h-7 px-2" aria-label="Cancelar" onClick={() => { setShowSavePreset(false); setPresetName(""); }}>
                 <X className="h-3 w-3" />
               </Button>
             </div>

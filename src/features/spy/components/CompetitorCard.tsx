@@ -73,6 +73,7 @@ export function CompetitorCard({ competitor, onDelete }: CompetitorCardProps) {
             size="sm"
             variant="ghost"
             className="text-destructive hover:text-destructive"
+            aria-label="Deletar concorrente"
             onClick={() => onDelete(competitor.id)}
           >
             <Trash2 className="h-3.5 w-3.5" />

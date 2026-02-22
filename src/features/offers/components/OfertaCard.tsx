@@ -70,7 +70,7 @@ export function OfertaCard({ oferta, onDelete }: OfertaCardProps) {
           <Button variant="outline" size="sm" onClick={() => navigate(`/ofertas/${oferta.id}`)}>
             <Edit className="h-3.5 w-3.5 mr-1" /> Editar
           </Button>
-          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => onDelete(oferta.id)}>
+          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" aria-label="Deletar oferta" onClick={() => onDelete(oferta.id)}>
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
         </div>

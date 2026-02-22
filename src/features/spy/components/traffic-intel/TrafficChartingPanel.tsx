@@ -71,6 +71,7 @@ export function TrafficChartingPanel({ chartIds, chartData, allOffers, onToggleC
                 {offer?.main_domain || offer?.nome || id}
                 <button
                   onClick={() => onToggleChart(id)}
+                  aria-label="Remover do gráfico"
                   className="ml-0.5 rounded-sm hover:opacity-70 transition-opacity"
                 >
                   <X className="h-3 w-3" />

@@ -66,7 +66,7 @@ export function ImportStepUpload({
               <FileSpreadsheet className="h-4 w-4 text-muted-foreground shrink-0" />
               <span className="flex-1 truncate">{f.name}</span>
               <Badge variant="outline" className={`${TYPE_COLORS[f.classified.type]} whitespace-nowrap`}>{f.classified.label}</Badge>
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onRemoveFile(i)}>
+              <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="Remover arquivo" onClick={() => onRemoveFile(i)}>
                 <X className="h-3 w-3" />
               </Button>
             </div>

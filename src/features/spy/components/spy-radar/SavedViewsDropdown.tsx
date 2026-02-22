@@ -222,6 +222,7 @@ function ViewItem({
           className={`p-0.5 rounded hover:bg-[var(--bg-subtle)] ${view.is_pinned ? "text-[var(--accent-amber)]" : "text-[var(--text-muted)]"}`}
           onClick={(e) => { e.stopPropagation(); onTogglePin(); }}
           title={view.is_pinned ? "Desafixar" : "Fixar"}
+          aria-label={view.is_pinned ? "Desafixar view" : "Fixar view"}
         >
           <Pin className="h-3 w-3" />
         </button>
@@ -229,6 +230,7 @@ function ViewItem({
           className="p-0.5 rounded hover:bg-[var(--bg-subtle)] text-[var(--text-muted)] hover:text-[var(--semantic-error)]"
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
           title="Remover view"
+          aria-label="Remover view"
         >
           <Trash2 className="h-3 w-3" />
         </button>

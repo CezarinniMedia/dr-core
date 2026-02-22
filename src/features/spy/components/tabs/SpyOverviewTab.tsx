@@ -273,6 +273,7 @@ function ScreenshotField({ offerId, value, onUpdated }: ScreenshotFieldProps) {
             variant="ghost"
             className="h-6 w-6 shrink-0"
             title="Mais ações"
+            aria-label="Mais ações"
           >
             <MoreHorizontal className="h-3.5 w-3.5" />
           </Button>

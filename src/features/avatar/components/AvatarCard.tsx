@@ -68,6 +68,7 @@ export function AvatarCard({ avatar, onDelete }: AvatarCardProps) {
             size="sm"
             variant="ghost"
             className="text-destructive hover:text-destructive"
+            aria-label="Deletar avatar"
             onClick={() => onDelete(avatar.id)}
           >
             <Trash2 className="h-3.5 w-3.5" />

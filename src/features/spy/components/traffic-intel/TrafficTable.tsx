@@ -173,6 +173,7 @@ const TrafficRowContent = memo(function TrafficRowContent({ row, isSelected, isC
           <TooltipTrigger asChild>
             <button
               onClick={() => onToggleChart(row.id)}
+              aria-label={isCharted ? "Remover do gráfico" : "Adicionar ao gráfico"}
               className={`p-1 rounded transition-colors ${isCharted ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"}`}
             >
               <BarChart3 className="h-3.5 w-3.5" />
@@ -269,7 +270,7 @@ const TrafficRowContent = memo(function TrafficRowContent({ row, isSelected, isC
       <TableCell onClick={(e) => e.stopPropagation()}>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onNavigate(row.id)}>
+            <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Ver detalhes" onClick={() => onNavigate(row.id)}>
               <Eye className="h-3.5 w-3.5" />
             </Button>
           </TooltipTrigger>
@@ -391,7 +392,7 @@ export function TrafficTable({
               <TableHead className="w-[40px]">
                 <Checkbox checked={allChecked} onCheckedChange={onSelectAll} />
               </TableHead>
-              <TableHead className="w-[36px] text-center">
+              <TableHead className="w-[36px] text-center" aria-label="Gráfico">
                 <BarChart3 className="h-3.5 w-3.5 mx-auto" />
               </TableHead>
               {visibleColumns.has("status") && <SortHeader field="status" label="Status" className="w-[90px]" sortField={sortField} onToggleSort={onToggleSort} />}

@@ -335,7 +335,7 @@ export function SpyOffersTable({
                           }}
                         >
                           <PopoverTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" title="Editar notas">
+                            <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" title="Editar notas" aria-label="Editar notas">
                               <FileText className="h-3 w-3" />
                             </Button>
                           </PopoverTrigger>
@@ -504,7 +504,7 @@ export function SpyOffersTable({
                         >
                           <Popover open={hoverScreenshotId === offer.id}>
                             <PopoverTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); setHoverScreenshotId(null); setLightboxUrl(offer.screenshot_url); }}>
+                              <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Ver screenshot" onClick={(e) => { e.stopPropagation(); setHoverScreenshotId(null); setLightboxUrl(offer.screenshot_url); }}>
                                 <ImageIcon className="h-3.5 w-3.5" />
                               </Button>
                             </PopoverTrigger>
@@ -522,7 +522,7 @@ export function SpyOffersTable({
                       )}
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(`/spy/${offer.id}`)}>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Abrir oferta" onClick={() => navigate(`/spy/${offer.id}`)}>
                             <Eye className="h-3.5 w-3.5" />
                           </Button>
                         </TooltipTrigger>
@@ -530,7 +530,7 @@ export function SpyOffersTable({
                       </Tooltip>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => onDeleteSingle(offer.id)}>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" aria-label="Deletar oferta" onClick={() => onDeleteSingle(offer.id)}>
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         </TooltipTrigger>
@@ -558,11 +558,11 @@ export function SpyOffersTable({
         </div>
         {!isInfinite && totalPages > 1 && (
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" className="h-8 w-8" disabled={currentPage === 0} onClick={() => setCurrentPage(p => p - 1)}>
+            <Button variant="outline" size="icon" className="h-8 w-8" aria-label="Página anterior" disabled={currentPage === 0} onClick={() => setCurrentPage(p => p - 1)}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <span className="text-sm text-muted-foreground">{currentPage + 1} / {totalPages}</span>
-            <Button variant="outline" size="icon" className="h-8 w-8" disabled={currentPage >= totalPages - 1} onClick={() => setCurrentPage(p => p + 1)}>
+            <Button variant="outline" size="icon" className="h-8 w-8" aria-label="Próxima página" disabled={currentPage >= totalPages - 1} onClick={() => setCurrentPage(p => p + 1)}>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
