@@ -28,29 +28,35 @@ interface OfertaFormDialogProps {
 
 const verticais = ["Saúde", "Finanças", "Relacionamento", "Educação", "Negócios", "Outro"];
 const mercados = ["BR", "US", "EU", "LATAM", "Global"];
+const checkoutProviders = ["Hotmart", "Kiwify", "Eduzz", "Monetizze", "ClickBank", "Digistore24", "Outro"];
+
+const defaultForm = {
+  nome: "",
+  vertical: "",
+  mercado: "",
+  nicho: "",
+  ticket_front: "",
+  cpa_target: "",
+  aov_target: "",
+  roas_target: "",
+  promessa_principal: "",
+  mecanismo_unico: "",
+  dominio_principal: "",
+  checkout_provider: "",
+};
 
 export function OfertaFormDialog({ open, onOpenChange }: OfertaFormDialogProps) {
   const createMutation = useCreateOferta();
-  const [form, setForm] = useState({
-    nome: "",
-    vertical: "",
-    mercado: "",
-    ticket_front: "",
-    cpa_target: "",
-    aov_target: "",
-    roas_target: "",
-    promessa_principal: "",
-    mecanismo_unico: "",
-  });
+  const [form, setForm] = useState(defaultForm);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     createMutation.mutate(
       {
         nome: form.nome,
-        slug: "",
         vertical: form.vertical || null,
         mercado: form.mercado || null,
+        nicho: form.nicho || null,
         status: "RESEARCH",
         ticket_front: form.ticket_front ? Number(form.ticket_front) : null,
         cpa_target: form.cpa_target ? Number(form.cpa_target) : null,
@@ -58,22 +64,13 @@ export function OfertaFormDialog({ open, onOpenChange }: OfertaFormDialogProps) 
         roas_target: form.roas_target ? Number(form.roas_target) : null,
         promessa_principal: form.promessa_principal || null,
         mecanismo_unico: form.mecanismo_unico || null,
-        data_lancamento: null,
+        dominio_principal: form.dominio_principal || null,
+        checkout_provider: form.checkout_provider || null,
       },
       {
         onSuccess: () => {
           onOpenChange(false);
-          setForm({
-            nome: "",
-            vertical: "",
-            mercado: "",
-            ticket_front: "",
-            cpa_target: "",
-            aov_target: "",
-            roas_target: "",
-            promessa_principal: "",
-            mecanismo_unico: "",
-          });
+          setForm(defaultForm);
         },
       }
     );
@@ -86,7 +83,7 @@ export function OfertaFormDialog({ open, onOpenChange }: OfertaFormDialogProps) 
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Nova Oferta</DialogTitle>
-          <DialogDescription>Preencha os dados básicos da oferta.</DialogDescription>
+          <DialogDescription>Preencha os dados da oferta. Campos extras podem ser editados depois.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -121,6 +118,17 @@ export function OfertaFormDialog({ open, onOpenChange }: OfertaFormDialogProps) 
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
+              <Label>Nicho</Label>
+              <Input value={form.nicho} onChange={(e) => update("nicho", e.target.value)} placeholder="Ex: Emagrecimento 40+" />
+            </div>
+            <div className="space-y-2">
+              <Label>Dominio Principal</Label>
+              <Input value={form.dominio_principal} onChange={(e) => update("dominio_principal", e.target.value)} placeholder="exemplo.com" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
               <Label htmlFor="ticket">Ticket Front (R$)</Label>
               <Input id="ticket" type="number" step="0.01" value={form.ticket_front} onChange={(e) => update("ticket_front", e.target.value)} placeholder="97.00" />
             </div>
@@ -139,6 +147,18 @@ export function OfertaFormDialog({ open, onOpenChange }: OfertaFormDialogProps) 
               <Label htmlFor="roas">ROAS Target</Label>
               <Input id="roas" type="number" step="0.01" value={form.roas_target} onChange={(e) => update("roas_target", e.target.value)} placeholder="3.00" />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Checkout</Label>
+            <Select value={form.checkout_provider} onValueChange={(v) => update("checkout_provider", v)}>
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                {checkoutProviders.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">

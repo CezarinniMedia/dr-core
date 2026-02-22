@@ -11,19 +11,33 @@ export interface Oferta {
   slug: string;
   vertical: string | null;
   mercado: string | null;
+  nicho: string | null;
   status: string;
+  prioridade: number | null;
   ticket_front: number | null;
   aov_target: number | null;
   cpa_target: number | null;
   roas_target: number | null;
   promessa_principal: string | null;
   mecanismo_unico: string | null;
+  dominio_principal: string | null;
+  checkout_provider: string | null;
+  vsl_player: string | null;
+  plataforma_quiz: string | null;
+  tem_cloaker: boolean | null;
+  tem_quiz: boolean | null;
   data_lancamento: string | null;
+  tags: string[] | null;
+  urls_sites: string[] | null;
+  fb_pages: string[] | null;
+  trafego_atual: number | null;
+  trafego_tendencia: string | null;
+  notas: string | null;
   created_at: string;
   updated_at: string;
 }
 
-export type OfertaInsert = Omit<Oferta, "id" | "workspace_id" | "created_at" | "updated_at">;
+export type OfertaInsert = Partial<Omit<Oferta, "id" | "workspace_id" | "created_at" | "updated_at">> & { nome: string };
 
 const OFERTA_STATUSES = ["RESEARCH", "TEST", "ATIVA", "PAUSE", "MORTA"] as const;
 export type OfertaStatus = (typeof OFERTA_STATUSES)[number];

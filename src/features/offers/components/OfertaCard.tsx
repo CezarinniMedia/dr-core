@@ -1,7 +1,7 @@
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
-import { Edit, FlaskConical, Pause, Skull, Trash2, Zap } from "lucide-react";
+import { Edit, FlaskConical, Globe, Pause, Skull, Trash2, Zap } from "lucide-react";
 import { ReactNode } from "react";
 import { formatCurrency } from "@/shared/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -43,6 +43,11 @@ export function OfertaCard({ oferta, onDelete }: OfertaCardProps) {
         <Badge variant={status.variant} className="flex items-center gap-1">{status.icon} {status.label}</Badge>
       </CardHeader>
       <CardContent className="pt-0">
+        {oferta.dominio_principal && (
+          <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1 truncate">
+            <Globe className="h-3 w-3 shrink-0" /> {oferta.dominio_principal}
+          </p>
+        )}
         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm mb-4">
           <div>
             <span className="text-muted-foreground">Ticket:</span>{" "}
