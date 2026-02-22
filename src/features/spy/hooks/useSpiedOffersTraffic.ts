@@ -127,9 +127,9 @@ export function useDeleteTrafficData() {
 }
 
 // ============================================
-// MATERIALIZED VIEW: Traffic Summary (BD-2.5)
-// Pre-calculado via mv_offer_traffic_summary
-// Refresh automatico a cada 15min via pg_cron
+// MATERIALIZED VIEW: Traffic Summary (Phase 3)
+// Pre-calculado via mv_traffic_summary → backward-compat view mv_offer_traffic_summary
+// Refresh automatico a cada 6h via pg_cron
 // ============================================
 
 export type OfferTrafficSummary = {
@@ -157,6 +157,6 @@ export function useOfferTrafficSummary(offerId: string) {
       return data;
     },
     enabled: !!offerId,
-    staleTime: 15 * 60_000, // 15min — alinhado com refresh da materialized view
+    staleTime: 6 * 60 * 60_000, // 6h — alinhado com refresh da mv_traffic_summary (Phase 3)
   });
 }
