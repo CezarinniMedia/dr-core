@@ -59,33 +59,9 @@ CREATE UNIQUE INDEX idx_mv_dashboard_stats_ws
   ON mv_dashboard_stats(workspace_id);
 
 -- ============================================================
--- RLS: Materialized views precisam de politicas explicitas
--- (RLS nao e herdado automaticamente das tabelas base)
--- ============================================================
-
--- mv_offer_traffic_summary: acesso via spied_offer_id do workspace
-ALTER TABLE mv_offer_traffic_summary ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Workspace members view traffic summaries"
-  ON mv_offer_traffic_summary FOR SELECT
-  USING (
-    spied_offer_id IN (
-      SELECT id FROM spied_offers
-      WHERE workspace_id IN (
-        SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid()
-      )
-    )
-  );
-
--- mv_dashboard_stats: acesso direto por workspace_id
-ALTER TABLE mv_dashboard_stats ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Workspace members view dashboard stats"
-  ON mv_dashboard_stats FOR SELECT
-  USING (is_workspace_member(auth.uid(), workspace_id));
-
--- ============================================================
 -- GRANTS: Permitir consulta para usuarios autenticados
+-- NOTE: RLS nao e suportado em materialized views no PostgreSQL.
+-- Acesso controlado via SECURITY DEFINER RPCs (Phase 3+).
 -- ============================================================
 
 GRANT SELECT ON mv_offer_traffic_summary TO authenticated;
