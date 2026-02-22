@@ -138,7 +138,7 @@ export function MonthRangePicker({ from, to, onChange }: MonthRangePickerProps) 
 
   const handleMonthClick = (key: string) => {
     if (isDisabled(key)) return;
-    if (!tempFrom || selecting === "from") {
+    if (!tempFrom || selecting === "from" || selecting === null) {
       setTempFrom(key);
       setTempTo(null);
       setSelecting("to");
@@ -170,7 +170,6 @@ export function MonthRangePicker({ from, to, onChange }: MonthRangePickerProps) 
     setTempTo(null);
     setSelecting(null);
     onChange(null, null);
-    setOpen(false);
   };
 
   const handleOpen = (o: boolean) => {
