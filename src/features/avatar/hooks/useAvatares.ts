@@ -39,6 +39,56 @@ export function useAvatar(id: string) {
   });
 }
 
+export function useCreateAvatar() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (avatar: {
+      oferta_id: string;
+      nome: string;
+      estado_atual?: string;
+      estado_desejado?: string;
+      pain_matrix?: Array<{ nivel: number; dor: string }>;
+      desire_matrix?: Array<{ nivel: number; desejo: string }>;
+      objecoes?: Array<{ objecao: string; tipo: string }>;
+      gatilhos_emocionais?: string[];
+      linguagem_avatar?: string;
+      demographics?: string;
+      notas?: string;
+    }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: member } = await supabase
+        .from("workspace_members")
+        .select("workspace_id")
+        .eq("user_id", user?.id)
+        .limit(1)
+        .single();
+
+      const { data, error } = await supabase
+        .from("avatares")
+        .insert({
+          ...avatar,
+          workspace_id: member?.workspace_id,
+          versao: 1,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      analytics.track({ event: "AVATAR_CREATED_MANUAL", workspaceId: member?.workspace_id });
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["avatares"] });
+      toast({ title: "Avatar criado com sucesso!" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Erro ao criar avatar", description: error.message, variant: "destructive" });
+    },
+  });
+}
+
 export function useExtractAvatar() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
