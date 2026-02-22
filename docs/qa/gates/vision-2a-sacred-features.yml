@@ -1,0 +1,100 @@
+schema: 1
+story: 'VISION-2A'
+title: 'Phase 2A — Sacred Features (SPY Excellence)'
+gate: PASS
+status_reason: >
+  All 3 Sacred Features implemented per vision-architecture.md section 6.1.
+  Design system 100% aligned with aesthetic-profile.md (45/45 tokens).
+  MonthRangePicker fixes (A: 3rd-click restart, B: reset keeps picker open) verified.
+  TypeScript 0 errors, build success.
+  3 LOW + 1 INFO concerns (non-blocking).
+reviewer: 'Quinn'
+updated: '2026-02-21T23:30:00Z'
+branch: 'feature/vision-1-foundation'
+scope:
+  - 'Sacred Feature #1: Comparative Multi-Domain Traffic Chart'
+  - 'Sacred Feature #2: Sparkline in Traffic Table'
+  - 'Sacred Feature #3: MonthRangePicker'
+  - 'Design System tokens/primitives/components alignment'
+  - 'MonthRangePicker bug fixes (A + B)'
+files_reviewed:
+  - 'src/features/spy/components/TrafficChart.tsx'
+  - 'src/features/spy/components/TrafficIntelligenceView.tsx'
+  - 'src/features/spy/components/traffic-intel/TrafficChartingPanel.tsx'
+  - 'src/features/spy/components/traffic-intel/TrafficTable.tsx'
+  - 'src/features/spy/components/traffic-intel/types.ts'
+  - 'src/features/spy/components/MonthRangePicker.tsx'
+  - 'src/features/spy/components/spy-radar/SpyOffersTable.tsx'
+  - 'src/shared/design-system/tokens.css'
+  - 'src/shared/design-system/primitives/GlassmorphismCard.tsx'
+  - 'src/shared/design-system/primitives/LEDGlowBorder.tsx'
+  - 'src/shared/design-system/primitives/AmbientGlow.tsx'
+  - 'src/shared/design-system/components/DataMetricCard.tsx'
+  - 'src/shared/design-system/components/StatusBadge.tsx'
+  - 'src/shared/design-system/components/SparklineBadge.tsx'
+validation:
+  tsc: PASS
+  build: 'PASS (8.54s)'
+  regressions: NONE
+sacred_features:
+  feature_1_comparative_chart:
+    verdict: PASS
+    checks:
+      - 'N domains unlimited: PASS'
+      - 'Unique colors per domain (12 palette): PASS'
+      - 'Glassmorphism tooltip: PASS'
+      - 'Click toggle series: PASS'
+      - 'Area fill with gradient: PASS'
+      - 'Active dot with glow: PASS'
+      - 'Animation 400ms ease-out: PASS'
+      - 'Respects MonthRangePicker: PASS'
+      - 'Design system tokens: PASS'
+  feature_2_sparkline:
+    verdict: PASS
+    checks:
+      - 'Inline SVG in TrafficTable rows: PASS'
+      - 'Spike detection >100% orange: PASS'
+      - 'Trend colors (teal/red/muted): PASS'
+      - 'Area fill: PASS'
+      - 'Glow dot on last point: PASS'
+      - 'Animated pulse for spikes: PASS'
+      - 'aria-label accessibility: PASS'
+      - 'Respects MonthRangePicker: PASS'
+  feature_3_month_range_picker:
+    verdict: PASS
+    checks:
+      - 'Semrush-style two-year calendar: PASS'
+      - 'Continuous range selection: PASS'
+      - '6 presets (1M, 3M, 6M, YTD, 1A, 2A): PASS'
+      - 'Portuguese month names: PASS'
+      - 'Fix A — 3rd click restarts range: PASS'
+      - 'Fix B — Reset keeps picker open: PASS'
+      - 'Future months disabled: PASS'
+design_system_alignment:
+  aesthetic_profile_match: '45/45 tokens (100%)'
+  categories_verified:
+    - 'Foundation backgrounds: 7/7'
+    - 'Primary accent violet: 4/4'
+    - 'Secondary accents: 7/7'
+    - 'Semantic colors: 7/7'
+    - 'Text colors: 4/4'
+    - 'Borders: 5/5'
+    - 'Typography: Inter + JetBrains Mono'
+    - 'Type scale: 7/7'
+    - 'Animations: 5 keyframes'
+    - 'LED glow utilities: 3 directions'
+    - 'Glass card, ambient glows, sidebar active'
+concerns:
+  - severity: LOW
+    item: 'C1: CHART_LINE_COLORS has 12 colors — >12 domains causes color recycling'
+    recommendation: 'Consider dynamic color generation or visual cap at 12'
+  - severity: LOW
+    item: 'C2: any type casts in TrafficChartingPanel and SpyOffersTable'
+    recommendation: 'Type with specific interface in future sprint'
+  - severity: LOW
+    item: 'C3: MonthRangePicker chunk 407KB (Recharts co-bundled)'
+    recommendation: 'Optimize via manualChunks in future sprint'
+  - severity: INFO
+    item: 'C4: SparklineBadge (design-system) and Sparkline (TrafficTable) coexist — different purposes'
+    recommendation: 'Document distinction: generic reusable vs traffic-specific with spike detection'
+waiver: { active: false }

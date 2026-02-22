@@ -1,5 +1,5 @@
 # Story BD-2.1: Decompose God Components
-**Epic:** EPIC-BD | **Sprint:** 2 | **Status:** InReview | **Estimate:** 12h | **Priority:** ALTO
+**Epic:** EPIC-BD | **Sprint:** 2 | **Status:** Done | **Estimate:** 12h | **Priority:** ALTO
 
 ---
 
@@ -122,6 +122,7 @@
 - 2026-02-21: AC-2 completed — UniversalImportModal.tsx decomposed from 1166 → 107 LOC (4 step components + hook + types)
 - 2026-02-21: AC-3 completed — TrafficIntelligenceView.tsx decomposed from 824 → 73 LOC (3 sub-components + hook + types)
 - 2026-02-21: Typecheck PASS, Build PASS after all decompositions
+- 2026-02-21: Final validation PASS (tsc + build) — Status → Done
 
 ### Completion Notes
 - Total LOC reduction in orchestrators: 4171 → 498 LOC (88% reduction)

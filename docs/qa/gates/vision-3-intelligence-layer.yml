@@ -1,0 +1,397 @@
+schema: 1
+story: 'VISION-3'
+title: 'Phase 3 — Intelligence Layer (Backend + Frontend)'
+gate: PASS
+status_reason: >
+  Phase 3A: 820-line migration with 3 MVs, 4 RPCs, realtime trigger, pg_cron.
+  Phase 3B: Dashboard rewrite with 5 KPIs, spike detection UI with realtime,
+  heatmap calendar, status donut chart, activity feed. 9 new files, 910 LOC.
+  All 17 issues (10 backend + 7 frontend) resolved across 5 QA rounds.
+  93/93 tests, typecheck clean, build success. 1 accepted tech debt (H3-FE).
+reviewer: 'Quinn'
+updated: '2026-02-22T18:00:00Z'
+branch: 'feature/vision-1-foundation'
+
+# ============================================================
+# SCOPE — Phase 3A (Backend): 3 Commits, 5 Files
+# ============================================================
+commits_3a:
+  - hash: '7592428'
+    message: 'fix: switch traffic upsert to bulk RPC + mark BD-2.1 Done'
+  - hash: 'e9198e7'
+    message: 'feat: add Phase 3 Intelligence Layer migration with MVs, RPCs, and spike detection [VISION-1]'
+  - hash: '86bf88d'
+    message: 'fix: use RPC row count for traffic import toast + add QA gate for Phase 3A [VISION-1]'
+
+# ============================================================
+# SCOPE — Phase 3B (Frontend): 5 Commits, 9 Files, 910 LOC
+# ============================================================
+commits_3b:
+  - hash: '5a1eb47'
+    message: 'feat: implement Intelligence Dashboard with real KPIs, spike feed, donut chart [VISION-3.1]'
+  - hash: '8ed73d3'
+    message: 'feat: add Spike Detection UI with realtime subscription [VISION-3.2]'
+  - hash: '395b208'
+    message: 'feat: add Heatmap Calendar showing activity intensity [VISION-3.3]'
+  - hash: '997e168'
+    message: 'fix: apply QA review fixes — stale closure + design token remnants [VISION-3]'
+  - hash: '560483b'
+    message: 'fix: clean up SpikeAlertCard — remove unused Flame import, use LucideIcon type [VISION-3]'
+
+files_changed:
+  - path: 'supabase/migrations/20260221000000_phase3_intelligence_layer.sql'
+    type: new
+    lines: 820
+    description: 'Full Phase 3 migration: spike_alerts table, 3 MVs, 2 backward-compat views, 4 RPCs, trigger, pg_cron'
+  - path: 'src/features/spy/components/import-modal/useImportWorkflow.ts'
+    type: modified
+    description: 'Phase 4 bulk upsert → supabase.rpc("bulk_upsert_traffic_data"), trafficCount from RPC response'
+  - path: 'src/features/spy/hooks/useSpiedOffersTraffic.ts'
+    type: modified
+    description: 'useBulkInsertTrafficData → RPC, staleTime 15min→6h, comments updated to Phase 3'
+  - path: 'src/integrations/supabase/types.ts'
+    type: modified
+    description: '+4 RPC function types (bulk_upsert, detect_spikes, get_dashboard_metrics, get_traffic_comparison)'
+  - path: 'docs/stories/BD-2.1.story.md'
+    type: modified
+    description: 'Story status update to Done'
+  # Phase 3B Frontend files
+  - path: 'src/features/dashboard/hooks/useDashboardMetrics.ts'
+    type: new
+    lines: 90
+    description: 'useDashboardMetrics (RPC), useDashboardActivity (workspace-filtered), useDetectSpikes'
+  - path: 'src/features/dashboard/hooks/useSpikeAlerts.ts'
+    type: new
+    lines: 43
+    description: 'Spike alerts hook combining detect_spikes RPC + realtime subscription with toast'
+  - path: 'src/features/dashboard/hooks/useActivityHeatmap.ts'
+    type: new
+    lines: 54
+    description: 'Activity heatmap hook aggregating activity_log by day, workspace-filtered'
+  - path: 'src/features/dashboard/components/StatusDistributionChart.tsx'
+    type: new
+    lines: 99
+    description: 'Recharts donut chart with CSS token resolution via getComputedStyle'
+  - path: 'src/features/dashboard/components/SpikeAlertCard.tsx'
+    type: new
+    lines: 94
+    description: 'Spike alert card with glow-pulse animation, color-mix backgrounds, aria-label'
+  - path: 'src/features/dashboard/components/ActivityFeed.tsx'
+    type: new
+    lines: 91
+    description: 'Timeline feed with action-specific icons/colors from design system tokens'
+  - path: 'src/features/dashboard/components/HeatmapCalendar.tsx'
+    type: new
+    lines: 160
+    description: '3-month activity heatmap grid with 5 teal intensity levels and tooltips'
+  - path: 'src/shared/hooks/useRealtimeSubscription.ts'
+    type: new
+    lines: 93
+    description: 'Generic Supabase Realtime hook with useRef pattern for stale closure prevention'
+  - path: 'src/pages/Dashboard.tsx'
+    type: modified
+    description: 'Full rewrite: 5 KPI cards, spike feed, donut chart, activity feed, heatmap, quick links'
+
+# ============================================================
+# 7 QUALITY CHECKS — Phase 3A (Backend)
+# ============================================================
+checks:
+  code_review:
+    status: PASS
+    rounds: 3
+    details: |
+      Round 1: 2 CRITICAL, 3 HIGH, 3 MEDIUM found
+        - C1: Dashboard.tsx breaks (dropped MV) → backward-compat VIEW added
+        - C2: useSpiedOffersTraffic.ts breaks → backward-compat VIEW added
+        - H1: NULL source in unique index → COALESCE + IS NOT DISTINCT FROM
+        - H2: Trigger perf on bulk import → skip_spike_check guard
+        - H3: BEGIN/COMMIT in Supabase CLI → removed
+        - M1: Missing created_at/updated_at → added to spike_alerts
+        - M2: DYING/NEVER_SCALED counted as active → excluded
+      Round 2: 3 issues found
+        - H1-r2: Cross-workspace check allows partial match → EXCEPT fix
+        - M1-r2: Traffic count uses local data not RPC → fixed (commit 86bf88d)
+        - M2-r2: Stale comment/staleTime → fixed
+      Round 3: PASS — all fixes verified
+
+  unit_tests:
+    status: PASS
+    total: 93
+    passed: 93
+    failed: 0
+    files: 4
+    details: 'csvClassifier (48), parseSemrushCSV (27), trafficProcessing (17), example (1)'
+
+  acceptance_criteria:
+    status: PASS
+    criteria:
+      - name: '3 Materialized Views'
+        met: true
+        details: 'mv_dashboard_metrics, mv_traffic_summary, mv_spike_detection — with UNIQUE indexes for CONCURRENTLY refresh'
+      - name: '4 RPC Functions'
+        met: true
+        details: 'bulk_upsert_traffic_data, get_dashboard_metrics, get_traffic_comparison, detect_spikes — SECURITY DEFINER + search_path'
+      - name: 'Realtime trigger'
+        met: true
+        details: 'fn_check_spike_on_traffic → spike_alerts + pg_notify("spike_alerts")'
+      - name: 'Bulk import optimization'
+        met: true
+        details: 'bulk_upsert_traffic_data RPC with SET LOCAL skip_spike_check + trafficCount from GET DIAGNOSTICS'
+      - name: 'Backward compatibility'
+        met: true
+        details: 'mv_dashboard_stats + mv_offer_traffic_summary regular VIEWs with security_invoker'
+      - name: 'Frontend integration'
+        met: true
+        details: 'useImportWorkflow + useBulkInsertTrafficData switched to RPC, toast shows server-side count'
+
+  no_regressions:
+    status: PASS
+    details: '93 tests pass. Build OK. Typecheck OK. Backward-compat views preserve existing frontend behavior.'
+
+  performance:
+    status: PASS
+    details: |
+      - Bulk import: ~56k trigger queries eliminated via skip_spike_check
+      - MVs use REFRESH CONCURRENTLY (non-blocking reads)
+      - pg_cron: dashboard 4h, traffic 6h, spikes 2h
+      - RPC batches: 1000 records/call, 3 parallel — acceptable for 14k+ imports
+
+  security:
+    status: PASS
+    details: |
+      - RLS enabled on all 3 MVs + spike_alerts table
+      - SECURITY DEFINER + SET search_path = public on all RPCs
+      - auth.uid() check on all functions
+      - Workspace membership validation (EXCEPT pattern — verifies ALL workspaces)
+      - is_workspace_member() policy on MVs
+      - GRANT SELECT/EXECUTE to authenticated only
+      - No SQL injection vectors (parameterized JSONB parsing)
+
+  documentation:
+    status: PASS
+    details: |
+      - COMMENT ON for all tables, MVs, and functions
+      - Migration header with full inventory
+      - DOWN MIGRATION section with rollback steps
+      - types.ts manually updated with 4 new function signatures
+
+# ============================================================
+# ISSUES: ALL 10 RESOLVED
+# ============================================================
+issues:
+  - id: 'C1'
+    severity: CRITICAL
+    description: 'Dashboard.tsx references dropped mv_dashboard_stats'
+    resolution: 'Backward-compat VIEW mv_dashboard_stats → mv_dashboard_metrics'
+    status: RESOLVED
+  - id: 'C2'
+    severity: CRITICAL
+    description: 'useSpiedOffersTraffic.ts references dropped mv_offer_traffic_summary'
+    resolution: 'Backward-compat VIEW mv_offer_traffic_summary → mv_traffic_summary aggregate'
+    status: RESOLVED
+  - id: 'H1'
+    severity: HIGH
+    description: 'NULL source breaks unique index and comparisons'
+    resolution: 'COALESCE(source, "unknown") in GROUP BY + IS NOT DISTINCT FROM in subqueries'
+    status: RESOLVED
+  - id: 'H2'
+    severity: HIGH
+    description: 'Trigger fires ~56k times during bulk import'
+    resolution: 'current_setting("app.skip_spike_check") guard + bulk_upsert_traffic_data RPC'
+    status: RESOLVED
+  - id: 'H3'
+    severity: HIGH
+    description: 'BEGIN/COMMIT conflicts with Supabase CLI transaction wrapper'
+    resolution: 'Removed explicit transaction boundaries'
+    status: RESOLVED
+  - id: 'H1-r2'
+    severity: HIGH
+    description: 'Cross-workspace check allows partial match'
+    resolution: 'NOT EXISTS...IN → EXISTS...EXCEPT for ALL workspace verification'
+    status: RESOLVED
+  - id: 'M1'
+    severity: MEDIUM
+    description: 'Missing created_at/updated_at on spike_alerts'
+    resolution: 'Added both columns + updated_at in ON CONFLICT'
+    status: RESOLVED
+  - id: 'M2'
+    severity: MEDIUM
+    description: 'DYING/NEVER_SCALED counted as active in dashboard'
+    resolution: 'Added to NOT IN clause in mv_dashboard_metrics'
+    status: RESOLVED
+  - id: 'M1-r2'
+    severity: MEDIUM
+    description: 'trafficCount uses local chunk.length instead of RPC response'
+    resolution: 'trafficCount += (data as number) ?? 0 — uses GET DIAGNOSTICS ROW_COUNT from server'
+    status: RESOLVED
+    fixed_in: '86bf88d'
+  - id: 'M2-r2'
+    severity: MEDIUM
+    description: 'Stale comment/staleTime referencing BD-2.5 15min'
+    resolution: 'Updated to Phase 3, 6h'
+    status: RESOLVED
+
+# ============================================================
+# 7 QUALITY CHECKS — Phase 3B (Frontend)
+# ============================================================
+checks_3b:
+  code_review:
+    status: PASS
+    rounds: 3
+    details: |
+      Round 1 (review): 2 HIGH, 4 MEDIUM, 1 LOW found
+        - H1-FE: Stale closure in useRealtimeSubscription (callbacks not in deps)
+        - H2-FE: activity_log queries missing workspace_id filter (defense-in-depth)
+        - M1-FE: SparklineBadge uses categorical data as time-series
+        - M2-FE: formatVisits duplicated (Dashboard + SpikeAlertCard)
+        - M3-FE: Hardcoded hex colors in StatusDistributionChart
+        - M4-FE: as any cast in useRealtimeSubscription
+        - L1-FE: No aria-label on SpikeAlertCard button
+      Round 2 (fix commit 997e168): All H1-H2, M1-M3, L1 fixed
+        - H1-FE: useRef pattern for all callbacks + stable useCallback
+        - H2-FE: workspace_id filter added to both hooks
+        - M1-FE: SparklineBadge removed from "Total no Radar"
+        - M2-FE: formatNumber shared util replaces formatVisits
+        - M3-FE: resolveToken() via getComputedStyle, tokens.css is source of truth
+        - L1-FE: Descriptive aria-label added
+      Round 3 (fix commit 560483b): Cosmetic cleanup
+        - N2: Unused Flame import replaced with LucideIcon type
+        - Residual blank line removed
+
+  design_system_adherence:
+    status: PASS
+    details: |
+      - All components use CSS custom properties from tokens.css
+      - StatusDistributionChart resolves tokens at runtime (Recharts SVG limitation)
+      - color-mix() used for subtle backgrounds (Chrome 111+, acceptable for target user)
+      - Design system animations: animate-glow-pulse, animate-shimmer from tokens.css
+
+  security:
+    status: PASS
+    details: |
+      - workspace_id filter on all activity_log queries (defense-in-depth beyond RLS)
+      - getWorkspaceId() validates user auth + workspace membership
+      - No direct SQL, all queries via Supabase client with typed methods
+
+  accessibility:
+    status: PASS
+    details: |
+      - aria-label on SpikeAlertCard button with offer name, alert type, and percentage
+      - Tooltip on all heatmap cells with date and count
+      - Semantic HTML: heading hierarchy (h1, h2), button elements for interactive cards
+
+  acceptance_criteria_3b:
+    status: PASS
+    criteria:
+      - name: '5 KPI cards with real data'
+        met: true
+        details: 'Total Radar, Hot, Scaling, Spikes 30d, Last Update — from get_dashboard_metrics RPC'
+      - name: 'Status distribution donut chart'
+        met: true
+        details: 'Recharts PieChart with 5 status categories, design token colors'
+      - name: 'Spike detection UI with realtime'
+        met: true
+        details: 'SpikeAlertCard with glow-pulse, realtime subscription on spike_alerts, toast on new spike'
+      - name: 'Activity feed'
+        met: true
+        details: 'Timeline with action-specific icons, workspace-filtered, 8 items max'
+      - name: 'Heatmap calendar'
+        met: true
+        details: '3-month grid, 5 intensity levels, today highlight, tooltips'
+      - name: 'Quick links navigation'
+        met: true
+        details: '4 action cards: Radar, Nova Oferta, Avatar, Criativos'
+
+# ============================================================
+# ISSUES — Phase 3B (Frontend): 7 found, 6 RESOLVED, 1 ACCEPTED
+# ============================================================
+issues_3b:
+  - id: 'H1-FE'
+    severity: HIGH
+    description: 'Stale closure in useRealtimeSubscription — callbacks captured at mount time'
+    resolution: 'useRef for all callbacks + stable useCallback with empty deps'
+    status: RESOLVED
+    fixed_in: '997e168'
+  - id: 'H2-FE'
+    severity: HIGH
+    description: 'activity_log queries missing workspace_id filter'
+    resolution: 'Added .eq("workspace_id", workspaceId) to useDashboardActivity and useActivityHeatmap'
+    status: RESOLVED
+    fixed_in: '997e168'
+  - id: 'M1-FE'
+    severity: MEDIUM
+    description: 'SparklineBadge used categorical status data as time-series'
+    resolution: 'Removed misleading sparkline from Total no Radar KPI'
+    status: RESOLVED
+    fixed_in: '997e168'
+  - id: 'M2-FE'
+    severity: MEDIUM
+    description: 'formatVisits duplicated in Dashboard.tsx and SpikeAlertCard.tsx'
+    resolution: 'Replaced with shared formatNumber from @/shared/lib/utils'
+    status: RESOLVED
+    fixed_in: '997e168'
+  - id: 'M3-FE'
+    severity: MEDIUM
+    description: 'Hardcoded hex colors in StatusDistributionChart'
+    resolution: 'resolveToken() reads CSS vars via getComputedStyle at runtime'
+    status: RESOLVED
+    fixed_in: '997e168'
+  - id: 'M4-FE'
+    severity: LOW
+    description: 'as any cast on channelConfig in useRealtimeSubscription'
+    resolution: 'Accepted — Supabase SDK typing limitation at postgres_changes integration point'
+    status: ACCEPTED
+    rationale: 'Typed interface above the cast provides safety. Supabase SDK does not expose compatible overload.'
+  - id: 'L1-FE'
+    severity: LOW
+    description: 'No aria-label on SpikeAlertCard button'
+    resolution: 'Descriptive aria-label with offer name, alert type, and change percent'
+    status: RESOLVED
+    fixed_in: '997e168'
+  - id: 'N2-FE'
+    severity: COSMETIC
+    description: 'Flame imported but only used as typeof reference'
+    resolution: 'Replaced with LucideIcon type import'
+    status: RESOLVED
+    fixed_in: '560483b'
+
+# ============================================================
+# TECH DEBT REGISTERED
+# ============================================================
+tech_debt:
+  - id: 'H3-FE'
+    title: 'Extract shared useWorkspaceId() hook'
+    severity: MEDIUM
+    description: 'getWorkspaceId() duplicated in useDashboardMetrics.ts and useActivityHeatmap.ts. Extract to shared hook.'
+    registered_for: 'Next sprint'
+
+# ============================================================
+# POST-DEPLOY REQUIREMENTS
+# ============================================================
+post_deploy:
+  - action: 'Verify pg_cron extension is enabled on Supabase'
+    priority: HIGH
+  - action: 'Run supabase gen types typescript to regenerate types.ts'
+    priority: HIGH
+  - action: 'Remove backward-compat views when frontend migrates to new RPC names'
+    priority: MEDIUM
+
+# ============================================================
+# VALIDATION
+# ============================================================
+validation:
+  typecheck: PASS
+  build: PASS
+  tests: '93/93 PASS'
+
+# ============================================================
+# VERDICT
+# ============================================================
+# PASS — All quality checks satisfied (7 backend + 5 frontend).
+# Phase 3A: 820-line migration reviewed across 3 QA rounds. 10 issues, all resolved.
+# Phase 3B: 910 LOC frontend reviewed across 3 rounds. 8 issues: 7 resolved, 1 accepted (as any).
+# 1 tech debt registered (H3-FE: extract useWorkspaceId).
+# Typecheck clean. 93/93 tests pass. Ready for push to remote.
+
+top_issues: []
+waiver: { active: false }

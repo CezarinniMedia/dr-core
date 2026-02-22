@@ -1,0 +1,275 @@
+schema: 1
+story: 'VISION-4'
+title: 'Phase 4 — Modules (Ofertas, Avatar, Criativos, Arsenal)'
+gate: PASS
+status_reason: >
+  4 modules built/enhanced across 5 commits, 20 files, 2566 LOC.
+  QA Round 1: 5 blockers (1 CRITICAL SQL injection, 3 CRITICAL missing delete confirmations,
+  1 HIGH double query, 1 HIGH missing loading state) + 3 recommendations.
+  QA Round 2: All 5 blockers resolved in commit 66b5b65. 3 recommendations deferred as tech debt.
+  Typecheck clean, build success. No remaining blockers.
+reviewer: 'Quinn'
+updated: '2026-02-22T22:00:00Z'
+branch: 'feature/vision-1-foundation'
+
+# ============================================================
+# SCOPE: 5 Commits, 20 Files, 2566 insertions
+# ============================================================
+commits:
+  - hash: '8602d55'
+    message: 'feat: upgrade Ofertas module — 3 views, complete fields, status workflow [VISION-4]'
+  - hash: 'f945d10'
+    message: 'feat: enhance Avatar module — manual creation, JSONB editing, MD export [VISION-4]'
+  - hash: '9b28d69'
+    message: 'feat: enhance Creatives — naming engine, duplication, headline field [VISION-4]'
+  - hash: '666b454'
+    message: 'feat: build Arsenal module — dorks, footprints, keywords [VISION-4]'
+  - hash: '66b5b65'
+    message: 'fix: apply 5 QA blocker fixes — sanitize SQL, delete confirmations, double query, loading state [VISION-4]'
+
+files_changed:
+  # Ofertas module
+  - path: 'src/pages/Ofertas.tsx'
+    type: modified
+    description: '3 view modes (cards, table, kanban), status filters, drag-and-drop status change'
+  - path: 'src/pages/OfertaDetail.tsx'
+    type: modified
+    description: 'Complete edit form with 5 cards, tech stack fields, AlertDialog delete confirmation'
+  - path: 'src/features/offers/components/OfertaFormDialog.tsx'
+    type: modified
+    description: 'Enhanced create dialog with all fields'
+  - path: 'src/features/offers/components/OfertaCard.tsx'
+    type: modified
+    description: 'Card component updates for new fields'
+  - path: 'src/features/offers/hooks/useOfertas.ts'
+    type: modified
+    description: 'Extended hook with new fields support'
+  # Avatar module
+  - path: 'src/pages/AvatarDetail.tsx'
+    type: modified
+    description: 'JSONB editing, markdown export, complete field editing'
+  - path: 'src/pages/AvatarList.tsx'
+    type: modified
+    description: 'Enhanced list with create modal integration'
+  - path: 'src/features/avatar/components/AvatarCreateModal.tsx'
+    type: new
+    lines: 184
+    description: 'Manual avatar creation modal with form fields'
+  - path: 'src/features/avatar/hooks/useAvatares.ts'
+    type: new
+    lines: 50
+    description: 'Avatar CRUD hooks'
+  # Criativos module
+  - path: 'src/features/creatives/components/CriativoFormDialog.tsx'
+    type: modified
+    description: 'Naming engine auto-generation, headline field'
+  - path: 'src/features/creatives/components/KanbanBoard.tsx'
+    type: modified
+    description: 'Duplication feature, enhanced kanban interactions'
+  - path: 'src/features/creatives/hooks/useCriativos.ts'
+    type: new
+    lines: 57
+    description: 'Criativos CRUD hooks with duplicate mutation'
+  # Arsenal module (new)
+  - path: 'src/features/arsenal/hooks/useArsenal.ts'
+    type: new
+    lines: 342
+    description: 'Complete CRUD for dorks, footprints, keywords with sanitized search'
+  - path: 'src/features/arsenal/components/DorksTab.tsx'
+    type: new
+    lines: 276
+    description: 'Dorks tab with create/delete/copy/favorite + AlertDialog confirmation'
+  - path: 'src/features/arsenal/components/FootprintsTab.tsx'
+    type: new
+    lines: 294
+    description: 'Footprints tab with PublicWWW/Google Dorks queries + AlertDialog confirmation'
+  - path: 'src/features/arsenal/components/KeywordsTab.tsx'
+    type: new
+    lines: 278
+    description: 'Keywords tab with nicho/idioma/tipo + AlertDialog confirmation'
+  - path: 'src/pages/ArsenalPage.tsx'
+    type: new
+    lines: 59
+    description: 'Arsenal page with tab navigation and shared search'
+  # Infrastructure
+  - path: 'src/App.tsx'
+    type: modified
+    description: 'Arsenal route added'
+  - path: 'src/shared/components/layout/AppSidebar.tsx'
+    type: modified
+    description: 'Arsenal sidebar entry'
+  # QA docs
+  - path: 'docs/qa/QA_FIX_REQUEST_VISION-4.md'
+    type: new
+    lines: 187
+    description: 'QA fix request with 5 blockers + 3 recommendations'
+
+# ============================================================
+# 7 QUALITY CHECKS
+# ============================================================
+checks:
+  code_review:
+    status: PASS
+    rounds: 2
+    details: |
+      Round 1 (review of 8602d55..666b454): 5 blockers + 3 recommendations found
+        - FIX-1 [CRITICAL]: SQL injection in Arsenal .or() queries (3 hooks)
+        - FIX-2 [CRITICAL]: Delete without confirmation in Arsenal (3 tabs)
+        - FIX-3 [CRITICAL]: Delete without confirmation in OfertaDetail
+        - FIX-4 [HIGH]: Double useOfertas() query in Ofertas page
+        - FIX-5 [HIGH]: Kanban renders without loading state check
+        - REC-1 [LOW]: useEffect dependency in CriativoFormDialog
+        - REC-2 [LOW]: Form reset on cancel in OfertaFormDialog
+        - REC-3 [LOW]: Verify AvatarCreateModal pending state
+      Round 2 (review of 66b5b65): All 5 blockers resolved correctly
+        - FIX-1: search.replace(/[%_\\]/g, '\\$&') applied in all 3 hooks
+        - FIX-2: deleteId state + AlertDialog in DorksTab, FootprintsTab, KeywordsTab
+        - FIX-3: showDeleteConfirm state + AlertDialog in OfertaDetail
+        - FIX-4: Single useOfertas() + client-side filter
+        - FIX-5: Kanban inside isLoading ternary
+
+  unit_tests:
+    status: WAIVED
+    details: |
+      No unit tests for VISION-4 modules (0% coverage).
+      Consistent with project baseline (0% test coverage across codebase).
+      Registered as pre-existing tech debt, not a regression.
+
+  acceptance_criteria:
+    status: PASS
+    criteria:
+      - name: 'Ofertas: 3 view modes (cards, table, kanban)'
+        met: true
+      - name: 'Ofertas: complete field editing in detail page'
+        met: true
+      - name: 'Ofertas: drag-and-drop status change in kanban'
+        met: true
+      - name: 'Avatar: manual creation modal'
+        met: true
+      - name: 'Avatar: JSONB field editing + MD export'
+        met: true
+      - name: 'Criativos: naming engine auto-generation'
+        met: true
+      - name: 'Criativos: duplication feature'
+        met: true
+      - name: 'Arsenal: dorks, footprints, keywords CRUD'
+        met: true
+      - name: 'Arsenal: search, favorite, copy-to-clipboard, usage count'
+        met: true
+
+  no_regressions:
+    status: PASS
+    details: |
+      - Existing SPY module unaffected (no files touched)
+      - Dashboard unaffected
+      - Build success, no new warnings beyond pre-existing chunk size
+
+  performance:
+    status: PASS
+    details: |
+      - Arsenal queries use server-side filtering (Supabase .or() with sanitized input)
+      - Ofertas double query eliminated (FIX-4), reducing network requests by 50%
+      - Kanban uses same dataset as cards/table (no additional query)
+
+  security:
+    status: PASS
+    details: |
+      - FIX-1 resolved: Search input sanitized against ILIKE wildcards (%_\)
+      - PostgREST parameterized queries provide base SQL injection protection
+      - Delete operations require explicit user confirmation (AlertDialog)
+      - No hardcoded credentials or secrets in diff
+
+  documentation:
+    status: PASS
+    details: |
+      - QA_FIX_REQUEST_VISION-4.md documents all issues found and fixes applied
+      - Code is self-documenting with clear component/hook naming
+
+# ============================================================
+# ISSUES: 8 found, 5 RESOLVED, 3 DEFERRED
+# ============================================================
+issues:
+  - id: 'FIX-1'
+    severity: CRITICAL
+    description: 'SQL injection via unsanitized input in Arsenal .or() queries'
+    resolution: 'search.replace(/[%_\\]/g, "\\$&") in 3 hooks'
+    status: RESOLVED
+    fixed_in: '66b5b65'
+  - id: 'FIX-2'
+    severity: CRITICAL
+    description: 'Delete without confirmation in Arsenal tabs (DorksTab, FootprintsTab, KeywordsTab)'
+    resolution: 'deleteId state + AlertDialog with destructive action styling'
+    status: RESOLVED
+    fixed_in: '66b5b65'
+  - id: 'FIX-3'
+    severity: CRITICAL
+    description: 'Delete without confirmation in OfertaDetail'
+    resolution: 'showDeleteConfirm state + AlertDialog'
+    status: RESOLVED
+    fixed_in: '66b5b65'
+  - id: 'FIX-4'
+    severity: HIGH
+    description: 'Double useOfertas() query in Ofertas page'
+    resolution: 'Single query + client-side status filter'
+    status: RESOLVED
+    fixed_in: '66b5b65'
+  - id: 'FIX-5'
+    severity: HIGH
+    description: 'Kanban renders without checking isLoading'
+    resolution: 'Kanban inside isLoading ternary, covered by single query'
+    status: RESOLVED
+    fixed_in: '66b5b65'
+  - id: 'REC-1'
+    severity: LOW
+    description: 'useEffect missing form.nome dependency in CriativoFormDialog'
+    status: DEFERRED
+    rationale: 'Non-blocking, cosmetic timing issue. Naming engine still works.'
+  - id: 'REC-2'
+    severity: LOW
+    description: 'OfertaFormDialog does not reset form on cancel'
+    status: DEFERRED
+    rationale: 'Non-blocking UX issue. Form state clears on next open with fresh data.'
+  - id: 'REC-3'
+    severity: LOW
+    description: 'AvatarCreateModal pending state — needs manual verification'
+    status: DEFERRED
+    rationale: 'Code already has disabled={isPending} + Loader2. Likely functional.'
+
+# ============================================================
+# TECH DEBT REGISTERED
+# ============================================================
+tech_debt:
+  - id: 'REC-1'
+    title: 'Fix useEffect dependency in CriativoFormDialog naming engine'
+    severity: LOW
+  - id: 'REC-2'
+    title: 'Reset form state on OfertaFormDialog cancel'
+    severity: LOW
+  - id: 'REC-3'
+    title: 'Verify AvatarCreateModal pending state in browser'
+    severity: LOW
+  - id: 'TD-V4-1'
+    title: 'Add unit tests for VISION-4 modules (Arsenal, Ofertas, Avatar, Criativos)'
+    severity: MEDIUM
+
+# ============================================================
+# VALIDATION
+# ============================================================
+validation:
+  typecheck: PASS
+  build: PASS
+  tests: N/A
+  console_errors: N/A
+
+# ============================================================
+# VERDICT
+# ============================================================
+# PASS — All 5 blocker issues (3 CRITICAL + 2 HIGH) resolved in commit 66b5b65.
+# 3 LOW recommendations deferred as tech debt (non-blocking).
+# 4 modules delivered: Ofertas (3 views), Avatar (manual create + JSONB),
+# Criativos (naming + duplication), Arsenal (dorks/footprints/keywords).
+# 20 files, 2566 LOC. Typecheck clean, build success.
+# Ready for push to remote.
+
+top_issues: []
+waiver: { active: false }

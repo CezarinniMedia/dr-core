@@ -1,12 +1,12 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/shared/components/ui/toaster";
+import { Toaster as Sonner } from "@/shared/components/ui/sonner";
+import { TooltipProvider } from "@/shared/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/hooks/useAuth";
-import { ThemeProvider } from "@/components/ThemeProvider";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { AuthProvider } from "@/shared/hooks/useAuth";
+import { ThemeProvider } from "@/shared/design-system/theme-provider";
+import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
+import { DashboardLayout } from "@/shared/components/layout/DashboardLayout";
 import { Suspense, lazy } from "react";
 import { Loader2 } from "lucide-react";
 
@@ -22,6 +22,7 @@ const AvatarDetail = lazy(() => import("./pages/AvatarDetail"));
 const SpyRadar = lazy(() => import("./pages/SpyRadar"));
 const SpyOfferDetail = lazy(() => import("./pages/SpyOfferDetail"));
 const CriativosPage = lazy(() => import("./pages/CriativosPage"));
+const ArsenalPage = lazy(() => import("./pages/ArsenalPage"));
 const PlaceholderPage = lazy(() => import("./pages/PlaceholderPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -64,6 +65,7 @@ const App = () => (
                 <Route path="/spy" element={<SpyRadar />} />
                 <Route path="/spy/:id" element={<SpyOfferDetail />} />
                 <Route path="/criativos" element={<CriativosPage />} />
+                <Route path="/arsenal" element={<ArsenalPage />} />
                 <Route path="/paginas" element={<PlaceholderPage title="Páginas" description="Landing pages e funis" />} />
                 <Route path="/analytics" element={<PlaceholderPage title="Analytics" description="Métricas e performance" />} />
                 <Route path="/prompts" element={<PlaceholderPage title="Prompts & Agents" description="Seus prompts e agentes de IA" />} />

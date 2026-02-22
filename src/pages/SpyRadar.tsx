@@ -1,34 +1,37 @@
 import { useState, useCallback, useMemo, useEffect, Suspense, lazy } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { useSpiedOffers, useDeleteSpiedOffer, useLatestTrafficPerOffer } from "@/hooks/useSpiedOffers";
+import { useSpiedOffers, useDeleteSpiedOffer, useLatestTrafficPerOffer } from "@/features/spy/hooks/useSpiedOffers";
 import { Loader2, LayoutList, BarChart3, Info, Radio } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { ErrorState } from "@/components/ui/ErrorState";
-import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
+import { TooltipProvider } from "@/shared/components/ui/tooltip";
+import { EmptyState } from "@/shared/components/ui/EmptyState";
+import { ErrorState } from "@/shared/components/ui/ErrorState";
+import { useToast } from "@/shared/hooks/use-toast";
 import {
   filterOffers as filterOffersService,
   updateOfferStatus,
   updateOfferNotes,
   bulkUpdateStatus,
   bulkDeleteOffers,
-} from "@/services";
+} from "@/shared/services";
 import {
   loadSpyColumns, LS_KEY_SPY_COLUMNS, LS_KEY_TRAFFIC_SOURCE,
-} from "@/components/spy/spy-radar/constants";
-import { SpyFilterBar } from "@/components/spy/spy-radar/SpyFilterBar";
-import { SpyColumnSelector } from "@/components/spy/spy-radar/SpyColumnSelector";
-import { SpyBulkActionsBar } from "@/components/spy/spy-radar/SpyBulkActionsBar";
-import { SpyOffersTable } from "@/components/spy/spy-radar/SpyOffersTable";
-import { SpyAboutTab } from "@/components/spy/spy-radar/SpyAboutTab";
-import { SpyRadarHeader } from "@/components/spy/spy-radar/SpyRadarHeader";
-import { SpyDeleteDialog } from "@/components/spy/spy-radar/SpyDeleteDialog";
+} from "@/features/spy/components/spy-radar/constants";
+import { SpyFilterBar } from "@/features/spy/components/spy-radar/SpyFilterBar";
+import { SpyColumnSelector } from "@/features/spy/components/spy-radar/SpyColumnSelector";
+import { SavedViewsDropdown } from "@/features/spy/components/spy-radar/SavedViewsDropdown";
+import { useSavedViews, type SpyViewFilters, type SavedView } from "@/features/spy/hooks/useSavedViews";
+import { SpyBulkActionsBar } from "@/features/spy/components/spy-radar/SpyBulkActionsBar";
+import { SpyOffersTable } from "@/features/spy/components/spy-radar/SpyOffersTable";
+import { SpyAboutTab } from "@/features/spy/components/spy-radar/SpyAboutTab";
+import { SpyRadarHeader } from "@/features/spy/components/spy-radar/SpyRadarHeader";
+import { SpyDeleteDialog } from "@/features/spy/components/spy-radar/SpyDeleteDialog";
 
-const QuickAddOfferModal = lazy(() => import("@/components/spy/QuickAddOfferModal").then(m => ({ default: m.QuickAddOfferModal })));
-const FullOfferFormModal = lazy(() => import("@/components/spy/FullOfferFormModal").then(m => ({ default: m.FullOfferFormModal })));
-const UniversalImportModal = lazy(() => import("@/components/spy/UniversalImportModal").then(m => ({ default: m.UniversalImportModal })));
-const TrafficIntelligenceView = lazy(() => import("@/components/spy/TrafficIntelligenceView").then(m => ({ default: m.TrafficIntelligenceView })));
+const QuickAddOfferModal = lazy(() => import("@/features/spy/components/QuickAddOfferModal").then(m => ({ default: m.QuickAddOfferModal })));
+const FullOfferFormModal = lazy(() => import("@/features/spy/components/FullOfferFormModal").then(m => ({ default: m.FullOfferFormModal })));
+const UniversalImportModal = lazy(() => import("@/features/spy/components/UniversalImportModal").then(m => ({ default: m.UniversalImportModal })));
+const TrafficIntelligenceView = lazy(() => import("@/features/spy/components/TrafficIntelligenceView").then(m => ({ default: m.TrafficIntelligenceView })));
 
 const ModalLoader = () => (
   <div className="flex items-center justify-center p-8">
@@ -39,6 +42,8 @@ const ModalLoader = () => (
 export default function SpyRadar() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { data: savedViewsList = [] } = useSavedViews("spy");
 
   // Filters
   const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set());
@@ -58,11 +63,17 @@ export default function SpyRadar() {
   const [deleteTarget, setDeleteTarget] = useState<"single" | "bulk" | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
+  // Vault/Archive toggle
+  const [showArchived, setShowArchived] = useState(false);
+
   // Tabs & traffic source
   const [mainTab, setMainTab] = useState("offers");
   const [trafficDataSource, setTrafficDataSource] = useState<'similarweb' | 'semrush'>(() => {
     return (localStorage.getItem(LS_KEY_TRAFFIC_SOURCE) as 'similarweb' | 'semrush') || 'similarweb';
   });
+
+  // Saved views
+  const [activeViewId, setActiveViewId] = useState<string | null>(null);
 
   // Selection & pagination
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -76,12 +87,26 @@ export default function SpyRadar() {
     localStorage.setItem(LS_KEY_SPY_COLUMNS, JSON.stringify([...visibleColumns]));
   }, [visibleColumns]);
 
+  // Apply saved view from URL param (?view=uuid)
+  useEffect(() => {
+    const viewId = searchParams.get("view");
+    if (viewId && savedViewsList.length > 0) {
+      const view = savedViewsList.find(v => v.id === viewId);
+      if (view) {
+        handleApplyView(view);
+        searchParams.delete("view");
+        setSearchParams(searchParams, { replace: true });
+      }
+    }
+  }, [searchParams, savedViewsList]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const toggleStatusFilter = (value: string) => {
     setStatusFilter(prev => {
       const next = new Set(prev);
       if (next.has(value)) next.delete(value); else next.add(value);
       return next;
     });
+    setActiveViewId(null);
     setCurrentPage(0);
     setSelectedIds(new Set());
   };
@@ -129,13 +154,21 @@ export default function SpyRadar() {
 
   const offers = useMemo(() => {
     if (!allOffersRaw) return allOffersRaw;
-    if (statusFilter.size === 0) return allOffersRaw;
-    return filterOffersService(allOffersRaw as any, { statusFilter });
-  }, [allOffersRaw, statusFilter]);
+    let filtered = allOffersRaw as any[];
+    // Hide VAULT offers unless toggle is on
+    if (!showArchived) {
+      filtered = filtered.filter((o: any) => o.status !== "VAULT");
+    }
+    if (statusFilter.size > 0) {
+      filtered = filterOffersService(filtered, { statusFilter });
+    }
+    return filtered;
+  }, [allOffersRaw, statusFilter, showArchived]);
 
   const totalOffers = offers?.length ?? 0;
 
   const handleFilterChange = useCallback(() => {
+    setActiveViewId(null);
     setCurrentPage(0);
     setSelectedIds(new Set());
   }, []);
@@ -171,6 +204,34 @@ export default function SpyRadar() {
     else if (deleteId) { deleteMutation.mutate(deleteId); setDeleteTarget(null); setDeleteId(null); }
   };
 
+  const handleApplyView = useCallback((view: SavedView) => {
+    const f = view.filters;
+    setStatusFilter(new Set(f.statusFilter ?? []));
+    setVertical(f.vertical ?? "");
+    setSource(f.source ?? "");
+    setSearch(f.search ?? "");
+    setShowArchived(f.showArchived ?? false);
+    if (f.trafficDataSource) {
+      setTrafficDataSource(f.trafficDataSource);
+      localStorage.setItem(LS_KEY_TRAFFIC_SOURCE, f.trafficDataSource);
+    }
+    if (view.visible_columns && view.visible_columns.length > 0) {
+      setVisibleColumns(new Set(view.visible_columns));
+    }
+    setActiveViewId(view.id);
+    setCurrentPage(0);
+    setSelectedIds(new Set());
+  }, []);
+
+  const currentFilters: SpyViewFilters = useMemo(() => ({
+    statusFilter: [...statusFilter],
+    vertical,
+    source,
+    search,
+    trafficDataSource,
+    showArchived,
+  }), [statusFilter, vertical, source, search, trafficDataSource, showArchived]);
+
   return (
     <TooltipProvider delayDuration={200}>
       <div className="max-w-7xl space-y-6">
@@ -201,6 +262,16 @@ export default function SpyRadar() {
               onToggleStatus={toggleStatusFilter}
               onClearStatusFilter={() => { setStatusFilter(new Set()); handleFilterChange(); }}
               columnSelector={<SpyColumnSelector visibleColumns={visibleColumns} onToggleColumn={toggleSpyColumn} />}
+              savedViewsSlot={
+                <SavedViewsDropdown
+                  currentFilters={currentFilters}
+                  visibleColumns={[...visibleColumns]}
+                  onApplyView={handleApplyView}
+                  activeViewId={activeViewId}
+                />
+              }
+              showArchived={showArchived}
+              onToggleArchived={() => { setShowArchived(prev => !prev); handleFilterChange(); }}
             />
 
             <SpyBulkActionsBar

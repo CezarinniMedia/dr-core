@@ -1,21 +1,21 @@
 import { useState } from "react";
-import { useOfertas } from "@/hooks/useOfertas";
-import { useCriativos } from "@/hooks/useCriativos";
-import { KanbanBoard } from "@/components/criativos/KanbanBoard";
-import { HookGeneratorModal } from "@/components/criativos/HookGeneratorModal";
-import { CriativoFormDialog } from "@/components/criativos/CriativoFormDialog";
-import { HooksList } from "@/components/criativos/HooksList";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useOfertas } from "@/features/offers/hooks/useOfertas";
+import { useCriativos } from "@/features/creatives/hooks/useCriativos";
+import { KanbanBoard } from "@/features/creatives/components/KanbanBoard";
+import { HookGeneratorModal } from "@/features/creatives/components/HookGeneratorModal";
+import { CriativoFormDialog } from "@/features/creatives/components/CriativoFormDialog";
+import { HooksList } from "@/features/creatives/components/HooksList";
+import { Button } from "@/shared/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/shared/components/ui/select";
 import { Plus, Sparkles, LayoutList, Target, Palette } from "lucide-react";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { EmptyState } from "@/shared/components/ui/EmptyState";
 
 export default function CriativosPage() {
   const [selectedOferta, setSelectedOferta] = useState<string>("");

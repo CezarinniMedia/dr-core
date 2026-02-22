@@ -3,7 +3,7 @@ import {
   parseSemrushCSV,
   detectDelimiter,
   extractDomainsFromText,
-} from "@/lib/parseSemrushCSV";
+} from "@/shared/lib/parseSemrushCSV";
 
 // ─── parseSemrushCSV: Formato Semrush com headers ───
 describe("parseSemrushCSV - formato Semrush", () => {
