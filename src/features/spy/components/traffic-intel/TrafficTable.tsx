@@ -1,4 +1,4 @@
-import { useRef, memo, useMemo } from "react";
+import { useRef, memo, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Button } from "@/shared/components/ui/button";
@@ -303,7 +303,7 @@ export function TrafficTable({
     enabled: shouldVirtualize,
   });
 
-  const handleNavigate = (id: string) => navigate(`/spy/${id}`);
+  const handleNavigate = useCallback((id: string) => navigate(`/spy/${id}`), [navigate]);
 
   // Pre-compute counts to avoid recalculating in PaginationControls
   const rowCount = sortedRows.length;
