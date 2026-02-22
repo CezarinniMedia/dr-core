@@ -22,6 +22,7 @@ interface SpyFilterBarProps {
   columnSelector: React.ReactNode;
   showArchived: boolean;
   onToggleArchived: () => void;
+  savedViewsSlot?: React.ReactNode;
 }
 
 export function SpyFilterBar({
@@ -32,6 +33,7 @@ export function SpyFilterBar({
   statusFilter, onToggleStatus, onClearStatusFilter,
   columnSelector,
   showArchived, onToggleArchived,
+  savedViewsSlot,
 }: SpyFilterBarProps) {
   return (
     <div className="space-y-3">
@@ -86,6 +88,8 @@ export function SpyFilterBar({
         </Select>
 
         {columnSelector}
+
+        {savedViewsSlot}
 
         {/* Vault/Archive toggle */}
         <Button

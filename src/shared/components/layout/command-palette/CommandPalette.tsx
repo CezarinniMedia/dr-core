@@ -10,6 +10,7 @@ import {
   Plus,
   Settings,
   Search,
+  Bookmark,
 } from "lucide-react";
 import {
   CommandDialog,
@@ -22,6 +23,7 @@ import {
   CommandShortcut,
 } from "@/shared/components/ui/command";
 import { useSpiedOffers } from "@/features/spy/hooks/useSpiedOffers";
+import { useSavedViews } from "@/features/spy/hooks/useSavedViews";
 
 interface CommandPaletteProps {
   open: boolean;
@@ -53,6 +55,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const { data: offers } = useSpiedOffers();
+  const { data: savedViews = [] } = useSavedViews("spy");
 
   const filteredOffers = (offers ?? [])
     .filter((o) => {
@@ -64,6 +67,11 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       );
     })
     .slice(0, 8);
+
+  const filteredViews = savedViews.filter((v) => {
+    if (!search || search.length < 1) return true;
+    return v.name.toLowerCase().includes(search.toLowerCase());
+  }).slice(0, 5);
 
   const runAction = useCallback(
     (path: string) => {
@@ -123,6 +131,24 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             </CommandItem>
           ))}
         </CommandGroup>
+
+        {filteredViews.length > 0 && (
+          <>
+            <CommandSeparator />
+            <CommandGroup heading="Views salvas">
+              {filteredViews.map((view) => (
+                <CommandItem
+                  key={view.id}
+                  value={`view-${view.name}`}
+                  onSelect={() => runAction(`/spy?view=${view.id}`)}
+                >
+                  <Bookmark className="mr-2 h-4 w-4 text-[var(--accent-amber)]" />
+                  <span>{view.name}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </>
+        )}
 
         <CommandSeparator />
 

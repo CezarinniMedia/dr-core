@@ -1525,6 +1525,56 @@ export type Database = {
           },
         ]
       }
+      saved_views: {
+        Row: {
+          id: string
+          workspace_id: string
+          name: string
+          module: string
+          filters: Json
+          sort_config: Json
+          visible_columns: string[]
+          is_default: boolean
+          is_pinned: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          workspace_id: string
+          name: string
+          module?: string
+          filters?: Json
+          sort_config?: Json
+          visible_columns?: string[]
+          is_default?: boolean
+          is_pinned?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          workspace_id?: string
+          name?: string
+          module?: string
+          filters?: Json
+          sort_config?: Json
+          visible_columns?: string[]
+          is_default?: boolean
+          is_pinned?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_views_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       spied_offers: {
         Row: {
           checkout_provider: string | null
