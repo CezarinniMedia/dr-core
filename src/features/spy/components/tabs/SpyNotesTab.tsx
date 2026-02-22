@@ -3,7 +3,7 @@ import { useUpdateSpiedOffer } from "@/features/spy/hooks/useSpiedOffers";
 import ReactMarkdown from "react-markdown";
 import { Button } from "@/shared/components/ui/button";
 import { Textarea } from "@/shared/components/ui/textarea";
-// Design system: uses inline token classes instead of Card
+// Card replaced by design-token divs
 import { Edit, Eye, Save, Loader2 } from "lucide-react";
 
 interface SpyNotesTabProps {

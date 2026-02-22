@@ -124,25 +124,19 @@ export function useImportWorkflow() {
   };
 
   const updateFileType = async (idx: number, newType: CsvType) => {
-    setFiles(prev => {
-      const updated = [...prev];
-      const f = updated[idx];
-      if (!f) return prev;
-      const reclassified = { ...f.classified, type: newType, label: ALL_TYPES.find(t => t.value === newType)?.label || newType };
-      if (f.name && f.name !== "Colado") {
-        const periodInfo = extractPeriodFromFilename(f.name);
-        if (periodInfo) {
-          reclassified.periodDate = periodInfo.date;
-          reclassified.periodLabel = periodInfo.label;
-        }
-      }
-      updated[idx] = { ...f, classified: reclassified };
-      return updated;
-    });
-    // Reprocess in worker
+    // Build reclassified BEFORE setState to avoid stale closure reads
     const f = files[idx];
     if (!f) return;
     const reclassified = { ...f.classified, type: newType, label: ALL_TYPES.find(t => t.value === newType)?.label || newType };
+    if (f.name && f.name !== "Colado") {
+      const periodInfo = extractPeriodFromFilename(f.name);
+      if (periodInfo) {
+        reclassified.periodDate = periodInfo.date;
+        reclassified.periodLabel = periodInfo.label;
+      }
+    }
+    // Update classified immediately, then reprocess in worker
+    setFiles(prev => prev.map((file, i) => i === idx ? { ...file, classified: reclassified } : file));
     try {
       const processed = await reprocessFile(reclassified);
       setFiles(prev => prev.map((file, i) => i === idx ? { ...file, processed } : file));

@@ -6,7 +6,7 @@ import { Label } from "@/shared/components/ui/label";
 import { Badge } from "@/shared/components/ui/badge";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Switch } from "@/shared/components/ui/switch";
-// Design system: uses inline token classes instead of Card
+// Card replaced by design-token divs
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/shared/components/ui/dialog";
@@ -202,7 +202,7 @@ export function SpyFunnelTab({ offerId }: SpyFunnelTabProps) {
                 </div>
               </div>
               {idx < steps.length - 1 && (
-                <div className="flex justify-center py-1"><ArrowDown className="h-4 w-4 text-muted-foreground" /></div>
+                <div className="flex justify-center py-1"><ArrowDown className="h-4 w-4 text-[color:var(--text-muted)]" /></div>
               )}
             </div>
           ))}
