@@ -1,4 +1,6 @@
+import { useRef, memo, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
 import { Checkbox } from "@/shared/components/ui/checkbox";
@@ -38,11 +40,11 @@ interface TrafficTableProps {
   rangeTo: string | null;
 }
 
-// --- Sparkline SVG (Feature Sagrada #2) ---
+// --- Sparkline SVG (Feature Sagrada #2) - MEMOIZED ---
 // Spike detection: >100% = hot orange, positive = teal, negative = red, neutral = muted
 // Area fill + glow dot on peak for visual impact. <5ms render target.
 
-function Sparkline({ data, variation }: { data: number[]; variation: number }) {
+const Sparkline = memo(function Sparkline({ data, variation }: { data: number[]; variation: number }) {
   if (!data || data.length < 2) return <span className="text-muted-foreground text-xs">—</span>;
 
   const isSpike = variation > 100;
@@ -62,12 +64,11 @@ function Sparkline({ data, variation }: { data: number[]; variation: number }) {
 
   const h = 24;
   const w = 64;
-  const padY = 2; // vertical padding so line doesn't clip
+  const padY = 2;
   const max = Math.max(...data);
   const min = Math.min(...data);
   const range = max - min || 1;
 
-  // Compute points
   const pts = data.map((v, i) => ({
     x: (i / (data.length - 1)) * w,
     y: padY + (h - 2 * padY) - ((v - min) / range) * (h - 2 * padY),
@@ -75,18 +76,14 @@ function Sparkline({ data, variation }: { data: number[]; variation: number }) {
 
   const linePoints = pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
 
-  // Area fill path (line + close to bottom)
   const areaPath = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ")
     + ` L${w},${h} L0,${h} Z`;
 
-  // Peak dot position (last point if spike, otherwise skip)
   const lastPt = pts[pts.length - 1];
 
   return (
     <svg width={w} height={h} className="inline-block" aria-label={`Trend: ${isSpike ? "spike" : isUp ? "up" : isDown ? "down" : "stable"} ${variation.toFixed(0)}%`}>
-      {/* Area fill */}
       <path d={areaPath} fill={strokeColor} opacity={fillOpacity} />
-      {/* Main line */}
       <polyline
         fill="none"
         stroke={strokeColor}
@@ -95,7 +92,6 @@ function Sparkline({ data, variation }: { data: number[]; variation: number }) {
         strokeLinejoin="round"
         points={linePoints}
       />
-      {/* Glow dot on last point for spikes / significant trends */}
       {(isSpike || isUp || isDown) && (
         <circle
           cx={lastPt.x}
@@ -111,7 +107,7 @@ function Sparkline({ data, variation }: { data: number[]; variation: number }) {
       )}
     </svg>
   );
-}
+});
 
 function SortHeader({ field, label, className, sortField, onToggleSort }: {
   field: SortField; label: string; className?: string; sortField: SortField; onToggleSort: (f: SortField) => void;
@@ -126,9 +122,9 @@ function SortHeader({ field, label, className, sortField, onToggleSort }: {
   );
 }
 
-function PaginationControls({ pageSize, onPageSizeChange, currentPage, onPageChange, totalPages, isInfinite, sortedRows, rangeFrom, rangeTo }: {
+const PaginationControls = memo(function PaginationControls({ pageSize, onPageSizeChange, currentPage, onPageChange, totalPages, isInfinite, rowCount, hasTrafficCount, rangeFrom, rangeTo }: {
   pageSize: string; onPageSizeChange: (v: string) => void; currentPage: number; onPageChange: (p: number) => void;
-  totalPages: number; isInfinite: boolean; sortedRows: OfferTrafficRow[]; rangeFrom: string | null; rangeTo: string | null;
+  totalPages: number; isInfinite: boolean; rowCount: number; hasTrafficCount: number; rangeFrom: string | null; rangeTo: string | null;
 }) {
   return (
     <div className="flex items-center justify-between">
@@ -140,7 +136,7 @@ function PaginationControls({ pageSize, onPageSizeChange, currentPage, onPageCha
           </SelectContent>
         </Select>
         <span className="text-xs text-muted-foreground">
-          {sortedRows.length} oferta(s) {sortedRows.filter(r => r.hasTrafficData).length > 0 && `• ${sortedRows.filter(r => r.hasTrafficData).length} com trafego`}
+          {rowCount} oferta(s) {hasTrafficCount > 0 && `• ${hasTrafficCount} com trafego`}
           {rangeFrom && ` • ${formatPeriodDate(rangeFrom)} – ${rangeTo ? formatPeriodDate(rangeTo) : "..."}`}
         </span>
       </div>
@@ -157,7 +153,135 @@ function PaginationControls({ pageSize, onPageSizeChange, currentPage, onPageCha
       )}
     </div>
   );
-}
+});
+
+// --- Memoized TrafficRow ---
+const TrafficRowContent = memo(function TrafficRowContent({ row, isSelected, isCharted, visibleColumns, sortedMonthCols, onToggleSelect, onToggleChart, onInlineStatusChange, onNavigate }: {
+  row: OfferTrafficRow; isSelected: boolean; isCharted: boolean; visibleColumns: Set<string>;
+  sortedMonthCols: string[]; onToggleSelect: (id: string) => void; onToggleChart: (id: string) => void;
+  onInlineStatusChange: (offerId: string, newStatus: string) => void; onNavigate: (id: string) => void;
+}) {
+  const sb = STATUS_BADGE[row.status] || STATUS_BADGE.RADAR;
+
+  return (
+    <TableRow className={`transition-colors ${isSelected ? "bg-primary/10" : "hover:bg-muted/50"}`}>
+      <TableCell onClick={(e) => e.stopPropagation()}>
+        <Checkbox checked={isSelected} onCheckedChange={() => onToggleSelect(row.id)} />
+      </TableCell>
+      <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => onToggleChart(row.id)}
+              className={`p-1 rounded transition-colors ${isCharted ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              <BarChart3 className="h-3.5 w-3.5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="text-xs">
+            {isCharted ? "Remover do gráfico" : "Adicionar ao gráfico"}
+          </TooltipContent>
+        </Tooltip>
+      </TableCell>
+      {visibleColumns.has("status") && (
+        <TableCell onClick={(e) => e.stopPropagation()}>
+          <Tooltip>
+            <DropdownMenu>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <button className="cursor-pointer">
+                    <Badge variant="outline" className={`${sb.className} whitespace-nowrap`}>{sb.label}</Badge>
+                  </button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <DropdownMenuContent align="start" className="w-40">
+                {STATUS_OPTIONS.map(s => (
+                  <DropdownMenuItem key={s.value} onClick={() => onInlineStatusChange(row.id, s.value)}>
+                    {s.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <TooltipContent side="right" className="text-xs max-w-[200px]">{sb.tip}</TooltipContent>
+          </Tooltip>
+        </TableCell>
+      )}
+      {visibleColumns.has("oferta") && (
+        <TableCell>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <p className="font-medium text-sm truncate max-w-[170px]">{row.nome}</p>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs max-w-xs">{row.nome}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <p className="text-xs text-muted-foreground truncate max-w-[170px]">{row.domain}</p>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">{row.domain}</TooltipContent>
+          </Tooltip>
+        </TableCell>
+      )}
+      {visibleColumns.has("trend") && (
+        <TableCell className="text-center">
+          <Sparkline data={row.sparkline} variation={row.variation} />
+        </TableCell>
+      )}
+      {visibleColumns.has("lastMonth") && (
+        <TableCell className="text-right font-medium text-sm">
+          {row.hasTrafficData ? formatTrafficNumber(row.lastMonth) : <span className="text-muted-foreground">N/A</span>}
+        </TableCell>
+      )}
+      {visibleColumns.has("variation") && (
+        <TableCell className="text-right">
+          {row.hasTrafficData ? (
+            <span className={`inline-flex items-center gap-0.5 text-sm ${
+              row.variation > 100 ? "text-success font-bold" :
+              row.variation > 5 ? "text-success" :
+              row.variation < -5 ? "text-destructive" : "text-muted-foreground"
+            }`}>
+              {row.variation > 5 ? <TrendingUp className="h-3 w-3" /> :
+               row.variation < -5 ? <TrendingDown className="h-3 w-3" /> :
+               <Minus className="h-3 w-3" />}
+              {row.variation > 0 ? "+" : ""}{row.variation.toFixed(0)}%
+            </span>
+          ) : <span className="text-muted-foreground text-sm">—</span>}
+        </TableCell>
+      )}
+      {visibleColumns.has("peak") && (
+        <TableCell className="text-right text-xs">
+          {row.hasTrafficData && row.peak > 0
+            ? <>{formatTrafficNumber(row.peak)} <span className="text-muted-foreground">({row.peakDate ? formatPeriodDate(row.peakDate) : ""})</span></>
+            : <span className="text-muted-foreground">—</span>
+          }
+        </TableCell>
+      )}
+      {visibleColumns.has("discovered") && (
+        <TableCell className="text-xs text-muted-foreground">
+          {row.discovered_at ? formatPeriodDate(row.discovered_at.slice(0, 7)) : "—"}
+        </TableCell>
+      )}
+      {sortedMonthCols.map(m => (
+        <TableCell key={m} className="text-right text-xs">
+          {row.monthlyData?.get(m) != null ? formatTrafficNumber(row.monthlyData.get(m)!) : <span className="text-muted-foreground">—</span>}
+        </TableCell>
+      ))}
+      <TableCell onClick={(e) => e.stopPropagation()}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onNavigate(row.id)}>
+              <Eye className="h-3.5 w-3.5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="text-xs">Ver detalhes</TooltipContent>
+        </Tooltip>
+      </TableCell>
+    </TableRow>
+  );
+});
+
+const VIRTUALIZE_THRESHOLD = 100;
+const ROW_HEIGHT = 48;
 
 export function TrafficTable({
   paginatedRows, sortedRows, visibleColumns, sortField, sortDir, onToggleSort,
@@ -167,6 +291,84 @@ export function TrafficTable({
   rangeFrom, rangeTo,
 }: TrafficTableProps) {
   const navigate = useNavigate();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const shouldVirtualize = paginatedRows.length > VIRTUALIZE_THRESHOLD;
+
+  const virtualizer = useVirtualizer({
+    count: paginatedRows.length,
+    getScrollElement: () => scrollContainerRef.current,
+    estimateSize: () => ROW_HEIGHT,
+    overscan: 10,
+    enabled: shouldVirtualize,
+  });
+
+  const handleNavigate = (id: string) => navigate(`/spy/${id}`);
+
+  // Pre-compute counts to avoid recalculating in PaginationControls
+  const rowCount = sortedRows.length;
+  const hasTrafficCount = useMemo(
+    () => sortedRows.filter(r => r.hasTrafficData).length,
+    [sortedRows]
+  );
+
+  const renderRows = () => {
+    if (paginatedRows.length === 0) {
+      return (
+        <TableRow>
+          <TableCell colSpan={10 + sortedMonthCols.length} className="text-center py-8 text-muted-foreground">
+            Nenhuma oferta encontrada.
+          </TableCell>
+        </TableRow>
+      );
+    }
+
+    if (shouldVirtualize) {
+      const items = virtualizer.getVirtualItems();
+      return (
+        <>
+          {items.length > 0 && (
+            <tr style={{ height: items[0].start }} />
+          )}
+          {items.map(virtualItem => {
+            const row = paginatedRows[virtualItem.index];
+            return (
+              <TrafficRowContent
+                key={row.id}
+                row={row}
+                isSelected={selectedIds.has(row.id)}
+                isCharted={chartIds.has(row.id)}
+                visibleColumns={visibleColumns}
+                sortedMonthCols={sortedMonthCols}
+                onToggleSelect={onToggleSelect}
+                onToggleChart={onToggleChart}
+                onInlineStatusChange={onInlineStatusChange}
+                onNavigate={handleNavigate}
+              />
+            );
+          })}
+          {items.length > 0 && (
+            <tr style={{ height: virtualizer.getTotalSize() - (items[items.length - 1].end) }} />
+          )}
+        </>
+      );
+    }
+
+    return paginatedRows.map(row => (
+      <TrafficRowContent
+        key={row.id}
+        row={row}
+        isSelected={selectedIds.has(row.id)}
+        isCharted={chartIds.has(row.id)}
+        visibleColumns={visibleColumns}
+        sortedMonthCols={sortedMonthCols}
+        onToggleSelect={onToggleSelect}
+        onToggleChart={onToggleChart}
+        onInlineStatusChange={onInlineStatusChange}
+        onNavigate={handleNavigate}
+      />
+    ));
+  };
 
   return (
     <>
@@ -174,10 +376,15 @@ export function TrafficTable({
         pageSize={pageSize} onPageSizeChange={onPageSizeChange}
         currentPage={currentPage} onPageChange={onPageChange}
         totalPages={totalPages} isInfinite={isInfinite}
-        sortedRows={sortedRows} rangeFrom={rangeFrom} rangeTo={rangeTo}
+        rowCount={rowCount} hasTrafficCount={hasTrafficCount}
+        rangeFrom={rangeFrom} rangeTo={rangeTo}
       />
 
-      <div className="border rounded-lg overflow-hidden">
+      <div
+        ref={scrollContainerRef}
+        className="border rounded-lg overflow-auto"
+        style={shouldVirtualize ? { maxHeight: "70vh" } : undefined}
+      >
         <Table>
           <TableHeader>
             <TableRow>
@@ -201,133 +408,7 @@ export function TrafficTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedRows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={10 + sortedMonthCols.length} className="text-center py-8 text-muted-foreground">
-                  Nenhuma oferta encontrada.
-                </TableCell>
-              </TableRow>
-            ) : paginatedRows.map((row) => {
-              const sb = STATUS_BADGE[row.status] || STATUS_BADGE.RADAR;
-              const isSelected = selectedIds.has(row.id);
-              const isCharted = chartIds.has(row.id);
-
-              return (
-                <TableRow key={row.id} className={`transition-colors ${isSelected ? "bg-primary/10" : "hover:bg-muted/50"}`}>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <Checkbox checked={isSelected} onCheckedChange={() => onToggleSelect(row.id)} />
-                  </TableCell>
-                  <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={() => onToggleChart(row.id)}
-                          className={`p-1 rounded transition-colors ${isCharted ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"}`}
-                        >
-                          <BarChart3 className="h-3.5 w-3.5" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="text-xs">
-                        {isCharted ? "Remover do gráfico" : "Adicionar ao gráfico"}
-                      </TooltipContent>
-                    </Tooltip>
-                  </TableCell>
-                  {visibleColumns.has("status") && (
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <Tooltip>
-                        <DropdownMenu>
-                          <TooltipTrigger asChild>
-                            <DropdownMenuTrigger asChild>
-                              <button className="cursor-pointer">
-                                <Badge variant="outline" className={`${sb.className} whitespace-nowrap`}>{sb.label}</Badge>
-                              </button>
-                            </DropdownMenuTrigger>
-                          </TooltipTrigger>
-                          <DropdownMenuContent align="start" className="w-40">
-                            {STATUS_OPTIONS.map(s => (
-                              <DropdownMenuItem key={s.value} onClick={() => onInlineStatusChange(row.id, s.value)}>
-                                {s.label}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                        <TooltipContent side="right" className="text-xs max-w-[200px]">{sb.tip}</TooltipContent>
-                      </Tooltip>
-                    </TableCell>
-                  )}
-                  {visibleColumns.has("oferta") && (
-                    <TableCell>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <p className="font-medium text-sm truncate max-w-[170px]">{row.nome}</p>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="text-xs max-w-xs">{row.nome}</TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <p className="text-xs text-muted-foreground truncate max-w-[170px]">{row.domain}</p>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom" className="text-xs">{row.domain}</TooltipContent>
-                      </Tooltip>
-                    </TableCell>
-                  )}
-                  {visibleColumns.has("trend") && (
-                    <TableCell className="text-center">
-                      <Sparkline data={row.sparkline} variation={row.variation} />
-                    </TableCell>
-                  )}
-                  {visibleColumns.has("lastMonth") && (
-                    <TableCell className="text-right font-medium text-sm">
-                      {row.hasTrafficData ? formatTrafficNumber(row.lastMonth) : <span className="text-muted-foreground">N/A</span>}
-                    </TableCell>
-                  )}
-                  {visibleColumns.has("variation") && (
-                    <TableCell className="text-right">
-                      {row.hasTrafficData ? (
-                        <span className={`inline-flex items-center gap-0.5 text-sm ${
-                          row.variation > 100 ? "text-success font-bold" :
-                          row.variation > 5 ? "text-success" :
-                          row.variation < -5 ? "text-destructive" : "text-muted-foreground"
-                        }`}>
-                          {row.variation > 5 ? <TrendingUp className="h-3 w-3" /> :
-                           row.variation < -5 ? <TrendingDown className="h-3 w-3" /> :
-                           <Minus className="h-3 w-3" />}
-                          {row.variation > 0 ? "+" : ""}{row.variation.toFixed(0)}%
-                        </span>
-                      ) : <span className="text-muted-foreground text-sm">—</span>}
-                    </TableCell>
-                  )}
-                  {visibleColumns.has("peak") && (
-                    <TableCell className="text-right text-xs">
-                      {row.hasTrafficData && row.peak > 0
-                        ? <>{formatTrafficNumber(row.peak)} <span className="text-muted-foreground">({row.peakDate ? formatPeriodDate(row.peakDate) : ""})</span></>
-                        : <span className="text-muted-foreground">—</span>
-                      }
-                    </TableCell>
-                  )}
-                  {visibleColumns.has("discovered") && (
-                    <TableCell className="text-xs text-muted-foreground">
-                      {row.discovered_at ? formatPeriodDate(row.discovered_at.slice(0, 7)) : "—"}
-                    </TableCell>
-                  )}
-                  {sortedMonthCols.map(m => (
-                    <TableCell key={m} className="text-right text-xs">
-                      {row.monthlyData?.get(m) != null ? formatTrafficNumber(row.monthlyData.get(m)!) : <span className="text-muted-foreground">—</span>}
-                    </TableCell>
-                  ))}
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(`/spy/${row.id}`)}>
-                          <Eye className="h-3.5 w-3.5" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="text-xs">Ver detalhes</TooltipContent>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+            {renderRows()}
           </TableBody>
         </Table>
       </div>
@@ -336,7 +417,8 @@ export function TrafficTable({
         pageSize={pageSize} onPageSizeChange={onPageSizeChange}
         currentPage={currentPage} onPageChange={onPageChange}
         totalPages={totalPages} isInfinite={isInfinite}
-        sortedRows={sortedRows} rangeFrom={rangeFrom} rangeTo={rangeTo}
+        rowCount={rowCount} hasTrafficCount={hasTrafficCount}
+        rangeFrom={rangeFrom} rangeTo={rangeTo}
       />
     </>
   );
