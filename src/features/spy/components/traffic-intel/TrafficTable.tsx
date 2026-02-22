@@ -82,7 +82,7 @@ const Sparkline = memo(function Sparkline({ data, variation }: { data: number[];
   const lastPt = pts[pts.length - 1];
 
   return (
-    <svg width={w} height={h} className="inline-block" aria-label={`Trend: ${isSpike ? "spike" : isUp ? "up" : isDown ? "down" : "stable"} ${variation.toFixed(0)}%`}>
+    <svg width={w} height={h} className="inline-block" role="img" aria-label={`Trend: ${isSpike ? "spike" : isUp ? "up" : isDown ? "down" : "stable"} ${variation.toFixed(0)}%`}>
       <path d={areaPath} fill={strokeColor} opacity={fillOpacity} />
       <polyline
         fill="none"
@@ -142,11 +142,11 @@ const PaginationControls = memo(function PaginationControls({ pageSize, onPageSi
       </div>
       {!isInfinite && totalPages > 1 && (
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" className="h-8 w-8" disabled={currentPage === 0} onClick={() => onPageChange(currentPage - 1)}>
+          <Button variant="outline" size="icon" className="h-8 w-8" aria-label="Página anterior" disabled={currentPage === 0} onClick={() => onPageChange(currentPage - 1)}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="text-sm text-muted-foreground">{currentPage + 1} / {totalPages}</span>
-          <Button variant="outline" size="icon" className="h-8 w-8" disabled={currentPage >= totalPages - 1} onClick={() => onPageChange(currentPage + 1)}>
+          <Button variant="outline" size="icon" className="h-8 w-8" aria-label="Próxima página" disabled={currentPage >= totalPages - 1} onClick={() => onPageChange(currentPage + 1)}>
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
@@ -166,7 +166,7 @@ const TrafficRowContent = memo(function TrafficRowContent({ row, isSelected, isC
   return (
     <TableRow className={`transition-colors ${isSelected ? "bg-primary/10" : "hover:bg-muted/50"}`}>
       <TableCell onClick={(e) => e.stopPropagation()}>
-        <Checkbox checked={isSelected} onCheckedChange={() => onToggleSelect(row.id)} />
+        <Checkbox checked={isSelected} onCheckedChange={() => onToggleSelect(row.id)} aria-label={`Selecionar ${row.nome || row.id}`} />
       </TableCell>
       <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
         <Tooltip>
@@ -390,7 +390,7 @@ export function TrafficTable({
           <TableHeader>
             <TableRow>
               <TableHead className="w-[40px]">
-                <Checkbox checked={allChecked} onCheckedChange={onSelectAll} />
+                <Checkbox checked={allChecked} onCheckedChange={onSelectAll} aria-label="Selecionar todos" />
               </TableHead>
               <TableHead className="w-[36px] text-center">
                 <BarChart3 className="h-3.5 w-3.5 mx-auto" />
