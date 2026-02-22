@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useDropzone } from "react-dropzone";
 import { useToast } from "@/shared/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import {
   classifyCsv, processCsv, filterCsvData, getDefaultExcludedColumns,
   type CsvType,
@@ -457,7 +458,7 @@ export function useImportWorkflow() {
         for (let i = 0; i < chunks.length; i += PARALLEL) {
           const batch = chunks.slice(i, i + PARALLEL);
           const results = await Promise.all(
-            batch.map(chunk => supabase.from("offer_traffic_data").upsert(chunk as any[], { onConflict: "spied_offer_id,domain,period_type,period_date" }))
+            batch.map(chunk => supabase.rpc("bulk_upsert_traffic_data", { p_records: chunk as unknown as Json }))
           );
           for (const { error } of results) { if (error) throw error; }
           chunksCompleted += batch.length;

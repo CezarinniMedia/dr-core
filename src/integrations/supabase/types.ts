@@ -1751,6 +1751,59 @@ export type Database = {
       }
     }
     Functions: {
+      bulk_upsert_traffic_data: {
+        Args: { p_records: Json }
+        Returns: number
+      }
+      detect_spikes: {
+        Args: { p_threshold?: number; p_lookback_days?: number }
+        Returns: {
+          spied_offer_id: string
+          offer_name: string
+          offer_status: string
+          workspace_id: string
+          domain: string
+          source: string
+          period_date: string
+          current_visits: number
+          prev_visits: number
+          change_percent: number
+          alert_type: string
+        }[]
+      }
+      get_dashboard_metrics: {
+        Args: { p_workspace_id: string }
+        Returns: {
+          total_active_offers: number
+          hot_offers: number
+          scaling_offers: number
+          analyzing_offers: number
+          radar_offers: number
+          cloned_offers: number
+          total_offers_all: number
+          total_domains: number
+          total_traffic_points: number
+          spikes_last_30d: number
+          unread_spikes: number
+          last_offer_updated: string
+          refreshed_at: string
+        }[]
+      }
+      get_traffic_comparison: {
+        Args: {
+          p_offer_ids: string[]
+          p_start_date: string
+          p_end_date: string
+        }
+        Returns: {
+          spied_offer_id: string
+          offer_name: string
+          domain: string
+          source: string
+          period_date: string
+          visits: number
+        }[]
+      }
       is_oferta_workspace_member: {
         Args: { _oferta_id: string; _user_id: string }
         Returns: boolean

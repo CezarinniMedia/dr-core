@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
 import { useToast } from '@/shared/hooks/use-toast';
 
 // ============================================
@@ -48,19 +49,16 @@ export function useBulkInsertTrafficData() {
         source: 'semrush_csv',
       }));
 
-      const { data, error } = await supabase
-        .from('offer_traffic_data')
-        .upsert(enrichedRecords as any[], {
-          onConflict: 'spied_offer_id,domain,period_type,period_date',
-        })
-        .select();
+      const { data, error } = await supabase.rpc('bulk_upsert_traffic_data', {
+        p_records: enrichedRecords as unknown as Json,
+      });
 
       if (error) throw error;
       return data;
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['offer-traffic', variables.offerId] });
-      toast({ title: `${data?.length ?? 0} registros de trafego importados!` });
+      toast({ title: `${data ?? 0} registros de trafego importados!` });
     },
     onError: (error: Error) => {
       toast({ title: 'Erro na importacao', description: error.message, variant: 'destructive' });
