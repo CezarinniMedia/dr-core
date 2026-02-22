@@ -15,6 +15,12 @@ async function getWorkspaceId() {
   return member?.workspace_id;
 }
 
+export function generateCreativeName(ofertaNome: string, count: number, angulo?: string): string {
+  const num = String(count + 1).padStart(2, "0");
+  const suffix = angulo ? ` - ${angulo}` : "";
+  return `${ofertaNome} #${num}${suffix}`;
+}
+
 export function useCriativos(ofertaId?: string, status?: string) {
   return useQuery({
     queryKey: ["criativos", ofertaId, status],
@@ -114,6 +120,57 @@ export function useUpdateCriativoStatus() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["criativos"] });
+    },
+  });
+}
+
+export function useDuplicateCriativo() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (criativo: {
+      id: string;
+      oferta_id: string;
+      nome: string;
+      tipo: string;
+      hook_text: string;
+      copy_body?: string | null;
+      copy_headline?: string | null;
+      cta?: string | null;
+      plataforma?: string | null;
+      angulo?: string | null;
+      tags?: string[] | null;
+    }) => {
+      const workspaceId = await getWorkspaceId();
+      const { data, error } = await supabase
+        .from("criativos")
+        .insert({
+          oferta_id: criativo.oferta_id,
+          nome: `${criativo.nome} (cópia)`,
+          tipo: criativo.tipo,
+          hook_text: criativo.hook_text,
+          copy_body: criativo.copy_body,
+          copy_headline: criativo.copy_headline,
+          cta: criativo.cta,
+          plataforma: criativo.plataforma,
+          angulo: criativo.angulo,
+          tags: criativo.tags,
+          status: "DRAFT",
+          workspace_id: workspaceId,
+        } as any)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["criativos"] });
+      toast({ title: "Criativo duplicado!" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Erro ao duplicar", description: error.message, variant: "destructive" });
     },
   });
 }

@@ -1,9 +1,10 @@
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Badge } from "@/shared/components/ui/badge";
-import { useUpdateCriativoStatus } from "@/features/creatives/hooks/useCriativos";
-import { useNavigate } from "react-router-dom";
-import { FileText, Film, Skull, Zap } from "lucide-react";
+import { Button } from "@/shared/components/ui/button";
+import { useUpdateCriativoStatus, useDuplicateCriativo } from "@/features/creatives/hooks/useCriativos";
+import { Copy, FileText, Film, Skull, Zap } from "lucide-react";
 import { ReactNode, useState } from "react";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/shared/components/ui/tooltip";
 
 const COLUMNS: { id: string; label: string; icon: ReactNode }[] = [
   { id: "DRAFT", label: "Draft", icon: <FileText className="h-3.5 w-3.5 inline-block mr-1" /> },
@@ -12,21 +13,29 @@ const COLUMNS: { id: string; label: string; icon: ReactNode }[] = [
   { id: "MORTO", label: "Morto", icon: <Skull className="h-3.5 w-3.5 inline-block mr-1" /> },
 ];
 
+interface Criativo {
+  id: string;
+  nome: string;
+  hook_text: string;
+  status: string | null;
+  plataforma: string | null;
+  tipo: string;
+  thumbnail_url: string | null;
+  oferta_id: string;
+  copy_body?: string | null;
+  copy_headline?: string | null;
+  cta?: string | null;
+  angulo?: string | null;
+  tags?: string[] | null;
+}
+
 interface KanbanBoardProps {
-  criativos: Array<{
-    id: string;
-    nome: string;
-    hook_text: string;
-    status: string | null;
-    plataforma: string | null;
-    tipo: string;
-    thumbnail_url: string | null;
-  }>;
+  criativos: Criativo[];
 }
 
 export function KanbanBoard({ criativos }: KanbanBoardProps) {
   const updateStatus = useUpdateCriativoStatus();
-  const navigate = useNavigate();
+  const duplicateMutation = useDuplicateCriativo();
   const [draggingOver, setDraggingOver] = useState<string | null>(null);
 
   const handleDragStart = (e: React.DragEvent, criativoId: string) => {
@@ -56,10 +65,26 @@ export function KanbanBoard({ criativos }: KanbanBoardProps) {
   };
 
   const handleDragLeave = (e: React.DragEvent, colId: string) => {
-    // Only clear if leaving the column container itself (not a child)
     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
       setDraggingOver(prev => prev === colId ? null : prev);
     }
+  };
+
+  const handleDuplicate = (e: React.MouseEvent, criativo: Criativo) => {
+    e.stopPropagation();
+    duplicateMutation.mutate({
+      id: criativo.id,
+      oferta_id: criativo.oferta_id,
+      nome: criativo.nome,
+      tipo: criativo.tipo,
+      hook_text: criativo.hook_text,
+      copy_body: criativo.copy_body,
+      copy_headline: criativo.copy_headline,
+      cta: criativo.cta,
+      plataforma: criativo.plataforma,
+      angulo: criativo.angulo,
+      tags: criativo.tags,
+    });
   };
 
   return (
@@ -87,7 +112,7 @@ export function KanbanBoard({ criativos }: KanbanBoardProps) {
                   key={criativo.id}
                   draggable
                   onDragStart={(e) => handleDragStart(e, criativo.id)}
-                  className="cursor-move hover:border-primary/40 transition-colors"
+                  className="cursor-move hover:border-primary/40 transition-colors group"
                 >
                   <CardContent className="p-3 space-y-2">
                     {criativo.thumbnail_url && (
@@ -97,7 +122,20 @@ export function KanbanBoard({ criativos }: KanbanBoardProps) {
                         className="w-full h-20 object-cover rounded"
                       />
                     )}
-                    <p className="text-sm font-medium line-clamp-1">{criativo.nome}</p>
+                    <div className="flex items-start justify-between gap-1">
+                      <p className="text-sm font-medium line-clamp-1">{criativo.nome}</p>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={(e) => handleDuplicate(e, criativo)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 p-0.5 rounded hover:bg-muted"
+                          >
+                            <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>Duplicar criativo</TooltipContent>
+                      </Tooltip>
+                    </div>
                     <p className="text-xs text-muted-foreground line-clamp-2">
                       {criativo.hook_text}
                     </p>
@@ -110,6 +148,11 @@ export function KanbanBoard({ criativos }: KanbanBoardProps) {
                       <Badge variant="secondary" className="text-[10px]">
                         {criativo.tipo}
                       </Badge>
+                      {criativo.angulo && (
+                        <Badge variant="secondary" className="text-[10px]">
+                          {criativo.angulo}
+                        </Badge>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -17,10 +17,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
-import { useCreateCriativo } from "@/features/creatives/hooks/useCriativos";
+import { useCreateCriativo, useCriativos, generateCreativeName } from "@/features/creatives/hooks/useCriativos";
+import { useOferta } from "@/features/offers/hooks/useOfertas";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Upload, Wand2 } from "lucide-react";
 import { useToast } from "@/shared/hooks/use-toast";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/shared/components/ui/tooltip";
 
 interface CriativoFormDialogProps {
   open: boolean;
@@ -28,22 +30,41 @@ interface CriativoFormDialogProps {
   ofertaId: string;
 }
 
+const defaultForm = {
+  nome: "",
+  tipo: "IMAGE",
+  hook_text: "",
+  copy_headline: "",
+  copy_body: "",
+  cta: "",
+  plataforma: "FACEBOOK",
+  angulo: "",
+  file_url: "",
+};
+
 export function CriativoFormDialog({ open, onClose, ofertaId }: CriativoFormDialogProps) {
   const createMutation = useCreateCriativo();
+  const { data: oferta } = useOferta(ofertaId);
+  const { data: existingCriativos } = useCriativos(ofertaId);
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
-  const [form, setForm] = useState({
-    nome: "",
-    tipo: "IMAGE",
-    hook_text: "",
-    copy_body: "",
-    cta: "",
-    plataforma: "FACEBOOK",
-    angulo: "",
-    file_url: "",
-  });
+  const [form, setForm] = useState(defaultForm);
 
   const update = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }));
+
+  const handleAutoName = () => {
+    if (!oferta) return;
+    const count = existingCriativos?.length || 0;
+    const angulo = form.angulo || undefined;
+    update("nome", generateCreativeName(oferta.nome, count, angulo));
+  };
+
+  // Auto-generate name when angulo changes if name is empty or was auto-generated
+  useEffect(() => {
+    if (open && oferta && !form.nome) {
+      handleAutoName();
+    }
+  }, [open, oferta, form.angulo]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -80,7 +101,7 @@ export function CriativoFormDialog({ open, onClose, ofertaId }: CriativoFormDial
       {
         onSuccess: () => {
           onClose();
-          setForm({ nome: "", tipo: "IMAGE", hook_text: "", copy_body: "", cta: "", plataforma: "FACEBOOK", angulo: "", file_url: "" });
+          setForm(defaultForm);
         },
       }
     );
@@ -97,7 +118,22 @@ export function CriativoFormDialog({ open, onClose, ofertaId }: CriativoFormDial
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Nome *</Label>
-              <Input value={form.nome} onChange={(e) => update("nome", e.target.value)} placeholder="Nome do criativo" />
+              <div className="flex gap-1">
+                <Input
+                  value={form.nome}
+                  onChange={(e) => update("nome", e.target.value)}
+                  placeholder="Nome do criativo"
+                  className="flex-1"
+                />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="icon" onClick={handleAutoName} type="button">
+                      <Wand2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Gerar nome automaticamente</TooltipContent>
+                </Tooltip>
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Tipo</Label>
@@ -105,8 +141,9 @@ export function CriativoFormDialog({ open, onClose, ofertaId }: CriativoFormDial
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="IMAGE">Imagem</SelectItem>
-                  <SelectItem value="VIDEO">Vídeo</SelectItem>
+                  <SelectItem value="VIDEO">Video</SelectItem>
                   <SelectItem value="CAROUSEL">Carrossel</SelectItem>
+                  <SelectItem value="UGC">UGC</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -115,6 +152,11 @@ export function CriativoFormDialog({ open, onClose, ofertaId }: CriativoFormDial
           <div className="space-y-2">
             <Label>Hook *</Label>
             <Textarea value={form.hook_text} onChange={(e) => update("hook_text", e.target.value)} placeholder="O hook principal do criativo..." rows={2} />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Headline</Label>
+            <Input value={form.copy_headline} onChange={(e) => update("copy_headline", e.target.value)} placeholder="Headline do anuncio..." />
           </div>
 
           <div className="space-y-2">
@@ -136,13 +178,14 @@ export function CriativoFormDialog({ open, onClose, ofertaId }: CriativoFormDial
                   <SelectItem value="GOOGLE">Google</SelectItem>
                   <SelectItem value="TIKTOK">TikTok</SelectItem>
                   <SelectItem value="INSTAGRAM">Instagram</SelectItem>
+                  <SelectItem value="YOUTUBE">YouTube</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label>Ângulo</Label>
+            <Label>Angulo</Label>
             <Select value={form.angulo} onValueChange={(v) => update("angulo", v)}>
               <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
               <SelectContent>
@@ -151,6 +194,7 @@ export function CriativoFormDialog({ open, onClose, ofertaId }: CriativoFormDial
                 <SelectItem value="CURIOSIDADE">Curiosidade</SelectItem>
                 <SelectItem value="AUTORIDADE">Autoridade</SelectItem>
                 <SelectItem value="PROVA_SOCIAL">Prova Social</SelectItem>
+                <SelectItem value="URGENCIA">Urgência</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -175,7 +219,8 @@ export function CriativoFormDialog({ open, onClose, ofertaId }: CriativoFormDial
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
           <Button onClick={handleSubmit} disabled={!form.nome.trim() || !form.hook_text.trim() || createMutation.isPending}>
-            {createMutation.isPending ? "Salvando..." : "Criar Criativo"}
+            {createMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            Criar Criativo
           </Button>
         </DialogFooter>
       </DialogContent>
