@@ -1,0 +1,209 @@
+schema: 1
+story: 'VISION-3'
+title: 'Phase 3 — Intelligence Layer'
+gate: PASS
+status_reason: >
+  820-line migration with 3 MVs, 4 RPCs, realtime trigger, pg_cron.
+  Frontend bulk import switched to RPC. All 10 issues resolved across 3 QA rounds.
+  93/93 tests, typecheck clean, build success. No remaining debt.
+reviewer: 'Quinn'
+updated: '2026-02-22T01:50:00Z'
+branch: 'feature/vision-1-foundation'
+
+# ============================================================
+# SCOPE: 3 Commits, 5 Files, 906 insertions
+# ============================================================
+commits:
+  - hash: '7592428'
+    message: 'fix: switch traffic upsert to bulk RPC + mark BD-2.1 Done'
+  - hash: 'e9198e7'
+    message: 'feat: add Phase 3 Intelligence Layer migration with MVs, RPCs, and spike detection [VISION-1]'
+  - hash: '86bf88d'
+    message: 'fix: use RPC row count for traffic import toast + add QA gate for Phase 3A [VISION-1]'
+
+files_changed:
+  - path: 'supabase/migrations/20260221000000_phase3_intelligence_layer.sql'
+    type: new
+    lines: 820
+    description: 'Full Phase 3 migration: spike_alerts table, 3 MVs, 2 backward-compat views, 4 RPCs, trigger, pg_cron'
+  - path: 'src/features/spy/components/import-modal/useImportWorkflow.ts'
+    type: modified
+    description: 'Phase 4 bulk upsert → supabase.rpc("bulk_upsert_traffic_data"), trafficCount from RPC response'
+  - path: 'src/features/spy/hooks/useSpiedOffersTraffic.ts'
+    type: modified
+    description: 'useBulkInsertTrafficData → RPC, staleTime 15min→6h, comments updated to Phase 3'
+  - path: 'src/integrations/supabase/types.ts'
+    type: modified
+    description: '+4 RPC function types (bulk_upsert, detect_spikes, get_dashboard_metrics, get_traffic_comparison)'
+  - path: 'docs/stories/BD-2.1.story.md'
+    type: modified
+    description: 'Story status update to Done'
+
+# ============================================================
+# 7 QUALITY CHECKS
+# ============================================================
+checks:
+  code_review:
+    status: PASS
+    rounds: 3
+    details: |
+      Round 1: 2 CRITICAL, 3 HIGH, 3 MEDIUM found
+        - C1: Dashboard.tsx breaks (dropped MV) → backward-compat VIEW added
+        - C2: useSpiedOffersTraffic.ts breaks → backward-compat VIEW added
+        - H1: NULL source in unique index → COALESCE + IS NOT DISTINCT FROM
+        - H2: Trigger perf on bulk import → skip_spike_check guard
+        - H3: BEGIN/COMMIT in Supabase CLI → removed
+        - M1: Missing created_at/updated_at → added to spike_alerts
+        - M2: DYING/NEVER_SCALED counted as active → excluded
+      Round 2: 3 issues found
+        - H1-r2: Cross-workspace check allows partial match → EXCEPT fix
+        - M1-r2: Traffic count uses local data not RPC → fixed (commit 86bf88d)
+        - M2-r2: Stale comment/staleTime → fixed
+      Round 3: PASS — all fixes verified
+
+  unit_tests:
+    status: PASS
+    total: 93
+    passed: 93
+    failed: 0
+    files: 4
+    details: 'csvClassifier (48), parseSemrushCSV (27), trafficProcessing (17), example (1)'
+
+  acceptance_criteria:
+    status: PASS
+    criteria:
+      - name: '3 Materialized Views'
+        met: true
+        details: 'mv_dashboard_metrics, mv_traffic_summary, mv_spike_detection — with UNIQUE indexes for CONCURRENTLY refresh'
+      - name: '4 RPC Functions'
+        met: true
+        details: 'bulk_upsert_traffic_data, get_dashboard_metrics, get_traffic_comparison, detect_spikes — SECURITY DEFINER + search_path'
+      - name: 'Realtime trigger'
+        met: true
+        details: 'fn_check_spike_on_traffic → spike_alerts + pg_notify("spike_alerts")'
+      - name: 'Bulk import optimization'
+        met: true
+        details: 'bulk_upsert_traffic_data RPC with SET LOCAL skip_spike_check + trafficCount from GET DIAGNOSTICS'
+      - name: 'Backward compatibility'
+        met: true
+        details: 'mv_dashboard_stats + mv_offer_traffic_summary regular VIEWs with security_invoker'
+      - name: 'Frontend integration'
+        met: true
+        details: 'useImportWorkflow + useBulkInsertTrafficData switched to RPC, toast shows server-side count'
+
+  no_regressions:
+    status: PASS
+    details: '93 tests pass. Build OK. Typecheck OK. Backward-compat views preserve existing frontend behavior.'
+
+  performance:
+    status: PASS
+    details: |
+      - Bulk import: ~56k trigger queries eliminated via skip_spike_check
+      - MVs use REFRESH CONCURRENTLY (non-blocking reads)
+      - pg_cron: dashboard 4h, traffic 6h, spikes 2h
+      - RPC batches: 1000 records/call, 3 parallel — acceptable for 14k+ imports
+
+  security:
+    status: PASS
+    details: |
+      - RLS enabled on all 3 MVs + spike_alerts table
+      - SECURITY DEFINER + SET search_path = public on all RPCs
+      - auth.uid() check on all functions
+      - Workspace membership validation (EXCEPT pattern — verifies ALL workspaces)
+      - is_workspace_member() policy on MVs
+      - GRANT SELECT/EXECUTE to authenticated only
+      - No SQL injection vectors (parameterized JSONB parsing)
+
+  documentation:
+    status: PASS
+    details: |
+      - COMMENT ON for all tables, MVs, and functions
+      - Migration header with full inventory
+      - DOWN MIGRATION section with rollback steps
+      - types.ts manually updated with 4 new function signatures
+
+# ============================================================
+# ISSUES: ALL 10 RESOLVED
+# ============================================================
+issues:
+  - id: 'C1'
+    severity: CRITICAL
+    description: 'Dashboard.tsx references dropped mv_dashboard_stats'
+    resolution: 'Backward-compat VIEW mv_dashboard_stats → mv_dashboard_metrics'
+    status: RESOLVED
+  - id: 'C2'
+    severity: CRITICAL
+    description: 'useSpiedOffersTraffic.ts references dropped mv_offer_traffic_summary'
+    resolution: 'Backward-compat VIEW mv_offer_traffic_summary → mv_traffic_summary aggregate'
+    status: RESOLVED
+  - id: 'H1'
+    severity: HIGH
+    description: 'NULL source breaks unique index and comparisons'
+    resolution: 'COALESCE(source, "unknown") in GROUP BY + IS NOT DISTINCT FROM in subqueries'
+    status: RESOLVED
+  - id: 'H2'
+    severity: HIGH
+    description: 'Trigger fires ~56k times during bulk import'
+    resolution: 'current_setting("app.skip_spike_check") guard + bulk_upsert_traffic_data RPC'
+    status: RESOLVED
+  - id: 'H3'
+    severity: HIGH
+    description: 'BEGIN/COMMIT conflicts with Supabase CLI transaction wrapper'
+    resolution: 'Removed explicit transaction boundaries'
+    status: RESOLVED
+  - id: 'H1-r2'
+    severity: HIGH
+    description: 'Cross-workspace check allows partial match'
+    resolution: 'NOT EXISTS...IN → EXISTS...EXCEPT for ALL workspace verification'
+    status: RESOLVED
+  - id: 'M1'
+    severity: MEDIUM
+    description: 'Missing created_at/updated_at on spike_alerts'
+    resolution: 'Added both columns + updated_at in ON CONFLICT'
+    status: RESOLVED
+  - id: 'M2'
+    severity: MEDIUM
+    description: 'DYING/NEVER_SCALED counted as active in dashboard'
+    resolution: 'Added to NOT IN clause in mv_dashboard_metrics'
+    status: RESOLVED
+  - id: 'M1-r2'
+    severity: MEDIUM
+    description: 'trafficCount uses local chunk.length instead of RPC response'
+    resolution: 'trafficCount += (data as number) ?? 0 — uses GET DIAGNOSTICS ROW_COUNT from server'
+    status: RESOLVED
+    fixed_in: '86bf88d'
+  - id: 'M2-r2'
+    severity: MEDIUM
+    description: 'Stale comment/staleTime referencing BD-2.5 15min'
+    resolution: 'Updated to Phase 3, 6h'
+    status: RESOLVED
+
+# ============================================================
+# POST-DEPLOY REQUIREMENTS
+# ============================================================
+post_deploy:
+  - action: 'Verify pg_cron extension is enabled on Supabase'
+    priority: HIGH
+  - action: 'Run supabase gen types typescript to regenerate types.ts'
+    priority: HIGH
+  - action: 'Remove backward-compat views when frontend migrates to new RPC names'
+    priority: MEDIUM
+
+# ============================================================
+# VALIDATION
+# ============================================================
+validation:
+  typecheck: PASS
+  build: PASS
+  tests: '93/93 PASS'
+
+# ============================================================
+# VERDICT
+# ============================================================
+# PASS — All 7 quality checks satisfied.
+# 820-line migration reviewed across 3 QA rounds.
+# 10 issues found and ALL resolved. 0 accepted debt.
+# Ready for push to remote.
+
+top_issues: []
+waiver: { active: false }
