@@ -8,6 +8,7 @@ import {
   classifyCsv, processCsv, filterCsvData, getDefaultExcludedColumns,
   type CsvType,
 } from "@/shared/lib/csvClassifier";
+import { useCSVWorker } from "@/workers/useCSVWorker";
 import {
   type FileEntry, type DomainMatchInfo, type ImportResult,
   ALL_TYPES, extractPeriodFromFilename, groupBy, findOfferForSubdomain,
@@ -16,6 +17,7 @@ import {
 export function useImportWorkflow() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { classifyFile, reprocessFile, filterFile } = useCSVWorker();
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [files, setFiles] = useState<FileEntry[]>([]);
@@ -44,22 +46,42 @@ export function useImportWorkflow() {
           setUploadProgress(Math.round(((loaded + e.loaded / e.total) / total) * 100));
         }
       };
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         loaded++;
         setUploadProgress(Math.round((loaded / total) * 100));
         const text = e.target?.result as string || "";
-        const classified = classifyCsv(text, file.name);
-        const autoExcluded = getDefaultExcludedColumns(classified.type, classified.headers);
-        const filtered = autoExcluded.size > 0 ? filterCsvData(classified, autoExcluded, new Set()) : classified;
-        const processed = processCsv(filtered);
-        setFiles(prev => [...prev, {
-          name: file.name, text, classified, processed,
-          excludedColumns: autoExcluded.size > 0 ? autoExcluded : undefined,
-        }]);
-        if (classified.discoveryQuery && !footprintQuery) {
-          setFootprintQuery(classified.discoveryQuery);
+
+        try {
+          // Heavy CSV parsing runs in Web Worker (off main thread)
+          const result = await classifyFile(text, file.name, undefined, (pct, msg) => {
+            setProgressLabel(msg);
+          });
+          setFiles(prev => [...prev, {
+            name: file.name, text, classified: result.classified, processed: result.processed,
+            excludedColumns: result.excludedColumns.length > 0 ? new Set(result.excludedColumns) : undefined,
+          }]);
+          if (result.classified.discoveryQuery && !footprintQuery) {
+            setFootprintQuery(result.classified.discoveryQuery);
+          }
+        } catch {
+          // Fallback to main thread if worker fails
+          const classified = classifyCsv(text, file.name);
+          const autoExcluded = getDefaultExcludedColumns(classified.type, classified.headers);
+          const filtered = autoExcluded.size > 0 ? filterCsvData(classified, autoExcluded, new Set()) : classified;
+          const processed = processCsv(filtered);
+          setFiles(prev => [...prev, {
+            name: file.name, text, classified, processed,
+            excludedColumns: autoExcluded.size > 0 ? autoExcluded : undefined,
+          }]);
+          if (classified.discoveryQuery && !footprintQuery) {
+            setFootprintQuery(classified.discoveryQuery);
+          }
         }
-        if (loaded === total) setUploading(false);
+
+        if (loaded === total) {
+          setUploading(false);
+          setProgressLabel("");
+        }
       };
       reader.onerror = () => {
         loaded++;
@@ -67,7 +89,7 @@ export function useImportWorkflow() {
       };
       reader.readAsText(file);
     }
-  }, [footprintQuery]);
+  }, [footprintQuery, classifyFile]);
 
   const dropzone = useDropzone({
     onDrop,
@@ -75,14 +97,24 @@ export function useImportWorkflow() {
     multiple: true,
   });
 
-  const handleAddPaste = () => {
+  const handleAddPaste = async () => {
     if (!pasteText.trim()) return;
     const delim = pasteDelimiter === "auto" ? undefined : pasteDelimiter;
-    const classified = classifyCsv(pasteText, undefined, delim);
-    const processed = processCsv(classified);
-    setFiles(prev => [...prev, { name: "Colado", text: pasteText, classified, processed }]);
-    if (classified.discoveryQuery && !footprintQuery) {
-      setFootprintQuery(classified.discoveryQuery);
+
+    try {
+      const result = await classifyFile(pasteText, undefined, delim);
+      setFiles(prev => [...prev, { name: "Colado", text: pasteText, classified: result.classified, processed: result.processed }]);
+      if (result.classified.discoveryQuery && !footprintQuery) {
+        setFootprintQuery(result.classified.discoveryQuery);
+      }
+    } catch {
+      // Fallback to main thread
+      const classified = classifyCsv(pasteText, undefined, delim);
+      const processed = processCsv(classified);
+      setFiles(prev => [...prev, { name: "Colado", text: pasteText, classified, processed }]);
+      if (classified.discoveryQuery && !footprintQuery) {
+        setFootprintQuery(classified.discoveryQuery);
+      }
     }
     setPasteText("");
   };
@@ -91,9 +123,11 @@ export function useImportWorkflow() {
     setFiles(prev => prev.filter((_, i) => i !== idx));
   };
 
-  const updateFileType = (idx: number, newType: CsvType) => {
-    setFiles(prev => prev.map((f, i) => {
-      if (i !== idx) return f;
+  const updateFileType = async (idx: number, newType: CsvType) => {
+    setFiles(prev => {
+      const updated = [...prev];
+      const f = updated[idx];
+      if (!f) return prev;
       const reclassified = { ...f.classified, type: newType, label: ALL_TYPES.find(t => t.value === newType)?.label || newType };
       if (f.name && f.name !== "Colado") {
         const periodInfo = extractPeriodFromFilename(f.name);
@@ -102,40 +136,68 @@ export function useImportWorkflow() {
           reclassified.periodLabel = periodInfo.label;
         }
       }
-      return { ...f, classified: reclassified, processed: processCsv(reclassified) };
-    }));
+      updated[idx] = { ...f, classified: reclassified };
+      return updated;
+    });
+    // Reprocess in worker
+    const f = files[idx];
+    if (!f) return;
+    const reclassified = { ...f.classified, type: newType, label: ALL_TYPES.find(t => t.value === newType)?.label || newType };
+    try {
+      const processed = await reprocessFile(reclassified);
+      setFiles(prev => prev.map((file, i) => i === idx ? { ...file, processed } : file));
+    } catch {
+      const processed = processCsv(reclassified);
+      setFiles(prev => prev.map((file, i) => i === idx ? { ...file, processed } : file));
+    }
   };
 
-  const updateFilePeriod = (idx: number, period: string) => {
-    setFiles(prev => prev.map((f, i) => {
-      if (i !== idx) return f;
-      const updated = { ...f.classified, periodDate: period };
-      return { ...f, classified: updated, processed: processCsv(updated) };
-    }));
+  const updateFilePeriod = async (idx: number, period: string) => {
+    const f = files[idx];
+    if (!f) return;
+    const updated = { ...f.classified, periodDate: period };
+    setFiles(prev => prev.map((file, i) => i === idx ? { ...file, classified: updated } : file));
+    try {
+      const processed = await reprocessFile(updated);
+      setFiles(prev => prev.map((file, i) => i === idx ? { ...file, processed } : file));
+    } catch {
+      const processed = processCsv(updated);
+      setFiles(prev => prev.map((file, i) => i === idx ? { ...file, processed } : file));
+    }
   };
 
-  const toggleColumn = (fileIdx: number, colIdx: number) => {
-    setFiles(prev => prev.map((f, i) => {
-      if (i !== fileIdx) return f;
-      const exc = new Set(f.excludedColumns || []);
-      if (exc.has(colIdx)) exc.delete(colIdx); else exc.add(colIdx);
+  const toggleColumn = async (fileIdx: number, colIdx: number) => {
+    const f = files[fileIdx];
+    if (!f) return;
+    const exc = new Set(f.excludedColumns || []);
+    if (exc.has(colIdx)) exc.delete(colIdx); else exc.add(colIdx);
+    setFiles(prev => prev.map((file, i) => i === fileIdx ? { ...file, excludedColumns: exc } : file));
+    try {
+      const result = await filterFile(f.classified, [...exc], [...(f.excludedRows || [])]);
+      setFiles(prev => prev.map((file, i) => i === fileIdx ? { ...file, processed: result.processed } : file));
+    } catch {
       const filtered = filterCsvData(f.classified, exc, f.excludedRows || new Set());
-      return { ...f, excludedColumns: exc, processed: processCsv(filtered) };
-    }));
+      setFiles(prev => prev.map((file, i) => i === fileIdx ? { ...file, processed: processCsv(filtered) } : file));
+    }
   };
 
-  const toggleRow = (fileIdx: number, rowIdx: number) => {
-    setFiles(prev => prev.map((f, i) => {
-      if (i !== fileIdx) return f;
-      const exc = new Set(f.excludedRows || []);
-      if (exc.has(rowIdx)) exc.delete(rowIdx); else exc.add(rowIdx);
+  const toggleRow = async (fileIdx: number, rowIdx: number) => {
+    const f = files[fileIdx];
+    if (!f) return;
+    const exc = new Set(f.excludedRows || []);
+    if (exc.has(rowIdx)) exc.delete(rowIdx); else exc.add(rowIdx);
+    setFiles(prev => prev.map((file, i) => i === fileIdx ? { ...file, excludedRows: exc } : file));
+    try {
+      const result = await filterFile(f.classified, [...(f.excludedColumns || [])], [...exc]);
+      setFiles(prev => prev.map((file, i) => i === fileIdx ? { ...file, processed: result.processed } : file));
+    } catch {
       const filtered = filterCsvData(f.classified, f.excludedColumns || new Set(), exc);
-      return { ...f, excludedRows: exc, processed: processCsv(filtered) };
-    }));
+      setFiles(prev => prev.map((file, i) => i === fileIdx ? { ...file, processed: processCsv(filtered) } : file));
+    }
   };
 
-  const applyTypeToAll = (newType: CsvType) => {
-    setFiles(prev => prev.map(f => {
+  const applyTypeToAll = async (newType: CsvType) => {
+    const updatedFiles = files.map(f => {
       const reclassified = { ...f.classified, type: newType, label: ALL_TYPES.find(t => t.value === newType)?.label || newType };
       if (f.name && f.name !== "Colado") {
         const periodInfo = extractPeriodFromFilename(f.name);
@@ -144,15 +206,35 @@ export function useImportWorkflow() {
           reclassified.periodLabel = periodInfo.label;
         }
       }
-      return { ...f, classified: reclassified, processed: processCsv(reclassified) };
-    }));
+      return { ...f, classified: reclassified };
+    });
+    setFiles(updatedFiles);
+    // Reprocess all in worker (parallel)
+    const results = await Promise.all(
+      updatedFiles.map(async (f) => {
+        try {
+          return await reprocessFile(f.classified);
+        } catch {
+          return processCsv(f.classified);
+        }
+      })
+    );
+    setFiles(prev => prev.map((f, i) => ({ ...f, processed: results[i] })));
   };
 
-  const applyPeriodToAll = (period: string) => {
-    setFiles(prev => prev.map(f => {
-      const updated = { ...f.classified, periodDate: period };
-      return { ...f, classified: updated, processed: processCsv(updated) };
-    }));
+  const applyPeriodToAll = async (period: string) => {
+    const updatedFiles = files.map(f => ({ ...f, classified: { ...f.classified, periodDate: period } }));
+    setFiles(updatedFiles);
+    const results = await Promise.all(
+      updatedFiles.map(async (f) => {
+        try {
+          return await reprocessFile(f.classified);
+        } catch {
+          return processCsv(f.classified);
+        }
+      })
+    );
+    setFiles(prev => prev.map((f, i) => ({ ...f, processed: results[i] })));
   };
 
   const handleMatchDomains = async () => {
