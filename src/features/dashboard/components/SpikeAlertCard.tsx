@@ -1,5 +1,5 @@
 import { Flame, TrendingUp, TrendingDown, Zap, Ghost } from "lucide-react";
-import { cn } from "@/shared/lib/utils";
+import { cn, formatNumber } from "@/shared/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -28,11 +28,6 @@ const alertConfig: Record<string, { icon: typeof Flame; color: string; label: st
   resurrection: { icon: Ghost, color: "var(--accent-primary)", label: "Ressurreicao" },
 };
 
-function formatVisits(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
-  return String(n);
-}
 
 export function SpikeAlertCard({ spike, onClick }: SpikeAlertCardProps) {
   const config = alertConfig[spike.alert_type] ?? alertConfig.spike;
@@ -41,6 +36,7 @@ export function SpikeAlertCard({ spike, onClick }: SpikeAlertCardProps) {
 
   return (
     <button
+      aria-label={`Ver oferta ${spike.offer_name} — ${config.label} ${spike.change_percent > 0 ? "+" : ""}${spike.change_percent.toFixed(0)}%`}
       onClick={() => onClick?.(spike.spied_offer_id)}
       className={cn(
         "w-full text-left rounded-[var(--radius-lg)] border border-[var(--border-default)]",
@@ -83,7 +79,7 @@ export function SpikeAlertCard({ spike, onClick }: SpikeAlertCardProps) {
               {spike.domain}
             </span>
             <span className="text-[length:var(--text-caption)] text-[color:var(--text-muted)]">
-              {formatVisits(spike.prev_visits)} &rarr; {formatVisits(spike.current_visits)}
+              {formatNumber(spike.prev_visits)} &rarr; {formatNumber(spike.current_visits)}
             </span>
             <span
               className="text-[length:var(--text-caption)] font-bold"

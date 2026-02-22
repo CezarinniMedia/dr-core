@@ -2,7 +2,6 @@ import { Package, Flame, TrendingUp, Zap, Clock, AlertTriangle, ArrowRight, Sear
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { DataMetricCard } from "@/shared/design-system/components/DataMetricCard";
-import { SparklineBadge } from "@/shared/design-system/components/SparklineBadge";
 import { StatusDistributionChart } from "@/features/dashboard/components/StatusDistributionChart";
 import { SpikeAlertCard } from "@/features/dashboard/components/SpikeAlertCard";
 import { ActivityFeed } from "@/features/dashboard/components/ActivityFeed";
@@ -15,12 +14,7 @@ import { useSpikeAlerts } from "@/features/dashboard/hooks/useSpikeAlerts";
 import { useActivityHeatmap } from "@/features/dashboard/hooks/useActivityHeatmap";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-
-function formatCount(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
-  return String(n);
-}
+import { formatNumber } from "@/shared/lib/utils";
 
 function formatTimeAgo(dateStr: string | null | undefined): string {
   if (!dateStr) return "—";
@@ -81,21 +75,8 @@ export default function DashboardPage() {
           <>
             <DataMetricCard
               label="Total no Radar"
-              value={formatCount(metrics?.total_active_offers ?? 0)}
+              value={formatNumber(metrics?.total_active_offers ?? 0)}
               icon={<Package className="w-4 h-4" />}
-              sparkline={
-                <SparklineBadge
-                  data={[
-                    metrics?.analyzing_offers ?? 0,
-                    metrics?.radar_offers ?? 0,
-                    metrics?.hot_offers ?? 0,
-                    metrics?.scaling_offers ?? 0,
-                    metrics?.total_active_offers ?? 0,
-                  ]}
-                  width={56}
-                  height={24}
-                />
-              }
             />
             <DataMetricCard
               label="Ofertas Hot"

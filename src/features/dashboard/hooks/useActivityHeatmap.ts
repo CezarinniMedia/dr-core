@@ -7,15 +7,32 @@ interface ActivityDay {
   count: number;
 }
 
+async function getWorkspaceId() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data: member } = await supabase
+    .from("workspace_members")
+    .select("workspace_id")
+    .eq("user_id", user.id)
+    .limit(1)
+    .single();
+  return member?.workspace_id ?? null;
+}
+
+// H2 fix: filter by workspace_id (defense-in-depth)
 export function useActivityHeatmap(months = 3) {
   return useQuery({
     queryKey: ["activity-heatmap", months],
     queryFn: async (): Promise<ActivityDay[]> => {
+      const workspaceId = await getWorkspaceId();
+      if (!workspaceId) return [];
+
       const since = format(subMonths(new Date(), months), "yyyy-MM-dd");
 
       const { data, error } = await supabase
         .from("activity_log")
         .select("created_at")
+        .eq("workspace_id", workspaceId)
         .gte("created_at", since)
         .order("created_at", { ascending: true });
 

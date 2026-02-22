@@ -7,12 +7,16 @@ interface StatusDistributionChartProps {
 }
 
 const STATUS_CONFIG = [
-  { key: "analyzing_offers", label: "Analyzing", color: "#3B82F6" },
-  { key: "radar_offers", label: "Monitoring", color: "#D4A574" },
-  { key: "hot_offers", label: "Hot", color: "#EF4444" },
-  { key: "scaling_offers", label: "Scaling", color: "#22C55E" },
-  { key: "cloned_offers", label: "Cloned", color: "#7C3AED" },
+  { key: "analyzing_offers", label: "Analyzing", token: "--accent-blue" },
+  { key: "radar_offers", label: "Monitoring", token: "--accent-amber" },
+  { key: "hot_offers", label: "Hot", token: "--semantic-hot" },
+  { key: "scaling_offers", label: "Scaling", token: "--semantic-success" },
+  { key: "cloned_offers", label: "Cloned", token: "--accent-primary" },
 ] as const;
+
+function resolveToken(token: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(token).trim();
+}
 
 function CustomTooltip({ active, payload }: any) {
   if (!active || !payload?.[0]) return null;
@@ -32,7 +36,7 @@ export function StatusDistributionChart({ metrics }: StatusDistributionChartProp
       .map((s) => ({
         name: s.label,
         value: metrics[s.key] ?? 0,
-        color: s.color,
+        color: resolveToken(s.token),
       }))
       .filter((d) => d.value > 0);
   }, [metrics]);

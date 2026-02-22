@@ -49,13 +49,18 @@ export function useDashboardMetrics() {
   });
 }
 
+// H2 fix: filter activity_log by workspace_id (defense-in-depth, not only RLS)
 export function useDashboardActivity(limit = 10) {
   return useQuery({
     queryKey: ["dashboard-activity", limit],
     queryFn: async () => {
+      const workspaceId = await getWorkspaceId();
+      if (!workspaceId) return [];
+
       const { data, error } = await supabase
         .from("activity_log")
         .select("id, action, entity_type, entity_id, metadata, created_at")
+        .eq("workspace_id", workspaceId)
         .order("created_at", { ascending: false })
         .limit(limit);
 
