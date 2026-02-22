@@ -18,16 +18,16 @@ import { Plus, Trash2, Star, ExternalLink, Loader2, Edit } from "lucide-react";
 import { format } from "date-fns";
 
 const TYPE_BADGE: Record<string, string> = {
-  landing_page: "bg-info/20 text-info",
-  cloaker: "bg-destructive/20 text-destructive",
-  checkout: "bg-success/20 text-success",
-  quiz: "bg-warning/20 text-warning",
-  preland: "bg-accent/20 text-accent",
-  advertorial: "bg-primary/20 text-primary",
-  redirect: "bg-muted text-muted-foreground",
-  other: "bg-muted text-muted-foreground",
-  thank_you: "bg-success/20 text-success",
-  upsell: "bg-info/20 text-info",
+  landing_page: "bg-[rgba(59,130,246,0.1)] text-[color:var(--accent-blue)] border-[rgba(59,130,246,0.2)]",
+  cloaker: "bg-[rgba(239,68,68,0.1)] text-[color:var(--semantic-error)] border-[rgba(239,68,68,0.2)]",
+  checkout: "bg-[rgba(34,197,94,0.1)] text-[color:var(--accent-green)] border-[rgba(34,197,94,0.2)]",
+  quiz: "bg-[rgba(234,179,8,0.1)] text-[color:var(--semantic-warning)] border-[rgba(234,179,8,0.2)]",
+  preland: "bg-[rgba(124,58,237,0.1)] text-[color:var(--accent-primary)] border-[rgba(124,58,237,0.2)]",
+  advertorial: "bg-[rgba(124,58,237,0.1)] text-[color:var(--accent-primary)] border-[rgba(124,58,237,0.2)]",
+  redirect: "bg-[rgba(107,114,128,0.1)] text-[color:var(--text-muted)] border-[rgba(107,114,128,0.2)]",
+  other: "bg-[rgba(107,114,128,0.1)] text-[color:var(--text-muted)] border-[rgba(107,114,128,0.2)]",
+  thank_you: "bg-[rgba(34,197,94,0.1)] text-[color:var(--accent-green)] border-[rgba(34,197,94,0.2)]",
+  upsell: "bg-[rgba(59,130,246,0.1)] text-[color:var(--accent-blue)] border-[rgba(59,130,246,0.2)]",
 };
 
 const DOMAIN_TYPES = ["landing_page", "cloaker", "checkout", "quiz", "preland", "advertorial", "redirect", "thank_you", "upsell", "other"];
@@ -110,11 +110,11 @@ export function SpyDomainsTab({ offerId }: SpyDomainsTabProps) {
       </div>
 
       {!domains || domains.length === 0 ? (
-        <div className="border border-dashed rounded-lg p-8 text-center">
-          <p className="text-muted-foreground text-sm">Nenhum domínio cadastrado.</p>
+        <div className="border border-dashed border-[var(--border-default)] rounded-[var(--radius-lg)] p-8 text-center bg-[var(--bg-surface)]">
+          <p className="text-[color:var(--text-muted)] text-sm">Nenhum domínio cadastrado.</p>
         </div>
       ) : (
-        <div className="border rounded-lg overflow-x-auto">
+        <div className="border border-[var(--border-default)] rounded-[var(--radius-lg)] overflow-x-auto bg-[var(--bg-surface)]">
           <Table>
             <TableHeader>
               <TableRow>
@@ -138,7 +138,7 @@ export function SpyDomainsTab({ offerId }: SpyDomainsTabProps) {
                   </TableCell>
                   <TableCell>
                     {d.url ? (
-                      <a href={d.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs flex items-center gap-1">
+                      <a href={d.url} target="_blank" rel="noopener noreferrer" className="text-[color:var(--accent-teal)] hover:underline text-xs flex items-center gap-1">
                         Link <ExternalLink className="h-3 w-3" />
                       </a>
                     ) : "—"}

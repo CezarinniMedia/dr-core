@@ -6,7 +6,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+// Design system: uses inline token classes instead of Card
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/shared/components/ui/dialog";
@@ -105,15 +105,15 @@ export function SpyTrafficTab({ offerId, offerDomains, mainDomain }: SpyTrafficT
     });
   };
 
-  if (isLoading) return <p className="text-muted-foreground">Carregando...</p>;
+  if (isLoading) return <p className="text-[color:var(--text-muted)]">Carregando...</p>;
 
   if (!trafficData || trafficData.length === 0) {
     return (
-      <div className="border border-dashed rounded-lg p-12 text-center space-y-4">
-        <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto" />
-        <p className="text-muted-foreground">Nenhum dado de tráfego ainda.</p>
-        <p className="text-sm text-muted-foreground">Importe dados do Semrush ou adicione manualmente.</p>
-        <Button variant="outline" size="sm" onClick={() => setShowManual(true)}>
+      <div className="border border-dashed border-[var(--border-default)] rounded-[var(--radius-lg)] p-12 text-center space-y-4 bg-[var(--bg-surface)]">
+        <BarChart3 className="h-12 w-12 text-[color:var(--text-muted)] mx-auto" />
+        <p className="text-[color:var(--text-muted)]">Nenhum dado de tráfego ainda.</p>
+        <p className="text-sm text-[color:var(--text-secondary)]">Importe dados do Semrush ou adicione manualmente.</p>
+        <Button variant="outline" size="sm" className="border-[var(--border-default)]" onClick={() => setShowManual(true)}>
           <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar Manualmente
         </Button>
         {showManual && (
@@ -133,11 +133,11 @@ export function SpyTrafficTab({ offerId, offerDomains, mainDomain }: SpyTrafficT
       <MonthRangePicker from={rangeFrom} to={rangeTo} onChange={handleRangeChange} />
 
       {/* Chart */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Tráfego por Domínio</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)]">
+        <div className="px-4 pt-4 pb-2">
+          <h3 className="text-[length:var(--text-label)] [font-weight:var(--font-semibold)] text-[color:var(--text-secondary)]">Tráfego por Domínio</h3>
+        </div>
+        <div className="px-4 pb-4">
           <TrafficChart
             data={filteredData.map((d) => ({
               period_date: d.period_date,
@@ -149,34 +149,34 @@ export function SpyTrafficTab({ offerId, offerDomains, mainDomain }: SpyTrafficT
           <div className="flex flex-wrap gap-3 mt-3">
             {allDomains.filter((d) => filteredData.some((td) => td.domain === d)).map((domain, i) => {
               const colors = [
-                "hsl(217, 91%, 60%)", "hsl(0, 84%, 60%)", "hsl(142, 76%, 36%)",
-                "hsl(38, 92%, 50%)", "hsl(262, 83%, 58%)", "hsl(330, 81%, 60%)",
+                "var(--accent-blue)", "var(--semantic-hot)", "var(--accent-green)",
+                "var(--semantic-warning)", "var(--accent-primary)", "var(--accent-teal)",
               ];
               return (
-                <div key={domain} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <div key={domain} className="flex items-center gap-1.5 text-xs text-[color:var(--text-muted)]">
                   <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: colors[i % colors.length] }} />
                   {domain}
                 </div>
               );
             })}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Data Table (collapsible) */}
       <Collapsible open={showDataTable} onOpenChange={setShowDataTable}>
-        <Card>
-          <CardHeader className="pb-2">
+        <div className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)]">
+          <div className="px-4 pt-4 pb-2">
             <CollapsibleTrigger className="flex items-center gap-2 w-full">
-              <CardTitle className="text-sm flex-1 text-left flex items-center gap-2">
+              <h3 className="text-[length:var(--text-label)] [font-weight:var(--font-semibold)] text-[color:var(--text-secondary)] flex-1 text-left flex items-center gap-2">
                 Dados Brutos ({filteredData.length} registros)
-              </CardTitle>
-              <ChevronDown className={`h-4 w-4 transition-transform ${showDataTable ? "rotate-180" : ""}`} />
+              </h3>
+              <ChevronDown className={`h-4 w-4 text-[color:var(--text-muted)] transition-transform ${showDataTable ? "rotate-180" : ""}`} />
             </CollapsibleTrigger>
-          </CardHeader>
+          </div>
           <CollapsibleContent>
-            <CardContent className="pt-0">
-              <div className="border rounded-lg overflow-x-auto max-h-[400px] overflow-y-auto">
+            <div className="px-4 pb-4">
+              <div className="border border-[var(--border-default)] rounded-[var(--radius-md)] overflow-x-auto max-h-[400px] overflow-y-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -209,26 +209,26 @@ export function SpyTrafficTab({ offerId, offerDomains, mainDomain }: SpyTrafficT
                   </TableBody>
                 </Table>
               </div>
-            </CardContent>
+            </div>
           </CollapsibleContent>
-        </Card>
+        </div>
       </Collapsible>
 
       {/* Manual add */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2">
+      <div className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)]">
+        <div className="px-4 pt-4 pb-2">
+          <h3 className="text-[length:var(--text-label)] [font-weight:var(--font-semibold)] text-[color:var(--text-secondary)] flex items-center gap-2">
             <Plus className="h-4 w-4" /> Adicionar Manualmente
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+          </h3>
+        </div>
+        <div className="px-4 pb-4">
           <ManualForm
             domains={allDomains} domain={manualDomain} setDomain={setManualDomain}
             month={manualMonth} setMonth={setManualMonth}
             visits={manualVisits} setVisits={setManualVisits} onAdd={handleManualAdd}
           />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Edit Dialog */}
       <Dialog open={!!editingRecord} onOpenChange={(open) => { if (!open) setEditingRecord(null); }}>

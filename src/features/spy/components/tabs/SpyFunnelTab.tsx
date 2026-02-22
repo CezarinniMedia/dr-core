@@ -6,7 +6,7 @@ import { Label } from "@/shared/components/ui/label";
 import { Badge } from "@/shared/components/ui/badge";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Switch } from "@/shared/components/ui/switch";
-import { Card, CardContent } from "@/shared/components/ui/card";
+// Design system: uses inline token classes instead of Card
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/shared/components/ui/dialog";
@@ -22,12 +22,18 @@ const STEP_TYPES = [
 ];
 
 const STEP_TYPE_COLOR: Record<string, string> = {
-  AD: "bg-info/20 text-info", CLOAKER: "bg-destructive/20 text-destructive",
-  PRELAND: "bg-accent/20 text-accent", QUIZ: "bg-warning/20 text-warning",
-  VSL_PAGE: "bg-primary/20 text-primary", CHECKOUT: "bg-success/20 text-success",
-  UPSELL_1: "bg-info/20 text-info", UPSELL_2: "bg-info/20 text-info",
-  DOWNSELL: "bg-warning/20 text-warning", ORDER_BUMP: "bg-success/20 text-success",
-  THANK_YOU: "bg-muted text-muted-foreground", EMAIL_SEQUENCE: "bg-primary/20 text-primary",
+  AD: "bg-[rgba(59,130,246,0.1)] text-[color:var(--accent-blue)] border-[rgba(59,130,246,0.2)]",
+  CLOAKER: "bg-[rgba(239,68,68,0.1)] text-[color:var(--semantic-error)] border-[rgba(239,68,68,0.2)]",
+  PRELAND: "bg-[rgba(124,58,237,0.1)] text-[color:var(--accent-primary)] border-[rgba(124,58,237,0.2)]",
+  QUIZ: "bg-[rgba(234,179,8,0.1)] text-[color:var(--semantic-warning)] border-[rgba(234,179,8,0.2)]",
+  VSL_PAGE: "bg-[rgba(124,58,237,0.1)] text-[color:var(--accent-primary)] border-[rgba(124,58,237,0.2)]",
+  CHECKOUT: "bg-[rgba(34,197,94,0.1)] text-[color:var(--accent-green)] border-[rgba(34,197,94,0.2)]",
+  UPSELL_1: "bg-[rgba(59,130,246,0.1)] text-[color:var(--accent-blue)] border-[rgba(59,130,246,0.2)]",
+  UPSELL_2: "bg-[rgba(59,130,246,0.1)] text-[color:var(--accent-blue)] border-[rgba(59,130,246,0.2)]",
+  DOWNSELL: "bg-[rgba(234,179,8,0.1)] text-[color:var(--semantic-warning)] border-[rgba(234,179,8,0.2)]",
+  ORDER_BUMP: "bg-[rgba(34,197,94,0.1)] text-[color:var(--accent-green)] border-[rgba(34,197,94,0.2)]",
+  THANK_YOU: "bg-[rgba(107,114,128,0.1)] text-[color:var(--text-muted)] border-[rgba(107,114,128,0.2)]",
+  EMAIL_SEQUENCE: "bg-[rgba(124,58,237,0.1)] text-[color:var(--accent-primary)] border-[rgba(124,58,237,0.2)]",
 };
 
 const STEP_TYPE_TO_DOMAIN_TYPE: Record<string, string> = {
@@ -148,19 +154,19 @@ export function SpyFunnelTab({ offerId }: SpyFunnelTabProps) {
   return (
     <div className="space-y-4">
       {!steps || steps.length === 0 ? (
-        <div className="border border-dashed rounded-lg p-8 text-center space-y-3">
-          <p className="text-muted-foreground text-sm">Nenhum step do funil mapeado.</p>
+        <div className="border border-dashed border-[var(--border-default)] rounded-[var(--radius-lg)] p-8 text-center space-y-3 bg-[var(--bg-surface)]">
+          <p className="text-[color:var(--text-muted)] text-sm">Nenhum step do funil mapeado.</p>
           <Button size="sm" onClick={openAdd}><Plus className="h-3.5 w-3.5 mr-1" /> Adicionar Step</Button>
         </div>
       ) : (
         <div className="space-y-1">
           {steps.map((step: any, idx: number) => (
             <div key={step.id}>
-              <Card className="relative">
-                <CardContent className="p-4">
+              <div className="relative rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)]">
+                <div className="p-4">
                   <div className="flex items-start gap-3">
                     <div className="flex flex-col items-center shrink-0">
-                      <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center text-sm font-bold">
+                      <div className="w-8 h-8 rounded-full bg-[rgba(124,58,237,0.15)] text-[color:var(--accent-primary)] flex items-center justify-center text-sm font-bold">
                         {step.step_order}
                       </div>
                     </div>
@@ -173,16 +179,16 @@ export function SpyFunnelTab({ offerId }: SpyFunnelTabProps) {
                         {step.html_source && <Badge variant="outline" className="text-xs"><FileText className="h-3 w-3 mr-1" /> HTML salvo</Badge>}
                       </div>
                       {step.page_url && (
-                        <a href={step.page_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
+                        <a href={step.page_url} target="_blank" rel="noopener noreferrer" className="text-xs text-[color:var(--accent-teal)] hover:underline flex items-center gap-1">
                           {step.page_url} <ExternalLink className="h-3 w-3" />
                         </a>
                       )}
-                      <div className="flex gap-4 text-xs text-muted-foreground">
+                      <div className="flex gap-4 text-xs text-[color:var(--text-muted)]">
                         {step.product_name && <span className="inline-flex items-center gap-1"><Package className="h-3 w-3" /> {step.product_name}</span>}
                         {step.price && <span className="inline-flex items-center gap-1"><Banknote className="h-3 w-3" /> R$ {Number(step.price).toFixed(2)}</span>}
                         {step.product_promise && <span className="truncate max-w-[200px] inline-flex items-center gap-1"><MessageSquare className="h-3 w-3 shrink-0" /> {step.product_promise}</span>}
                       </div>
-                      {step.notas && <p className="text-xs text-muted-foreground mt-1">{step.notas}</p>}
+                      {step.notas && <p className="text-xs text-[color:var(--text-muted)] mt-1">{step.notas}</p>}
                     </div>
                     <div className="flex gap-1 shrink-0">
                       <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Editar etapa" onClick={() => openEdit(step)}>
@@ -193,8 +199,8 @@ export function SpyFunnelTab({ offerId }: SpyFunnelTabProps) {
                       </Button>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
               {idx < steps.length - 1 && (
                 <div className="flex justify-center py-1"><ArrowDown className="h-4 w-4 text-muted-foreground" /></div>
               )}

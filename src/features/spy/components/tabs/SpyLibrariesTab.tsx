@@ -94,11 +94,11 @@ export function SpyLibrariesTab({ offerId }: SpyLibrariesTabProps) {
       </div>
 
       {!libraries || libraries.length === 0 ? (
-        <div className="border border-dashed rounded-lg p-8 text-center">
-          <p className="text-muted-foreground text-sm">Nenhuma biblioteca cadastrada.</p>
+        <div className="border border-dashed border-[var(--border-default)] rounded-[var(--radius-lg)] p-8 text-center bg-[var(--bg-surface)]">
+          <p className="text-[color:var(--text-muted)] text-sm">Nenhuma biblioteca cadastrada.</p>
         </div>
       ) : (
-        <div className="border rounded-lg overflow-hidden">
+        <div className="border border-[var(--border-default)] rounded-[var(--radius-lg)] overflow-hidden bg-[var(--bg-surface)]">
           <Table>
             <TableHeader>
               <TableRow>
@@ -120,11 +120,11 @@ export function SpyLibrariesTab({ offerId }: SpyLibrariesTabProps) {
                   <TableCell className="text-xs text-muted-foreground">{lib.page_id || "—"}</TableCell>
                   <TableCell className="text-center text-sm">{lib.ad_count ?? "—"}</TableCell>
                   <TableCell className="text-center">
-                    {lib.is_scaled ? <Badge className="bg-success/20 text-success inline-flex items-center gap-1"><Rocket className="h-3 w-3" /> Sim</Badge> : <span className="text-xs text-muted-foreground">Não</span>}
+                    {lib.is_scaled ? <Badge className="bg-[rgba(34,197,94,0.1)] text-[color:var(--accent-green)] border border-[rgba(34,197,94,0.2)] inline-flex items-center gap-1"><Rocket className="h-3 w-3" /> Sim</Badge> : <span className="text-xs text-[color:var(--text-muted)]">Não</span>}
                   </TableCell>
                   <TableCell>
                     {lib.library_url ? (
-                      <a href={lib.library_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs flex items-center gap-1">
+                      <a href={lib.library_url} target="_blank" rel="noopener noreferrer" className="text-[color:var(--accent-teal)] hover:underline text-xs flex items-center gap-1">
                         Abrir <ExternalLink className="h-3 w-3" />
                       </a>
                     ) : "—"}

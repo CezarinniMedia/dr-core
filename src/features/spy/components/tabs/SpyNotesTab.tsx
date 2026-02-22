@@ -3,7 +3,7 @@ import { useUpdateSpiedOffer } from "@/features/spy/hooks/useSpiedOffers";
 import ReactMarkdown from "react-markdown";
 import { Button } from "@/shared/components/ui/button";
 import { Textarea } from "@/shared/components/ui/textarea";
-import { Card, CardContent } from "@/shared/components/ui/card";
+// Design system: uses inline token classes instead of Card
 import { Edit, Eye, Save, Loader2 } from "lucide-react";
 
 interface SpyNotesTabProps {
@@ -61,19 +61,17 @@ export function SpyNotesTab({ offerId, currentNotes }: SpyNotesTabProps) {
           </p>
         </div>
       ) : (
-        <Card>
-          <CardContent className="p-6">
+        <div className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] p-6">
             {notes ? (
               <div className="prose prose-sm dark:prose-invert max-w-none">
                 <ReactMarkdown>{notes}</ReactMarkdown>
               </div>
             ) : (
-              <p className="text-muted-foreground text-sm text-center py-8">
+              <p className="text-[color:var(--text-muted)] text-sm text-center py-8">
                 Nenhuma nota ainda. Clique em "Editar" para começar.
               </p>
             )}
-          </CardContent>
-        </Card>
+        </div>
       )}
     </div>
   );
