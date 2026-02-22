@@ -9,8 +9,8 @@ import { ActivityFeed } from "@/features/dashboard/components/ActivityFeed";
 import {
   useDashboardMetrics,
   useDashboardActivity,
-  useDetectSpikes,
 } from "@/features/dashboard/hooks/useDashboardMetrics";
+import { useSpikeAlerts } from "@/features/dashboard/hooks/useSpikeAlerts";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -39,7 +39,7 @@ const quickLinks = [
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { data: metrics, isLoading, isError } = useDashboardMetrics();
-  const { data: spikes, isLoading: spikesLoading } = useDetectSpikes();
+  const { data: spikes, isLoading: spikesLoading } = useSpikeAlerts();
   const { data: activities, isLoading: activitiesLoading } = useDashboardActivity(8);
 
   return (
