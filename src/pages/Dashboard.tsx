@@ -6,11 +6,13 @@ import { SparklineBadge } from "@/shared/design-system/components/SparklineBadge
 import { StatusDistributionChart } from "@/features/dashboard/components/StatusDistributionChart";
 import { SpikeAlertCard } from "@/features/dashboard/components/SpikeAlertCard";
 import { ActivityFeed } from "@/features/dashboard/components/ActivityFeed";
+import { HeatmapCalendar } from "@/features/dashboard/components/HeatmapCalendar";
 import {
   useDashboardMetrics,
   useDashboardActivity,
 } from "@/features/dashboard/hooks/useDashboardMetrics";
 import { useSpikeAlerts } from "@/features/dashboard/hooks/useSpikeAlerts";
+import { useActivityHeatmap } from "@/features/dashboard/hooks/useActivityHeatmap";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -41,6 +43,7 @@ export default function DashboardPage() {
   const { data: metrics, isLoading, isError } = useDashboardMetrics();
   const { data: spikes, isLoading: spikesLoading } = useSpikeAlerts();
   const { data: activities, isLoading: activitiesLoading } = useDashboardActivity(8);
+  const { data: heatmapData, isLoading: heatmapLoading } = useActivityHeatmap(3);
 
   return (
     <div className="space-y-[var(--space-section-gap)] max-w-[var(--content-max-width)]">
@@ -209,6 +212,22 @@ export default function DashboardPage() {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Heatmap Calendar */}
+      <div className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] p-[var(--space-card-padding)]">
+        <h2 className="text-[length:var(--text-card-title)] font-[var(--font-semibold)] text-[color:var(--text-primary)] mb-4">
+          Mapa de Atividade
+        </h2>
+        {heatmapLoading ? (
+          <div className="flex gap-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-[120px] w-[200px]" />
+            ))}
+          </div>
+        ) : (
+          <HeatmapCalendar data={heatmapData ?? []} months={3} />
+        )}
       </div>
     </div>
   );
