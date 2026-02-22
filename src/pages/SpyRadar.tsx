@@ -58,6 +58,9 @@ export default function SpyRadar() {
   const [deleteTarget, setDeleteTarget] = useState<"single" | "bulk" | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
+  // Vault/Archive toggle
+  const [showArchived, setShowArchived] = useState(false);
+
   // Tabs & traffic source
   const [mainTab, setMainTab] = useState("offers");
   const [trafficDataSource, setTrafficDataSource] = useState<'similarweb' | 'semrush'>(() => {
@@ -129,9 +132,16 @@ export default function SpyRadar() {
 
   const offers = useMemo(() => {
     if (!allOffersRaw) return allOffersRaw;
-    if (statusFilter.size === 0) return allOffersRaw;
-    return filterOffersService(allOffersRaw as any, { statusFilter });
-  }, [allOffersRaw, statusFilter]);
+    let filtered = allOffersRaw as any[];
+    // Hide VAULT offers unless toggle is on
+    if (!showArchived) {
+      filtered = filtered.filter((o: any) => o.status !== "VAULT");
+    }
+    if (statusFilter.size > 0) {
+      filtered = filterOffersService(filtered, { statusFilter });
+    }
+    return filtered;
+  }, [allOffersRaw, statusFilter, showArchived]);
 
   const totalOffers = offers?.length ?? 0;
 
@@ -201,6 +211,8 @@ export default function SpyRadar() {
               onToggleStatus={toggleStatusFilter}
               onClearStatusFilter={() => { setStatusFilter(new Set()); handleFilterChange(); }}
               columnSelector={<SpyColumnSelector visibleColumns={visibleColumns} onToggleColumn={toggleSpyColumn} />}
+              showArchived={showArchived}
+              onToggleArchived={() => { setShowArchived(prev => !prev); handleFilterChange(); }}
             />
 
             <SpyBulkActionsBar

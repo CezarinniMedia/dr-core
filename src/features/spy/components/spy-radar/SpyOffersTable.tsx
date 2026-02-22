@@ -159,11 +159,11 @@ export function SpyOffersTable({
 
   if (!offers || offers.length === 0) {
     return (
-      <div className="border border-dashed rounded-lg p-12 text-center space-y-4">
-        <Radar className="h-12 w-12 text-muted-foreground mx-auto" />
-        <p className="text-muted-foreground">Nenhuma oferta no radar ainda.</p>
-        <p className="text-sm text-muted-foreground">Comece adicionando ofertas que você encontrou espionando.</p>
-        <Button onClick={onShowQuickAdd}><Zap className="h-4 w-4 mr-2" /> Quick Add</Button>
+      <div className="border border-dashed border-[var(--border-default)] rounded-[var(--radius-lg)] p-12 text-center space-y-4 bg-[var(--bg-surface)]">
+        <Radar className="h-12 w-12 text-[color:var(--text-muted)] mx-auto" />
+        <p className="text-[color:var(--text-secondary)]">Nenhuma oferta no radar ainda.</p>
+        <p className="text-sm text-[color:var(--text-muted)]">Comece adicionando ofertas que você encontrou espionando.</p>
+        <Button onClick={onShowQuickAdd} className="bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-light)]"><Zap className="h-4 w-4 mr-2" /> Quick Add</Button>
       </div>
     );
   }
@@ -172,11 +172,11 @@ export function SpyOffersTable({
     <>
       <div
         ref={scrollContainerRef}
-        className="border rounded-lg overflow-hidden"
+        className="border border-[var(--border-default)] rounded-[var(--radius-lg)] overflow-hidden bg-[var(--bg-surface)]"
         style={shouldVirtualize ? { overflowY: "auto", maxHeight: "70vh" } : undefined}
       >
         <Table style={shouldVirtualize ? { tableLayout: "fixed" } : undefined}>
-          <TableHeader className={shouldVirtualize ? "sticky top-0 z-10 bg-background" : ""}>
+          <TableHeader className={`${shouldVirtualize ? "sticky top-0 z-10" : ""} bg-[var(--bg-elevated)]`}>
             <TableRow>
               <TableHead className="w-[40px]">
                 <Checkbox
@@ -237,7 +237,7 @@ export function SpyOffersTable({
                 <TableRow
                   key={offer.id}
                   style={rowStyle}
-                  className={`cursor-pointer transition-colors ${isSelected ? "bg-primary/10" : "hover:bg-muted/50"}`}
+                  className={`cursor-pointer transition-all duration-[var(--duration-fast)] ${isSelected ? "bg-[var(--accent-primary-muted)]" : "hover:bg-[var(--bg-raised)]"}`}
                   onClick={(e) => {
                     if (e.metaKey || e.ctrlKey || e.shiftKey) {
                       handleRowSelect(offer.id, visibleIdx, e);
