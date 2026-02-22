@@ -1,4 +1,4 @@
-import { Flame, TrendingUp, TrendingDown, Zap, Ghost } from "lucide-react";
+import { TrendingUp, TrendingDown, Zap, Ghost, type LucideIcon } from "lucide-react";
 import { cn, formatNumber } from "@/shared/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -21,13 +21,12 @@ interface SpikeAlertCardProps {
   onClick?: (offerId: string) => void;
 }
 
-const alertConfig: Record<string, { icon: typeof Flame; color: string; label: string }> = {
+const alertConfig: Record<string, { icon: LucideIcon; color: string; label: string }> = {
   spike: { icon: TrendingUp, color: "var(--semantic-spike)", label: "Spike" },
   drop: { icon: TrendingDown, color: "var(--semantic-error)", label: "Drop" },
   new_entry: { icon: Zap, color: "var(--accent-teal)", label: "Nova entrada" },
   resurrection: { icon: Ghost, color: "var(--accent-primary)", label: "Ressurreicao" },
 };
-
 
 export function SpikeAlertCard({ spike, onClick }: SpikeAlertCardProps) {
   const config = alertConfig[spike.alert_type] ?? alertConfig.spike;
