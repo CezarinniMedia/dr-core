@@ -30,7 +30,12 @@ BEGIN
 
   -- 1. Dashboard metrics
   v_start := clock_timestamp();
-  REFRESH MATERIALIZED VIEW CONCURRENTLY mv_dashboard_metrics;
+  BEGIN
+    REFRESH MATERIALIZED VIEW CONCURRENTLY mv_dashboard_metrics;
+  EXCEPTION WHEN OTHERS THEN
+    -- Fallback: non-concurrent refresh if view was never populated
+    REFRESH MATERIALIZED VIEW mv_dashboard_metrics;
+  END;
   v_end := clock_timestamp();
   view_name := 'mv_dashboard_metrics';
   refreshed_at := v_end;
@@ -39,7 +44,11 @@ BEGIN
 
   -- 2. Traffic summary
   v_start := clock_timestamp();
-  REFRESH MATERIALIZED VIEW CONCURRENTLY mv_traffic_summary;
+  BEGIN
+    REFRESH MATERIALIZED VIEW CONCURRENTLY mv_traffic_summary;
+  EXCEPTION WHEN OTHERS THEN
+    REFRESH MATERIALIZED VIEW mv_traffic_summary;
+  END;
   v_end := clock_timestamp();
   view_name := 'mv_traffic_summary';
   refreshed_at := v_end;
@@ -48,7 +57,11 @@ BEGIN
 
   -- 3. Spike detection
   v_start := clock_timestamp();
-  REFRESH MATERIALIZED VIEW CONCURRENTLY mv_spike_detection;
+  BEGIN
+    REFRESH MATERIALIZED VIEW CONCURRENTLY mv_spike_detection;
+  EXCEPTION WHEN OTHERS THEN
+    REFRESH MATERIALIZED VIEW mv_spike_detection;
+  END;
   v_end := clock_timestamp();
   view_name := 'mv_spike_detection';
   refreshed_at := v_end;
@@ -70,29 +83,35 @@ RETURNS TABLE (
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
+DECLARE
+  v_common_refresh TIMESTAMPTZ;
 BEGIN
   -- Auth check
   IF auth.uid() IS NULL THEN
     RAISE EXCEPTION 'Not authenticated';
   END IF;
 
-  -- mv_dashboard_metrics
-  view_name := 'mv_dashboard_metrics';
-  SELECT mdm.refreshed_at INTO last_refreshed
+  -- All 3 views are refreshed together via refresh_pipeline(),
+  -- so the dashboard's refreshed_at applies to all views
+  SELECT mdm.refreshed_at INTO v_common_refresh
     FROM mv_dashboard_metrics mdm
     LIMIT 1;
+
+  -- mv_dashboard_metrics
+  view_name := 'mv_dashboard_metrics';
+  last_refreshed := v_common_refresh;
   SELECT COUNT(*) INTO row_count FROM mv_dashboard_metrics;
   RETURN NEXT;
 
   -- mv_traffic_summary
   view_name := 'mv_traffic_summary';
-  last_refreshed := NULL; -- no refreshed_at column
+  last_refreshed := v_common_refresh;
   SELECT COUNT(*) INTO row_count FROM mv_traffic_summary;
   RETURN NEXT;
 
   -- mv_spike_detection
   view_name := 'mv_spike_detection';
-  last_refreshed := NULL;
+  last_refreshed := v_common_refresh;
   SELECT COUNT(*) INTO row_count FROM mv_spike_detection;
   RETURN NEXT;
 END;

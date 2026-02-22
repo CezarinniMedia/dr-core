@@ -22,8 +22,12 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
   const [activeTab, setActiveTab] = useState<"import" | "history">("import");
 
   const handleReImport = (job: ImportJob) => {
-    // Switch to import tab and reset workflow for retry
     wf.handleReset();
+    // Pre-populate footprint query from previous job config if available
+    const config = job.config as Record<string, unknown> | null;
+    if (config?.footprintQuery && typeof config.footprintQuery === "string") {
+      wf.setFootprintQuery(config.footprintQuery);
+    }
     setActiveTab("import");
   };
 
