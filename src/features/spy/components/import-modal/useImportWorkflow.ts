@@ -638,6 +638,7 @@ export function useImportWorkflow() {
           await updateJob.mutateAsync({
             id: jobId,
             status: "completed",
+            linhas_processadas: totalLines,
             linhas_importadas: trafficCount,
             ofertas_novas_criadas: newOffers,
             ofertas_existentes_atualizadas: updated,

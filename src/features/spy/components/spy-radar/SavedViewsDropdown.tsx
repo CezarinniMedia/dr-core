@@ -11,6 +11,11 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
   DialogFooter, DialogDescription,
 } from "@/shared/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
+} from "@/shared/components/ui/alert-dialog";
 import { Input } from "@/shared/components/ui/input";
 import { useToast } from "@/shared/hooks/use-toast";
 import {
@@ -36,6 +41,7 @@ export function SavedViewsDropdown({
 
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [newName, setNewName] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
 
   const handleSave = async () => {
     if (!newName.trim()) return;
@@ -53,12 +59,15 @@ export function SavedViewsDropdown({
     }
   };
 
-  const handleDelete = async (id: string, name: string) => {
+  const handleDeleteConfirmed = async () => {
+    if (!deleteConfirm) return;
     try {
-      await deleteView.mutateAsync(id);
-      toast({ title: `View "${name}" removida` });
+      await deleteView.mutateAsync(deleteConfirm.id);
+      toast({ title: `View "${deleteConfirm.name}" removida` });
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } finally {
+      setDeleteConfirm(null);
     }
   };
 
@@ -105,7 +114,7 @@ export function SavedViewsDropdown({
                   view={view}
                   isActive={activeViewId === view.id}
                   onSelect={() => onApplyView(view)}
-                  onDelete={() => handleDelete(view.id, view.name)}
+                  onDelete={() => setDeleteConfirm({ id: view.id, name: view.name })}
                   onTogglePin={() => handleTogglePin(view)}
                 />
               ))}
@@ -124,7 +133,7 @@ export function SavedViewsDropdown({
                   view={view}
                   isActive={activeViewId === view.id}
                   onSelect={() => onApplyView(view)}
-                  onDelete={() => handleDelete(view.id, view.name)}
+                  onDelete={() => setDeleteConfirm({ id: view.id, name: view.name })}
                   onTogglePin={() => handleTogglePin(view)}
                 />
               ))}
@@ -147,6 +156,23 @@ export function SavedViewsDropdown({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => { if (!open) setDeleteConfirm(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover view salva?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A view &ldquo;{deleteConfirm?.name}&rdquo; sera removida permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirmed}>
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
         <DialogContent className="max-w-sm">

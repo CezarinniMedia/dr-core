@@ -106,6 +106,7 @@ export default function SpyRadar() {
       if (next.has(value)) next.delete(value); else next.add(value);
       return next;
     });
+    setActiveViewId(null);
     setCurrentPage(0);
     setSelectedIds(new Set());
   };
@@ -167,6 +168,7 @@ export default function SpyRadar() {
   const totalOffers = offers?.length ?? 0;
 
   const handleFilterChange = useCallback(() => {
+    setActiveViewId(null);
     setCurrentPage(0);
     setSelectedIds(new Set());
   }, []);

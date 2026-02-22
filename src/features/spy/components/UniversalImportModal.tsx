@@ -10,6 +10,7 @@ import { ImportStepClassification } from "./import-modal/ImportStepClassificatio
 import { ImportStepMatching } from "./import-modal/ImportStepMatching";
 import { ImportStepResult } from "./import-modal/ImportStepResult";
 import { ImportHistoryPanel } from "./import-modal/ImportHistoryPanel";
+import type { ImportJob } from "@/features/spy/hooks/useImportHistory";
 
 interface UniversalImportModalProps {
   open: boolean;
@@ -19,6 +20,12 @@ interface UniversalImportModalProps {
 export function UniversalImportModal({ open, onClose }: UniversalImportModalProps) {
   const wf = useImportWorkflow();
   const [activeTab, setActiveTab] = useState<"import" | "history">("import");
+
+  const handleReImport = (job: ImportJob) => {
+    // Switch to import tab and reset workflow for retry
+    wf.handleReset();
+    setActiveTab("import");
+  };
 
   const handleClose = () => { wf.handleReset(); setActiveTab("import"); onClose(); };
 
@@ -119,7 +126,7 @@ export function UniversalImportModal({ open, onClose }: UniversalImportModalProp
           </TabsContent>
 
           <TabsContent value="history" className="mt-3">
-            <ImportHistoryPanel />
+            <ImportHistoryPanel onReImport={handleReImport} />
           </TabsContent>
         </Tabs>
       </DialogContent>

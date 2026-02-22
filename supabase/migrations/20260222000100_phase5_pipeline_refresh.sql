@@ -4,9 +4,8 @@
 
 -- Function to manually refresh all materialized views
 -- Returns refresh stats (which views were refreshed, timing)
-CREATE OR REPLACE FUNCTION refresh_pipeline(
-  p_workspace_id UUID DEFAULT NULL
-)
+-- FIX B2: Added auth check + advisory lock to prevent concurrent refreshes
+CREATE OR REPLACE FUNCTION refresh_pipeline()
 RETURNS TABLE (
   view_name TEXT,
   refreshed_at TIMESTAMPTZ,
@@ -19,6 +18,16 @@ DECLARE
   v_start TIMESTAMPTZ;
   v_end TIMESTAMPTZ;
 BEGIN
+  -- Auth check: only authenticated users can trigger refresh
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
+  -- Advisory lock prevents concurrent refreshes (lock id = hash of 'refresh_pipeline')
+  IF NOT pg_try_advisory_xact_lock(hashtext('refresh_pipeline')) THEN
+    RAISE EXCEPTION 'Pipeline refresh already in progress';
+  END IF;
+
   -- 1. Dashboard metrics
   v_start := clock_timestamp();
   REFRESH MATERIALIZED VIEW CONCURRENTLY mv_dashboard_metrics;
@@ -48,12 +57,11 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION refresh_pipeline(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION refresh_pipeline() TO authenticated;
 
 -- Function to get pipeline status (last refresh times)
-CREATE OR REPLACE FUNCTION get_pipeline_status(
-  p_workspace_id UUID DEFAULT NULL
-)
+-- FIX B2: Added auth check, removed unused p_workspace_id param
+CREATE OR REPLACE FUNCTION get_pipeline_status()
 RETURNS TABLE (
   view_name TEXT,
   last_refreshed TIMESTAMPTZ,
@@ -63,6 +71,11 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
+  -- Auth check
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
   -- mv_dashboard_metrics
   view_name := 'mv_dashboard_metrics';
   SELECT mdm.refreshed_at INTO last_refreshed
@@ -85,4 +98,4 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION get_pipeline_status(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION get_pipeline_status() TO authenticated;
