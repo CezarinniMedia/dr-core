@@ -460,9 +460,11 @@ export function useImportWorkflow() {
           const results = await Promise.all(
             batch.map(chunk => supabase.rpc("bulk_upsert_traffic_data", { p_records: chunk as unknown as Json }))
           );
-          for (const { error } of results) { if (error) throw error; }
+          for (const { data, error } of results) {
+            if (error) throw error;
+            trafficCount += (data as number) ?? 0;
+          }
           chunksCompleted += batch.length;
-          trafficCount += batch.reduce((sum, c) => sum + c.length, 0);
           const done = Math.min(chunksCompleted * BATCH, allTrafficRecords.length);
           setProgress(45 + Math.round((done / allTrafficRecords.length) * 40));
           setProgressLabel(`Importando tráfego... ${done.toLocaleString("pt-BR")}/${allTrafficRecords.length.toLocaleString("pt-BR")}`);
