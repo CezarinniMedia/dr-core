@@ -6,6 +6,7 @@ import { StatusDistributionChart } from "@/features/dashboard/components/StatusD
 import { SpikeAlertCard } from "@/features/dashboard/components/SpikeAlertCard";
 import { ActivityFeed } from "@/features/dashboard/components/ActivityFeed";
 import { HeatmapCalendar } from "@/features/dashboard/components/HeatmapCalendar";
+import { PipelineStatusCard } from "@/features/spy/components/spy-radar/PipelineStatusCard";
 import {
   useDashboardMetrics,
   useDashboardActivity,
@@ -172,25 +173,29 @@ export default function DashboardPage() {
           <ActivityFeed activities={activities ?? []} isLoading={activitiesLoading} />
         </div>
 
-        {/* Quick Links — 1 col */}
-        <div className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] p-[var(--space-card-padding)]">
-          <h2 className="text-[length:var(--text-card-title)] font-[var(--font-semibold)] text-[color:var(--text-primary)] mb-4">
-            Acoes Rapidas
-          </h2>
-          <div className="space-y-2">
-            {quickLinks.map((link) => (
-              <button
-                key={link.label}
-                onClick={() => navigate(link.href)}
-                className="w-full flex items-center gap-3 p-3 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-surface)] hover:bg-[var(--bg-raised)] transition-colors text-left group"
-              >
-                <link.icon className="h-4 w-4 text-[color:var(--accent-primary)] shrink-0" />
-                <span className="text-[length:var(--text-body-size)] text-[color:var(--text-body)] font-medium flex-1">
-                  {link.label}
-                </span>
-                <ArrowRight className="h-4 w-4 text-[color:var(--text-muted)] group-hover:text-[color:var(--accent-primary)] transition-colors" />
-              </button>
-            ))}
+        {/* Quick Links + Pipeline — 1 col */}
+        <div className="space-y-[var(--space-card-gap)]">
+          <PipelineStatusCard />
+
+          <div className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] p-[var(--space-card-padding)]">
+            <h2 className="text-[length:var(--text-card-title)] font-[var(--font-semibold)] text-[color:var(--text-primary)] mb-4">
+              Acoes Rapidas
+            </h2>
+            <div className="space-y-2">
+              {quickLinks.map((link) => (
+                <button
+                  key={link.label}
+                  onClick={() => navigate(link.href)}
+                  className="w-full flex items-center gap-3 p-3 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-surface)] hover:bg-[var(--bg-raised)] transition-colors text-left group"
+                >
+                  <link.icon className="h-4 w-4 text-[color:var(--accent-primary)] shrink-0" />
+                  <span className="text-[length:var(--text-body-size)] text-[color:var(--text-body)] font-medium flex-1">
+                    {link.label}
+                  </span>
+                  <ArrowRight className="h-4 w-4 text-[color:var(--text-muted)] group-hover:text-[color:var(--accent-primary)] transition-colors" />
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
