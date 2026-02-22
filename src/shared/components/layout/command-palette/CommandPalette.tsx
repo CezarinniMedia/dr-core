@@ -54,11 +54,11 @@ const quickActions: NavAction[] = [
 export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
-  const { data: offers } = useSpiedOffers();
+  const { data: offersResult } = useSpiedOffers({ search: search?.length >= 2 ? search : undefined, pageSize: 8 });
   const { data: savedViews = [] } = useSavedViews("spy");
 
-  const filteredOffers = (offers ?? [])
-    .filter((o) => {
+  const filteredOffers = (offersResult?.data ?? [])
+    .filter((o: any) => {
       if (!search || search.length < 2) return false;
       const q = search.toLowerCase();
       return (

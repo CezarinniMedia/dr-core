@@ -23,7 +23,8 @@ const STATUS_BADGE: Record<string, { label: React.ReactNode; className: string }
 export function TrafficComparisonView() {
   const [selectedOfferIds, setSelectedOfferIds] = useState<string[]>([]);
   const [period, setPeriod] = useState("6");
-  const { data: allOffers } = useSpiedOffers();
+  const { data: offersResult } = useSpiedOffers({ pageSize: 10000 });
+  const allOffers = offersResult?.data;
 
   // Fetch traffic data for all selected offers
   const { data: trafficData } = useQuery({

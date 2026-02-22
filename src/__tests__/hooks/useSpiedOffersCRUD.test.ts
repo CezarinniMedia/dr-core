@@ -3,7 +3,7 @@ import { waitFor } from "@testing-library/react";
 import { renderHookWithQuery } from "@/test/test-utils";
 
 // ─── Hoisted Supabase mock ───
-const { mockFrom, mockGetUser, mockSingle, mockInsert, mockUpdate, mockDeleteEq } = vi.hoisted(() => {
+const { mockFrom, mockGetUser, mockRpc, mockSingle, mockInsert, mockUpdate, mockDeleteEq } = vi.hoisted(() => {
   const mockSingle = vi.fn();
   const mockSelect = vi.fn().mockReturnThis();
   const mockOrder = vi.fn().mockReturnThis();
@@ -19,6 +19,7 @@ const { mockFrom, mockGetUser, mockSingle, mockInsert, mockUpdate, mockDeleteEq 
   const mockUpdate = vi.fn(() => ({ eq: mockEq }));
   const mockDeleteEq = vi.fn().mockResolvedValue({ error: null });
   const mockDelete = vi.fn(() => ({ eq: mockDeleteEq }));
+  const mockRpc = vi.fn();
   const mockFrom = vi.fn(() => ({
     select: mockSelect,
     insert: mockInsert,
@@ -30,13 +31,14 @@ const { mockFrom, mockGetUser, mockSingle, mockInsert, mockUpdate, mockDeleteEq 
     data: { user: { id: "user-123" } },
   });
 
-  return { mockFrom, mockGetUser, mockRange, mockSingle, mockInsert, mockUpdate, mockDeleteEq };
+  return { mockFrom, mockGetUser, mockRpc, mockRange, mockSingle, mockInsert, mockUpdate, mockDeleteEq };
 });
 
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     auth: { getUser: mockGetUser },
     from: mockFrom,
+    rpc: mockRpc,
   },
 }));
 
@@ -55,11 +57,19 @@ import {
 describe("useSpiedOffers", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("executa query com tabela spied_offers", async () => {
-    const { result } = renderHookWithQuery(() => useSpiedOffers());
+  it("executa RPC get_spied_offers_paginated", async () => {
+    // Mock workspace_members lookup
+    mockSingle.mockResolvedValueOnce({ data: { workspace_id: "ws-1" } });
+    mockRpc.mockResolvedValue({ data: [], error: null });
+
+    renderHookWithQuery(() => useSpiedOffers());
 
     await waitFor(() => {
-      expect(mockFrom).toHaveBeenCalledWith("spied_offers");
+      expect(mockRpc).toHaveBeenCalledWith("get_spied_offers_paginated", expect.objectContaining({
+        p_workspace_id: "ws-1",
+        p_limit: 50,
+        p_offset: 0,
+      }));
     });
   });
 

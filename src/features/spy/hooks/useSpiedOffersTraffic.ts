@@ -67,29 +67,37 @@ export function useBulkInsertTrafficData() {
 }
 
 // Returns Map<spied_offer_id, latest_visits> for the selected traffic provider
+// Uses RPC get_latest_traffic_per_offer — DISTINCT ON in DB instead of fetching 87k+ records
 // provider="similarweb" -> period_type="monthly_sw" | provider="semrush" -> period_type="monthly"
 export function useLatestTrafficPerOffer(provider: 'similarweb' | 'semrush') {
   return useQuery({
     queryKey: ['latest-traffic-per-offer', provider],
     queryFn: async () => {
       const periodType = provider === 'similarweb' ? 'monthly_sw' : 'monthly';
-      const { data, error } = await supabase
-        .from('offer_traffic_data')
-        .select('spied_offer_id, visits, period_date')
-        .eq('period_type', periodType)
-        .order('period_date', { ascending: false });
+
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: member } = await supabase
+        .from('workspace_members')
+        .select('workspace_id')
+        .eq('user_id', user?.id ?? '')
+        .single();
+
+      if (!member?.workspace_id) throw new Error('Workspace not found');
+
+      const { data, error } = await supabase.rpc('get_latest_traffic_per_offer', {
+        p_workspace_id: member.workspace_id,
+        p_period_type: periodType,
+      });
 
       if (error) throw error;
 
-      // Keep the most recent record per offer (data is already ordered by period_date desc)
       const map = new Map<string, number>();
       for (const record of data || []) {
-        if (!map.has(record.spied_offer_id)) {
-          map.set(record.spied_offer_id, record.visits ?? 0);
-        }
+        map.set(record.spied_offer_id, record.visits ?? 0);
       }
       return map;
     },
+    staleTime: 5 * 60_000, // 5min — data doesn't change every minute
   });
 }
 
