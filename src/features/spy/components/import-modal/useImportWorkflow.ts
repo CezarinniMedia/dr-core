@@ -9,6 +9,7 @@ import {
   type CsvType,
 } from "@/shared/lib/csvClassifier";
 import { useCSVWorker } from "@/workers/useCSVWorker";
+import { useCreateImportJob, useUpdateImportJob } from "@/features/spy/hooks/useImportHistory";
 import {
   type FileEntry, type DomainMatchInfo, type ImportResult,
   ALL_TYPES, extractPeriodFromFilename, groupBy, findOfferForSubdomain,
@@ -18,6 +19,8 @@ export function useImportWorkflow() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { classifyFile, reprocessFile, filterFile } = useCSVWorker();
+  const createJob = useCreateImportJob();
+  const updateJob = useUpdateImportJob();
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [files, setFiles] = useState<FileEntry[]>([]);
@@ -382,8 +385,27 @@ export function useImportWorkflow() {
     let trafficCount = 0;
     const BATCH = 1000;
     const PARALLEL = 3;
+    let jobId: string | null = null;
 
     try {
+      // Track import job
+      const totalLines = files.reduce((s, f) => s + (f.processed.trafficRecords.length + f.processed.domains.length), 0);
+      const csvTypes = [...new Set(files.map(f => f.classified.type))].join(", ");
+      try {
+        jobId = await createJob.mutateAsync({
+          tipo: csvTypes || "unknown",
+          arquivo_nome: files.map(f => f.name).join(", "),
+          total_linhas: totalLines,
+          config: {
+            fileCount: files.length,
+            footprintQuery: footprintQuery || null,
+            csvTypes: files.map(f => ({ name: f.name, type: f.classified.type })),
+          },
+        });
+      } catch {
+        // Non-blocking: import continues even if job tracking fails
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       const { data: member } = await supabase
         .from("workspace_members")
@@ -609,8 +631,38 @@ export function useImportWorkflow() {
       queryClient.invalidateQueries({ queryKey: ["spied-offers"] });
       setStep(4);
       toast({ title: "Importação concluída" });
+
+      // Update job as completed
+      if (jobId) {
+        try {
+          await updateJob.mutateAsync({
+            id: jobId,
+            status: "completed",
+            linhas_importadas: trafficCount,
+            ofertas_novas_criadas: newOffers,
+            ofertas_existentes_atualizadas: updated,
+            dominios_novos: domainMatches.filter(m => !m.matched).length,
+            completed_at: new Date().toISOString(),
+          });
+        } catch {
+          // Non-blocking
+        }
+      }
     } catch (err: any) {
       toast({ title: "Erro na importação", description: err.message, variant: "destructive" });
+      // Update job as failed
+      if (jobId) {
+        try {
+          await updateJob.mutateAsync({
+            id: jobId,
+            status: "failed",
+            erro_mensagem: err.message,
+            completed_at: new Date().toISOString(),
+          });
+        } catch {
+          // Non-blocking
+        }
+      }
     } finally {
       setImporting(false);
       setProgressLabel("");
