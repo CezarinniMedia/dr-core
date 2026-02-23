@@ -147,9 +147,27 @@ export function useCreateSpiedOffer() {
         .eq('user_id', user?.id ?? '')
         .single();
 
+      const workspaceId = member?.workspace_id;
+
+      // Dedup check: if main_domain is provided, check if it already exists
+      const domain = typeof offer.main_domain === 'string' ? offer.main_domain.trim().toLowerCase() : null;
+      if (domain) {
+        const { data: existing } = await supabase
+          .from('spied_offers')
+          .select('id, nome')
+          .eq('workspace_id', workspaceId)
+          .ilike('main_domain', domain)
+          .limit(1)
+          .maybeSingle();
+
+        if (existing) {
+          throw new Error(`Domínio "${domain}" já existe no radar: "${existing.nome}"`);
+        }
+      }
+
       const { data, error } = await supabase
         .from('spied_offers')
-        .insert({ ...offer, workspace_id: member?.workspace_id } as any)
+        .insert({ ...offer, workspace_id: workspaceId } as any)
         .select()
         .single();
 
