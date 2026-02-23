@@ -156,6 +156,9 @@ export default function SpyRadar() {
     pageSize: pageSize === 'all' ? 10000 : parseInt(pageSize),
   });
 
+  const offers = paginatedResult?.data;
+  const totalOffers = paginatedResult?.totalCount ?? 0;
+
   const { data: latestTrafficMap } = useLatestTrafficPerOffer(trafficDataSource);
 
   const handleTrafficSourceChange = (src: 'similarweb' | 'semrush') => {

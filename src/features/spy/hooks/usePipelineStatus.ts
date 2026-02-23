@@ -18,11 +18,16 @@ export function usePipelineStatus() {
     queryKey: ["pipeline-status"],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_pipeline_status");
-      if (error) throw error;
+      // Graceful fallback: if RPC doesn't exist yet, return empty array
+      if (error) {
+        if (error.code === 'PGRST202') return [] as PipelineViewStatus[];
+        throw error;
+      }
       return (data ?? []) as PipelineViewStatus[];
     },
     staleTime: 60_000,
-    refetchInterval: 5 * 60_000, // Auto-refetch every 5 min
+    refetchInterval: 5 * 60_000,
+    retry: false,
   });
 }
 
@@ -32,7 +37,10 @@ export function useRefreshPipeline() {
   return useMutation({
     mutationFn: async () => {
       const { data, error } = await supabase.rpc("refresh_pipeline");
-      if (error) throw error;
+      if (error) {
+        if (error.code === 'PGRST202') return [] as PipelineRefreshResult[];
+        throw error;
+      }
       return (data ?? []) as PipelineRefreshResult[];
     },
     onSuccess: () => {

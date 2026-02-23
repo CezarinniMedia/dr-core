@@ -42,7 +42,7 @@ interface SpyOffersTableProps {
   // Selection
   selectedIds: Set<string>;
   setSelectedIds: React.Dispatch<React.SetStateAction<Set<string>>>;
-  // Pagination — server-side: totalCount comes from DB, page/pageSize control the RPC call
+  // Pagination — server-side: totalCount comes from DB
   totalCount?: number;
   pageSize: string;
   setPageSize: (v: string) => void;
@@ -73,7 +73,7 @@ export function SpyOffersTable({
   const [editingNotesId, setEditingNotesId] = useState<string | null>(null);
   const [notesValue, setNotesValue] = useState("");
 
-  // Pagination — server-side: offers already comes as a single page from the DB RPC
+  // Pagination — server-side: data already paginated, totalCount from DB
   const serverTotal = totalCount ?? offers?.length ?? 0;
   const isInfinite = pageSize === "all";
   const pageSizeNum = isInfinite ? serverTotal : parseInt(pageSize);
@@ -555,7 +555,7 @@ export function SpyOffersTable({
               {PAGE_SIZE_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
             </SelectContent>
           </Select>
-          <span className="text-xs text-muted-foreground">{totalOffers} oferta(s)</span>
+          <span className="text-xs text-muted-foreground">{serverTotal} oferta(s)</span>
         </div>
         {!isInfinite && totalPages > 1 && (
           <div className="flex items-center gap-2">

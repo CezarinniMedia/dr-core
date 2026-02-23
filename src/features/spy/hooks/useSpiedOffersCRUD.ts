@@ -62,11 +62,11 @@ export interface PaginatedOffer {
 
 export function useSpiedOffers(filters?: {
   status?: string;
+  statuses?: string[];
+  excludeStatuses?: string[];
   vertical?: string;
   discovery_source?: string;
   search?: string;
-  statuses?: string[];
-  excludeStatuses?: string[];
   page?: number;
   pageSize?: number;
 }) {
