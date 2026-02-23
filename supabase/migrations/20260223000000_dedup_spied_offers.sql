@@ -56,20 +56,45 @@ END $$;
 -- STEP 2: Mover offer_traffic_data
 -- Quando keeper E duplicata têm dados para o mesmo
 -- (domain, period_type, period_date), manter o MAIOR visits.
+-- Trata NULLs em visits e period_type corretamente.
+-- Trata 3+ duplicatas sem non-determinism.
 -- =====================================================
 
--- 2a: Atualizar keeper com visits da duplicata quando duplicata tem MAIS
+-- 2a: Atualizar keeper com MAX(visits) de todas as duplicatas quando maior
 UPDATE offer_traffic_data k
-SET visits = t.visits
-FROM offer_traffic_data t
-JOIN dedup_map d ON t.spied_offer_id = d.duplicate_id
-WHERE k.spied_offer_id = d.keeper_id
-  AND k.domain = t.domain
-  AND k.period_type = t.period_type
-  AND k.period_date = t.period_date
-  AND t.visits > k.visits;
+SET visits = best.max_visits
+FROM (
+  SELECT
+    d.keeper_id,
+    t.domain,
+    t.period_type,
+    t.period_date,
+    MAX(t.visits) AS max_visits
+  FROM offer_traffic_data t
+  JOIN dedup_map d ON t.spied_offer_id = d.duplicate_id
+  GROUP BY d.keeper_id, t.domain, t.period_type, t.period_date
+) best
+WHERE k.spied_offer_id = best.keeper_id
+  AND k.domain = best.domain
+  AND k.period_type IS NOT DISTINCT FROM best.period_type
+  AND k.period_date = best.period_date
+  AND COALESCE(best.max_visits, 0) > COALESCE(k.visits, 0);
 
--- 2b: Deletar registros conflitantes da duplicata (keeper já tem o melhor valor)
+-- 2b: Entre duplicatas com mesma chave (sem keeper), manter apenas o de maior visits
+--     Previne UNIQUE violation quando múltiplas duplicatas compartilham mesma chave
+--     e o keeper NÃO tem registro para essa chave.
+DELETE FROM offer_traffic_data t
+WHERE t.spied_offer_id IN (SELECT duplicate_id FROM dedup_map)
+  AND t.id NOT IN (
+    SELECT DISTINCT ON (d.keeper_id, sub.domain, sub.period_type, sub.period_date) sub.id
+    FROM offer_traffic_data sub
+    JOIN dedup_map d ON sub.spied_offer_id = d.duplicate_id
+    ORDER BY d.keeper_id, sub.domain, sub.period_type, sub.period_date,
+             COALESCE(sub.visits, 0) DESC, sub.created_at ASC
+  );
+
+-- 2c: Deletar registros de duplicatas que conflitam com o keeper
+--     (keeper já tem o melhor valor após 2a)
 DELETE FROM offer_traffic_data t
 USING dedup_map d
 WHERE t.spied_offer_id = d.duplicate_id
@@ -77,11 +102,11 @@ WHERE t.spied_offer_id = d.duplicate_id
     SELECT 1 FROM offer_traffic_data k
     WHERE k.spied_offer_id = d.keeper_id
       AND k.domain = t.domain
-      AND k.period_type = t.period_type
+      AND k.period_type IS NOT DISTINCT FROM t.period_type
       AND k.period_date = t.period_date
   );
 
--- 2c: Reatribuir registros restantes (sem conflito) ao keeper
+-- 2d: Reatribuir registros restantes (sem conflito) ao keeper
 UPDATE offer_traffic_data t
 SET spied_offer_id = d.keeper_id
 FROM dedup_map d
