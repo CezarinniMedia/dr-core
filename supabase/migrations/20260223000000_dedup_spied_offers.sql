@@ -54,9 +54,22 @@ END $$;
 
 -- =====================================================
 -- STEP 2: Mover offer_traffic_data
--- Primeiro: deletar registros que conflitariam com o keeper
--- (mesma combinação spied_offer_id+domain+period_type+period_date)
+-- Quando keeper E duplicata têm dados para o mesmo
+-- (domain, period_type, period_date), manter o MAIOR visits.
 -- =====================================================
+
+-- 2a: Atualizar keeper com visits da duplicata quando duplicata tem MAIS
+UPDATE offer_traffic_data k
+SET visits = t.visits
+FROM offer_traffic_data t
+JOIN dedup_map d ON t.spied_offer_id = d.duplicate_id
+WHERE k.spied_offer_id = d.keeper_id
+  AND k.domain = t.domain
+  AND k.period_type = t.period_type
+  AND k.period_date = t.period_date
+  AND t.visits > k.visits;
+
+-- 2b: Deletar registros conflitantes da duplicata (keeper já tem o melhor valor)
 DELETE FROM offer_traffic_data t
 USING dedup_map d
 WHERE t.spied_offer_id = d.duplicate_id
@@ -68,7 +81,7 @@ WHERE t.spied_offer_id = d.duplicate_id
       AND k.period_date = t.period_date
   );
 
--- Reatribuir registros restantes ao keeper
+-- 2c: Reatribuir registros restantes (sem conflito) ao keeper
 UPDATE offer_traffic_data t
 SET spied_offer_id = d.keeper_id
 FROM dedup_map d
