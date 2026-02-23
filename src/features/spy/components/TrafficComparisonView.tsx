@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
-import { useSpiedOffers } from "@/features/spy/hooks/useSpiedOffers";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { fetchAllOffersLite } from "@/features/spy/components/traffic-intel/types";
 import { TrafficChart } from "@/features/spy/components/TrafficChart";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
@@ -23,8 +23,13 @@ const STATUS_BADGE: Record<string, { label: React.ReactNode; className: string }
 export function TrafficComparisonView() {
   const [selectedOfferIds, setSelectedOfferIds] = useState<string[]>([]);
   const [period, setPeriod] = useState("6");
-  const { data: offersResult } = useSpiedOffers({ pageSize: 10000 });
-  const allOffers = offersResult?.data;
+
+  // Batch-paginated fetch of ALL offers (lightweight fields only)
+  const { data: allOffers } = useQuery({
+    queryKey: ["all-offers-lite"],
+    queryFn: fetchAllOffersLite,
+    staleTime: 5 * 60 * 1000,
+  });
 
   // Fetch traffic data for all selected offers
   const { data: trafficData } = useQuery({

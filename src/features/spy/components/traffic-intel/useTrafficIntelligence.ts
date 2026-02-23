@@ -1,5 +1,4 @@
 import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
-import { useSpiedOffers } from "@/features/spy/hooks/useSpiedOffers";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/shared/hooks/use-toast";
@@ -8,40 +7,18 @@ import {
   updateOfferStatus, bulkUpdateStatus,
   type OfferTrafficRow, type SortField, type SortDir,
 } from "@/shared/services";
-import { loadColumns, LS_KEY_COLUMNS, LS_KEY_PAGE_SIZE, LS_KEY_TRAFFIC_SOURCE } from "./types";
-
-// Helper: get workspace_id from authenticated user
-async function getWorkspaceId(): Promise<string> {
-  const { data: { user } } = await supabase.auth.getUser();
-  const { data: member } = await supabase
-    .from('workspace_members')
-    .select('workspace_id')
-    .eq('user_id', user?.id ?? '')
-    .single();
-  if (!member?.workspace_id) throw new Error('Workspace not found');
-  return member.workspace_id;
-}
-
-interface TrafficSummaryRow {
-  spied_offer_id: string;
-  total_visits: number;
-  peak_visits: number;
-  avg_visits: number;
-  latest_visits: number;
-  previous_visits: number;
-  data_points: number;
-  domain_count: number;
-  earliest_period: string | null;
-  latest_period: string | null;
-}
+import { fetchAllOffersLite, fetchAllTrafficRows, loadColumns, LS_KEY_COLUMNS, LS_KEY_PAGE_SIZE, LS_KEY_TRAFFIC_SOURCE } from "./types";
 
 export function useTrafficIntelligence() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Load ALL offers (large page) — we need names/status for each row
-  const { data: offersResult } = useSpiedOffers({ pageSize: 10000 });
-  const allOffers = offersResult?.data;
+  // Batch-paginated fetch of ALL offers (lightweight fields only)
+  const { data: allOffers } = useQuery({
+    queryKey: ["all-offers-lite"],
+    queryFn: fetchAllOffersLite,
+    staleTime: 5 * 60 * 1000,
+  });
 
   // Traffic data source
   const [trafficDataSource, setTrafficDataSource] = useState<'similarweb' | 'semrush'>(() => {
