@@ -156,7 +156,7 @@ export function useCreateSpiedOffer() {
           .from('spied_offers')
           .select('id, nome')
           .eq('workspace_id', workspaceId)
-          .ilike('main_domain', domain)
+          .eq('main_domain', domain)
           .limit(1)
           .maybeSingle();
 
