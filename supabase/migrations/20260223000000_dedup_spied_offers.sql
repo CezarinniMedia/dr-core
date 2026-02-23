@@ -184,7 +184,16 @@ USING dedup_map d
 WHERE s.id = d.duplicate_id;
 
 -- =====================================================
--- STEP 9: Adicionar UNIQUE constraint (case-insensitive)
+-- STEP 9: Normalizar main_domain para lowercase
+-- Garante que .in() case-sensitive no app funcione
+-- =====================================================
+UPDATE spied_offers
+SET main_domain = LOWER(TRIM(main_domain))
+WHERE main_domain IS NOT NULL
+  AND main_domain <> LOWER(TRIM(main_domain));
+
+-- =====================================================
+-- STEP 10: Adicionar UNIQUE constraint (case-insensitive)
 -- Previne futuras duplicatas por workspace + domínio
 -- =====================================================
 CREATE UNIQUE INDEX IF NOT EXISTS idx_spied_offers_unique_domain
@@ -192,7 +201,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_spied_offers_unique_domain
   WHERE main_domain IS NOT NULL AND TRIM(main_domain) <> '';
 
 -- =====================================================
--- STEP 10: Resumo final
+-- STEP 11: Resumo final
 -- =====================================================
 DO $$
 DECLARE

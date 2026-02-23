@@ -156,7 +156,7 @@ export function useCreateSpiedOffer() {
           .from('spied_offers')
           .select('id, nome')
           .eq('workspace_id', workspaceId)
-          .eq('main_domain', domain)
+          .ilike('main_domain', domain.replace(/[%_\\]/g, '\\$&'))
           .limit(1)
           .maybeSingle();
 
