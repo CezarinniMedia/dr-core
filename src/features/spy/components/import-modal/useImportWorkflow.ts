@@ -279,7 +279,7 @@ export function useImportWorkflow() {
           .select("id, nome, main_domain")
           .in("main_domain", chunk);
         for (const offer of data || []) {
-          offersByMainDomain.set(offer.main_domain, { id: offer.id, nome: offer.nome });
+          offersByMainDomain.set(offer.main_domain.toLowerCase(), { id: offer.id, nome: offer.nome });
         }
       }
 
@@ -291,7 +291,7 @@ export function useImportWorkflow() {
           .select("domain, spied_offer_id")
           .in("domain", chunk);
         for (const od of data || []) {
-          offerDomainLookup.set(od.domain, od.spied_offer_id);
+          offerDomainLookup.set(od.domain.toLowerCase(), od.spied_offer_id);
         }
       }
 

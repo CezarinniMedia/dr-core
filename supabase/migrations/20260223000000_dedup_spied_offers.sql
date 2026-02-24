@@ -6,8 +6,6 @@
 -- Projeto: iaffbkzmckgvrfmlybsr (Lovable)
 -- =====================================================
 
-BEGIN;
-
 -- =====================================================
 -- STEP 1: Mapear duplicatas → keeper (mais antigo por workspace+domain)
 -- =====================================================
@@ -177,6 +175,36 @@ FROM dedup_map d
 WHERE o.spied_offer_id = d.duplicate_id;
 
 -- =====================================================
+-- STEP 7.5: Verificação de segurança antes do DELETE
+-- =====================================================
+DO $$
+DECLARE
+  orphan_traffic INT;
+  orphan_domains INT;
+  orphan_libraries INT;
+  orphan_funnels INT;
+  orphan_creatives INT;
+BEGIN
+  SELECT COUNT(*) INTO orphan_traffic FROM offer_traffic_data WHERE spied_offer_id IN (SELECT duplicate_id FROM dedup_map);
+  SELECT COUNT(*) INTO orphan_domains FROM offer_domains WHERE spied_offer_id IN (SELECT duplicate_id FROM dedup_map);
+  SELECT COUNT(*) INTO orphan_libraries FROM offer_ad_libraries WHERE spied_offer_id IN (SELECT duplicate_id FROM dedup_map);
+  SELECT COUNT(*) INTO orphan_funnels FROM offer_funnel_steps WHERE spied_offer_id IN (SELECT duplicate_id FROM dedup_map);
+  SELECT COUNT(*) INTO orphan_creatives FROM ad_creatives WHERE spied_offer_id IN (SELECT duplicate_id FROM dedup_map);
+
+  RAISE NOTICE '>>> Verificação pré-DELETE:';
+  RAISE NOTICE '>>>   traffic_data ainda em duplicatas: %', orphan_traffic;
+  RAISE NOTICE '>>>   domains ainda em duplicatas: %', orphan_domains;
+  RAISE NOTICE '>>>   libraries ainda em duplicatas: %', orphan_libraries;
+  RAISE NOTICE '>>>   funnels ainda em duplicatas: %', orphan_funnels;
+  RAISE NOTICE '>>>   creatives ainda em duplicatas: %', orphan_creatives;
+
+  IF orphan_traffic > 0 OR orphan_domains > 0 OR orphan_libraries > 0 OR orphan_funnels > 0 OR orphan_creatives > 0 THEN
+    RAISE EXCEPTION '>>> ABORTANDO: % registros órfãos seriam perdidos via CASCADE. Investigue antes de prosseguir.',
+      orphan_traffic + orphan_domains + orphan_libraries + orphan_funnels + orphan_creatives;
+  END IF;
+END $$;
+
+-- =====================================================
 -- STEP 8: Deletar ofertas duplicadas
 -- =====================================================
 DELETE FROM spied_offers s
@@ -217,5 +245,3 @@ BEGIN
 END $$;
 
 DROP TABLE dedup_map;
-
-COMMIT;

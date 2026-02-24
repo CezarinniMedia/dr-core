@@ -43,6 +43,12 @@ CREATE POLICY "Users can manage their workspace saved views"
     )
   );
 
+-- Trigger para atualizar updated_at automaticamente
+CREATE TRIGGER update_saved_views_updated_at
+  BEFORE UPDATE ON saved_views
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
 -- Only one default per module per workspace
 CREATE UNIQUE INDEX idx_saved_views_default
   ON saved_views(workspace_id, module)

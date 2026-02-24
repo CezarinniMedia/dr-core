@@ -3,16 +3,29 @@ import { waitFor } from "@testing-library/react";
 import { renderHookWithQuery } from "@/test/test-utils";
 
 // ─── Hoisted Supabase mock ───
-const { mockFrom, mockGetUser, mockRpc, mockSingle, mockInsert, mockUpdate, mockDeleteEq } = vi.hoisted(() => {
+const {
+  mockFrom, mockGetUser, mockRpc, mockSingle, mockMaybeSingle,
+  mockInsert, mockUpdate, mockDeleteEq,
+  mockSelect, mockEq, mockOrder, mockRange, mockOr, mockLimit, mockIlike,
+} = vi.hoisted(() => {
   const mockSingle = vi.fn();
+  const mockMaybeSingle = vi.fn();
+  const mockLimit = vi.fn(() => ({ maybeSingle: mockMaybeSingle }));
+  const mockIlike = vi.fn(() => ({ limit: mockLimit, maybeSingle: mockMaybeSingle }));
   const mockSelect = vi.fn().mockReturnThis();
   const mockOrder = vi.fn().mockReturnThis();
   const mockRange = vi.fn();
   const mockOr = vi.fn(() => ({ range: mockRange }));
-  const mockEq = vi.fn(() => ({ single: mockSingle, select: mockSelect, order: mockOrder }));
+  const mockEq = vi.fn(() => ({
+    single: mockSingle, select: mockSelect, order: mockOrder,
+    ilike: mockIlike, limit: mockLimit, maybeSingle: mockMaybeSingle,
+  }));
 
   // Wire up chain
-  mockSelect.mockReturnValue({ eq: mockEq, order: mockOrder, range: mockRange, or: mockOr, single: mockSingle });
+  mockSelect.mockReturnValue({
+    eq: mockEq, order: mockOrder, range: mockRange, or: mockOr,
+    single: mockSingle, ilike: mockIlike, limit: mockLimit, maybeSingle: mockMaybeSingle,
+  });
   mockOrder.mockReturnValue({ range: mockRange, eq: mockEq, or: mockOr });
 
   const mockInsert = vi.fn(() => ({ select: mockSelect }));
@@ -31,8 +44,42 @@ const { mockFrom, mockGetUser, mockRpc, mockSingle, mockInsert, mockUpdate, mock
     data: { user: { id: "user-123" } },
   });
 
-  return { mockFrom, mockGetUser, mockRpc, mockRange, mockSingle, mockInsert, mockUpdate, mockDeleteEq };
+  return {
+    mockFrom, mockGetUser, mockRpc, mockRange, mockSingle, mockMaybeSingle,
+    mockInsert, mockUpdate, mockDeleteEq, mockSelect, mockEq,
+    mockOrder, mockOr, mockLimit, mockIlike,
+  };
 });
+
+// Helper: re-wire mock chain after resetAllMocks clears return values
+function wireUpMocks() {
+  const chainFromSelect = {
+    eq: mockEq, order: mockOrder, range: mockRange, or: mockOr,
+    single: mockSingle, ilike: mockIlike, limit: mockLimit, maybeSingle: mockMaybeSingle,
+  };
+  mockSelect.mockReturnValue(chainFromSelect);
+  mockOrder.mockReturnValue({ range: mockRange, eq: mockEq, or: mockOr });
+  mockEq.mockReturnValue({
+    single: mockSingle, select: mockSelect, order: mockOrder,
+    ilike: mockIlike, limit: mockLimit, maybeSingle: mockMaybeSingle,
+  });
+  mockIlike.mockReturnValue({ limit: mockLimit, maybeSingle: mockMaybeSingle });
+  mockLimit.mockReturnValue({ maybeSingle: mockMaybeSingle });
+
+  mockInsert.mockReturnValue({ select: mockSelect });
+  mockUpdate.mockReturnValue({ eq: mockEq });
+
+  mockFrom.mockReturnValue({
+    select: mockSelect,
+    insert: mockInsert,
+    update: mockUpdate,
+    delete: vi.fn(() => ({ eq: mockDeleteEq })),
+  });
+
+  mockGetUser.mockResolvedValue({
+    data: { user: { id: "user-123" } },
+  });
+}
 
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
@@ -55,7 +102,10 @@ import {
 } from "@/features/spy/hooks/useSpiedOffersCRUD";
 
 describe("useSpiedOffers", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.resetAllMocks();
+    wireUpMocks();
+  });
 
   it("executa RPC get_spied_offers_paginated", async () => {
     // Mock workspace_members lookup
@@ -84,7 +134,10 @@ describe("useSpiedOffers", () => {
 });
 
 describe("useSpiedOffer", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.resetAllMocks();
+    wireUpMocks();
+  });
 
   it("query key contem offer id", async () => {
     const { result } = renderHookWithQuery(() => useSpiedOffer("offer-1"));
@@ -101,7 +154,10 @@ describe("useSpiedOffer", () => {
 });
 
 describe("useCreateSpiedOffer", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.resetAllMocks();
+    wireUpMocks();
+  });
 
   it("retorna mutation com mutateAsync", () => {
     const { result } = renderHookWithQuery(() => useCreateSpiedOffer());
@@ -110,10 +166,12 @@ describe("useCreateSpiedOffer", () => {
   });
 
   it("chama insert na tabela spied_offers com workspace_id", async () => {
-    // workspace_members lookup → insert result
+    // workspace_members lookup -> dedup check (maybeSingle returns null) -> insert result
     mockSingle
-      .mockResolvedValueOnce({ data: { workspace_id: "ws-1" } })
-      .mockResolvedValueOnce({ data: { id: "new-1", nome: "Test Offer" }, error: null });
+      .mockResolvedValueOnce({ data: { workspace_id: "ws-1" } })   // workspace_members .single()
+      .mockResolvedValueOnce({ data: { id: "new-1", nome: "Test Offer" }, error: null });  // insert .select().single()
+    mockMaybeSingle
+      .mockResolvedValueOnce({ data: null });  // dedup check returns no existing offer
 
     const { result } = renderHookWithQuery(() => useCreateSpiedOffer());
 
@@ -131,8 +189,10 @@ describe("useCreateSpiedOffer", () => {
 
   it("propaga erro quando insert falha", async () => {
     mockSingle
-      .mockResolvedValueOnce({ data: { workspace_id: "ws-1" } })
-      .mockResolvedValueOnce({ data: null, error: { message: "RLS policy violation" } });
+      .mockResolvedValueOnce({ data: { workspace_id: "ws-1" } })   // workspace_members .single()
+      .mockResolvedValueOnce({ data: null, error: { message: "RLS policy violation" } });  // insert .select().single()
+    mockMaybeSingle
+      .mockResolvedValueOnce({ data: null });  // dedup check returns no existing offer
 
     const { result } = renderHookWithQuery(() => useCreateSpiedOffer());
 
@@ -143,7 +203,10 @@ describe("useCreateSpiedOffer", () => {
 });
 
 describe("useUpdateSpiedOffer", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.resetAllMocks();
+    wireUpMocks();
+  });
 
   it("retorna mutation com mutateAsync", () => {
     const { result } = renderHookWithQuery(() => useUpdateSpiedOffer());
@@ -182,7 +245,10 @@ describe("useUpdateSpiedOffer", () => {
 });
 
 describe("useDeleteSpiedOffer", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.resetAllMocks();
+    wireUpMocks();
+  });
 
   it("retorna mutation com mutateAsync", () => {
     const { result } = renderHookWithQuery(() => useDeleteSpiedOffer());
