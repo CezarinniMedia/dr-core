@@ -11,9 +11,9 @@
 --   3. Missing FK indexes on subquery tables cause nested loop scans
 --
 -- Solution:
---   1. Replace correlated subqueries with a single CTE that pre-aggregates all counts
+--   1. Replace correlated subqueries with 4 GROUP BY CTEs (true set-based aggregation)
 --   2. Add a GIN-indexed tsvector generated column for full-text search
---      with ILIKE fallback for partial/fuzzy matches
+--      (FTS only — no ILIKE fallback that would force sequential scan)
 --   3. Add explicit FK indexes on all relation tables (idempotent)
 --
 -- Expected impact:
@@ -81,9 +81,9 @@ CREATE INDEX IF NOT EXISTS idx_spied_offers_workspace_updated
 -- PART 4: Optimized get_spied_offers_paginated RPC
 -- ============================================
 -- Changes from previous version:
---   1. CTE 'relation_counts' pre-aggregates all 4 counts in a single pass
---      instead of 4 correlated subqueries per row
---   2. Full-text search via search_vector @@ plainto_tsquery with ILIKE fallback
+--   1. 4 separate GROUP BY CTEs replace correlated subqueries (true set-based, no N+1)
+--   2. Full-text search via search_vector @@ plainto_tsquery (no ILIKE fallback —
+--      ILIKE with % prefix forces seq scan and negates the GIN index benefit)
 --   3. Same function signature — backward compatible (same params + return type)
 
 CREATE OR REPLACE FUNCTION public.get_spied_offers_paginated(
@@ -146,7 +146,7 @@ BEGIN
 
   -- -----------------------------------------------
   -- Total count with filters (for pagination metadata)
-  -- Uses FTS when available, ILIKE as fallback for partial matches
+  -- FTS only — no ILIKE fallback (% prefix forces seq scan, negating GIN)
   -- -----------------------------------------------
   SELECT COUNT(*) INTO v_total
   FROM spied_offers so
@@ -158,41 +158,34 @@ BEGIN
     AND (
       p_search IS NULL
       OR p_search = ''
-      -- Try FTS first (uses GIN index), fall back to ILIKE for partial matches
       OR so.search_vector @@ v_tsquery
-      OR so.nome ILIKE '%' || p_search || '%'
-      OR so.main_domain ILIKE '%' || p_search || '%'
-      OR so.product_name ILIKE '%' || p_search || '%'
     );
 
   -- -----------------------------------------------
-  -- Main query with CTE-based relation counts
+  -- Main query with 4 GROUP BY CTEs for relation counts
+  -- Each CTE scans its table ONCE with GROUP BY (true set-based, no N+1)
   -- -----------------------------------------------
   RETURN QUERY
   WITH
-  -- Pre-aggregate all relation counts in a single CTE
-  -- This runs once instead of 4 correlated subqueries * N rows
-  relation_counts AS (
-    SELECT
-      rc_so.id AS offer_id,
-      COALESCE(od.cnt, 0) AS domain_count,
-      COALESCE(oal.cnt, 0) AS ad_library_count,
-      COALESCE(ofs.cnt, 0) AS funnel_step_count,
-      COALESCE(ac.cnt, 0) AS creative_count
-    FROM spied_offers rc_so
-    LEFT JOIN LATERAL (
-      SELECT COUNT(*) AS cnt FROM offer_domains WHERE spied_offer_id = rc_so.id
-    ) od ON true
-    LEFT JOIN LATERAL (
-      SELECT COUNT(*) AS cnt FROM offer_ad_libraries WHERE spied_offer_id = rc_so.id
-    ) oal ON true
-    LEFT JOIN LATERAL (
-      SELECT COUNT(*) AS cnt FROM offer_funnel_steps WHERE spied_offer_id = rc_so.id
-    ) ofs ON true
-    LEFT JOIN LATERAL (
-      SELECT COUNT(*) AS cnt FROM ad_creatives WHERE spied_offer_id = rc_so.id
-    ) ac ON true
-    WHERE rc_so.workspace_id = p_workspace_id
+  dc AS (
+    SELECT spied_offer_id, COUNT(*) AS cnt
+    FROM offer_domains
+    GROUP BY spied_offer_id
+  ),
+  alc AS (
+    SELECT spied_offer_id, COUNT(*) AS cnt
+    FROM offer_ad_libraries
+    GROUP BY spied_offer_id
+  ),
+  fsc AS (
+    SELECT spied_offer_id, COUNT(*) AS cnt
+    FROM offer_funnel_steps
+    GROUP BY spied_offer_id
+  ),
+  acc AS (
+    SELECT spied_offer_id, COUNT(*) AS cnt
+    FROM ad_creatives
+    GROUP BY spied_offer_id
   )
   SELECT
     so.id,
@@ -220,13 +213,16 @@ BEGIN
     so.discovery_query,
     so.created_at,
     so.updated_at,
-    rc.domain_count,
-    rc.ad_library_count,
-    rc.funnel_step_count,
-    rc.creative_count,
+    COALESCE(dc.cnt, 0) AS domain_count,
+    COALESCE(alc.cnt, 0) AS ad_library_count,
+    COALESCE(fsc.cnt, 0) AS funnel_step_count,
+    COALESCE(acc.cnt, 0) AS creative_count,
     v_total AS total_count
   FROM spied_offers so
-  INNER JOIN relation_counts rc ON rc.offer_id = so.id
+  LEFT JOIN dc ON dc.spied_offer_id = so.id
+  LEFT JOIN alc ON alc.spied_offer_id = so.id
+  LEFT JOIN fsc ON fsc.spied_offer_id = so.id
+  LEFT JOIN acc ON acc.spied_offer_id = so.id
   WHERE so.workspace_id = p_workspace_id
     AND (p_statuses IS NULL OR so.status = ANY(p_statuses))
     AND (p_exclude_statuses IS NULL OR so.status != ALL(p_exclude_statuses))
@@ -236,9 +232,6 @@ BEGIN
       p_search IS NULL
       OR p_search = ''
       OR so.search_vector @@ v_tsquery
-      OR so.nome ILIKE '%' || p_search || '%'
-      OR so.main_domain ILIKE '%' || p_search || '%'
-      OR so.product_name ILIKE '%' || p_search || '%'
     )
   ORDER BY
     CASE WHEN p_sort_column = 'updated_at' AND p_sort_direction = 'desc' THEN so.updated_at END DESC NULLS LAST,
