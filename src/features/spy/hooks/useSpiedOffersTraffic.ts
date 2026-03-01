@@ -67,26 +67,33 @@ export function useBulkInsertTrafficData() {
 }
 
 // Returns Map<spied_offer_id, latest_visits> for the selected traffic provider
-// provider="similarweb" -> period_type="monthly_sw" | provider="semrush" -> period_type="monthly"
+// Uses get_latest_traffic_per_offer RPC (DISTINCT ON server-side)
 export function useLatestTrafficPerOffer(provider: 'similarweb' | 'semrush') {
   return useQuery({
     queryKey: ['latest-traffic-per-offer', provider],
     queryFn: async () => {
       const periodType = provider === 'similarweb' ? 'monthly_sw' : 'monthly';
-      const { data, error } = await supabase
-        .from('offer_traffic_data')
-        .select('spied_offer_id, visits, period_date')
-        .eq('period_type', periodType)
-        .order('period_date', { ascending: false });
+
+      // Get workspace_id
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: member } = await supabase
+        .from('workspace_members')
+        .select('workspace_id')
+        .eq('user_id', user?.id ?? '')
+        .single();
+
+      if (!member?.workspace_id) return new Map<string, number>();
+
+      const { data, error } = await supabase.rpc('get_latest_traffic_per_offer', {
+        p_workspace_id: member.workspace_id,
+        p_period_type: periodType,
+      });
 
       if (error) throw error;
 
-      // Keep the most recent record per offer (data is already ordered by period_date desc)
       const map = new Map<string, number>();
       for (const record of data || []) {
-        if (!map.has(record.spied_offer_id)) {
-          map.set(record.spied_offer_id, record.visits ?? 0);
-        }
+        map.set(record.spied_offer_id, record.visits ?? 0);
       }
       return map;
     },
@@ -128,8 +135,6 @@ export function useDeleteTrafficData() {
 
 // ============================================
 // MATERIALIZED VIEW: Traffic Summary (Phase 3)
-// Pre-calculado via mv_traffic_summary → backward-compat view mv_offer_traffic_summary
-// Refresh automatico a cada 6h via pg_cron
 // ============================================
 
 export type OfferTrafficSummary = {
@@ -157,6 +162,6 @@ export function useOfferTrafficSummary(offerId: string) {
       return data;
     },
     enabled: !!offerId,
-    staleTime: 6 * 60 * 60_000, // 6h — alinhado com refresh da mv_traffic_summary (Phase 3)
+    staleTime: 6 * 60 * 60_000,
   });
 }
