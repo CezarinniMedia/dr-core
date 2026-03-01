@@ -146,18 +146,25 @@ export default function SpyRadar() {
   };
 
   // Server-side paginated query — all filtering + pagination happens in the DB
-  const { data: paginatedResult, isLoading, isError, refetch } = useSpiedOffers({
+  const { data: paginatedResult, isLoading, isError, error: spyError, refetch } = useSpiedOffers({
     vertical: vertical || undefined,
     discovery_source: source || undefined,
     search: search || undefined,
     statuses: statusFilter.size > 0 ? [...statusFilter] : undefined,
     excludeStatuses: !showArchived ? ['VAULT'] : undefined,
     page: currentPage,
-    pageSize: pageSize === 'all' ? 10000 : parseInt(pageSize),
+    pageSize: pageSize === 'all' ? 500 : parseInt(pageSize),
   });
 
   const offers = paginatedResult?.data as PaginatedOffer[] | undefined;
   const totalOffers = paginatedResult?.totalCount ?? 0;
+
+  // Log errors for debugging — surfaces the actual failure reason in console
+  useEffect(() => {
+    if (spyError) {
+      console.error('[SpyRadar] Error loading offers:', spyError);
+    }
+  }, [spyError]);
 
   const { data: latestTrafficMap } = useLatestTrafficPerOffer(trafficDataSource);
 
@@ -292,7 +299,7 @@ export default function SpyRadar() {
                 </div>
               </div>
             ) : isError ? (
-              <ErrorState message="Erro ao carregar ofertas espionadas." onRetry={() => refetch()} />
+              <ErrorState message={spyError instanceof Error ? spyError.message : "Erro ao carregar ofertas espionadas."} onRetry={() => refetch()} />
             ) : !offers || offers.length === 0 ? (
               <EmptyState
                 icon={Radio}

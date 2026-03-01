@@ -6,13 +6,20 @@ import { useToast } from '@/shared/hooks/use-toast';
 // Helper: get workspace_id from authenticated user
 // ============================================
 async function getWorkspaceId(): Promise<string> {
-  const { data: { user } } = await supabase.auth.getUser();
-  const { data: member } = await supabase
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user?.id) {
+    console.error('[SpyRadar] Auth error:', authError?.message ?? 'User not authenticated');
+    throw new Error('Usuário não autenticado');
+  }
+  const { data: member, error: memberError } = await supabase
     .from('workspace_members')
     .select('workspace_id')
-    .eq('user_id', user?.id ?? '')
+    .eq('user_id', user.id)
     .single();
-  if (!member?.workspace_id) throw new Error('Workspace not found');
+  if (memberError || !member?.workspace_id) {
+    console.error('[SpyRadar] Workspace error:', memberError?.message ?? 'No workspace found');
+    throw new Error('Workspace não encontrado para este usuário');
+  }
   return member.workspace_id;
 }
 
@@ -97,7 +104,10 @@ export function useSpiedOffers(filters?: {
         p_search: filters?.search || null,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[SpyRadar] RPC error:', error.message, { page, pageSize, filters });
+        throw new Error(`Falha ao buscar ofertas: ${error.message}`);
+      }
 
       const rows = (data || []) as PaginatedOffer[];
       const totalCount = rows.length > 0 ? Number(rows[0].total_count) : 0;
@@ -106,6 +116,8 @@ export function useSpiedOffers(filters?: {
     },
     placeholderData: keepPreviousData,
     staleTime: 2 * 60_000, // 2min
+    retry: 1, // Only 1 retry instead of default 3 — avoids compounding timeouts
+    retryDelay: 1000,
   });
 }
 
