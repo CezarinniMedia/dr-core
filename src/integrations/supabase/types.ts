@@ -1829,6 +1829,7 @@ export type Database = {
           product_name: string | null
           product_promise: string | null
           product_ticket: number | null
+          search_vector: unknown
           status: string | null
           subnicho: string | null
           traffic_trend: string | null
@@ -1863,6 +1864,7 @@ export type Database = {
           product_name?: string | null
           product_promise?: string | null
           product_ticket?: number | null
+          search_vector?: unknown
           status?: string | null
           subnicho?: string | null
           traffic_trend?: string | null
@@ -1897,6 +1899,7 @@ export type Database = {
           product_name?: string | null
           product_promise?: string | null
           product_ticket?: number | null
+          search_vector?: unknown
           status?: string | null
           subnicho?: string | null
           traffic_trend?: string | null
@@ -2108,6 +2111,52 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_spied_offers_paginated: {
+        Args: {
+          p_discovery_source?: string
+          p_exclude_statuses?: string[]
+          p_limit?: number
+          p_offset?: number
+          p_search?: string
+          p_sort_column?: string
+          p_sort_direction?: string
+          p_statuses?: string[]
+          p_vertical?: string
+          p_workspace_id: string
+        }
+        Returns: {
+          ad_library_count: number
+          checkout_provider: string
+          created_at: string
+          creative_count: number
+          discovered_at: string
+          discovery_query: string
+          discovery_source: string
+          domain_count: number
+          estimated_monthly_revenue: number
+          estimated_monthly_traffic: number
+          funnel_step_count: number
+          geo: string
+          id: string
+          main_domain: string
+          nome: string
+          notas: string
+          operator_name: string
+          priority: number
+          product_currency: string
+          product_name: string
+          product_promise: string
+          product_ticket: number
+          screenshot_url: string
+          status: string
+          subnicho: string
+          total_count: number
+          traffic_trend: string
+          updated_at: string
+          vertical: string
+          vsl_player: string
+        }[]
+      }
       is_oferta_workspace_member: {
         Args: { _oferta_id: string; _user_id: string }
         Returns: boolean
