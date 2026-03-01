@@ -1829,6 +1829,7 @@ export type Database = {
           product_name: string | null
           product_promise: string | null
           product_ticket: number | null
+          screenshot_url: string | null
           search_vector: unknown
           status: string | null
           subnicho: string | null
@@ -1864,6 +1865,7 @@ export type Database = {
           product_name?: string | null
           product_promise?: string | null
           product_ticket?: number | null
+          screenshot_url?: string | null
           search_vector?: unknown
           status?: string | null
           subnicho?: string | null
@@ -1899,6 +1901,7 @@ export type Database = {
           product_name?: string | null
           product_promise?: string | null
           product_ticket?: number | null
+          screenshot_url?: string | null
           search_vector?: unknown
           status?: string | null
           subnicho?: string | null
