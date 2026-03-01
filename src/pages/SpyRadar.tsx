@@ -156,7 +156,7 @@ export default function SpyRadar() {
     pageSize: pageSize === 'all' ? 10000 : parseInt(pageSize),
   });
 
-  const offers = paginatedResult?.data;
+  const offers = paginatedResult?.data as PaginatedOffer[] | undefined;
   const totalOffers = paginatedResult?.totalCount ?? 0;
 
   const { data: latestTrafficMap } = useLatestTrafficPerOffer(trafficDataSource);
@@ -165,9 +165,6 @@ export default function SpyRadar() {
     setTrafficDataSource(src);
     localStorage.setItem(LS_KEY_TRAFFIC_SOURCE, src);
   };
-
-  const offers = paginatedResult?.data as PaginatedOffer[] | undefined;
-  const totalOffers = paginatedResult?.totalCount ?? 0;
 
   const handleFilterChange = useCallback(() => {
     setActiveViewId(null);
