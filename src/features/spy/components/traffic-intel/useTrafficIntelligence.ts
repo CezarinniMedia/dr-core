@@ -7,33 +7,7 @@ import {
   updateOfferStatus, bulkUpdateStatus,
   type OfferTrafficRow, type SortField, type SortDir,
 } from "@/shared/services";
-import { fetchAllOffersLite, loadColumns, LS_KEY_COLUMNS, LS_KEY_PAGE_SIZE, LS_KEY_TRAFFIC_SOURCE } from "./types";
-
-// Summary row from get_traffic_intel_summary RPC (materialized view)
-interface TrafficSummaryRow {
-  spied_offer_id: string;
-  total_visits: number;
-  peak_visits: number;
-  avg_visits: number;
-  latest_visits: number;
-  previous_visits: number;
-  data_points: number;
-  domain_count: number;
-  earliest_period: string | null;
-  latest_period: string | null;
-}
-
-async function getWorkspaceId(): Promise<string> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
-  const { data: member } = await supabase
-    .from("workspace_members")
-    .select("workspace_id")
-    .eq("user_id", user.id)
-    .single();
-  if (!member?.workspace_id) throw new Error("No workspace found");
-  return member.workspace_id;
-}
+import { fetchAllOffersLite, fetchAllTrafficRows, loadColumns, LS_KEY_COLUMNS, LS_KEY_PAGE_SIZE, LS_KEY_TRAFFIC_SOURCE } from "./types";
 
 export function useTrafficIntelligence() {
   const { toast } = useToast();
