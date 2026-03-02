@@ -75,6 +75,7 @@ export function useLatestTrafficPerOffer(provider: 'similarweb' | 'semrush') {
     queryFn: async () => {
       const periodType = provider === 'similarweb' ? 'monthly_sw' : 'monthly';
 
+      // Get workspace_id
       const { data: { user } } = await supabase.auth.getUser();
       const { data: member } = await supabase
         .from('workspace_members')
@@ -82,7 +83,7 @@ export function useLatestTrafficPerOffer(provider: 'similarweb' | 'semrush') {
         .eq('user_id', user?.id ?? '')
         .single();
 
-      if (!member?.workspace_id) throw new Error('Workspace not found');
+      if (!member?.workspace_id) return new Map<string, number>();
 
       const { data, error } = await supabase.rpc('get_latest_traffic_per_offer', {
         p_workspace_id: member.workspace_id,
@@ -136,8 +137,6 @@ export function useDeleteTrafficData() {
 
 // ============================================
 // MATERIALIZED VIEW: Traffic Summary (Phase 3)
-// Pre-calculado via mv_traffic_summary → backward-compat view mv_offer_traffic_summary
-// Refresh automatico a cada 6h via pg_cron
 // ============================================
 
 export type OfferTrafficSummary = {
@@ -165,6 +164,6 @@ export function useOfferTrafficSummary(offerId: string) {
       return data;
     },
     enabled: !!offerId,
-    staleTime: 6 * 60 * 60_000, // 6h — alinhado com refresh da mv_traffic_summary (Phase 3)
+    staleTime: 6 * 60 * 60_000,
   });
 }
