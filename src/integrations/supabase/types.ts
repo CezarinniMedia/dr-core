@@ -62,81 +62,6 @@ export type Database = {
           },
         ]
       }
-      ad_bibliotecas: {
-        Row: {
-          biblioteca_url: string | null
-          created_at: string | null
-          id: string
-          links_destino: Json | null
-          notas: string | null
-          oferta_id: string | null
-          pagina_id: string | null
-          pagina_nome: string | null
-          pagina_url: string | null
-          plataforma: string
-          primeira_detecao: string | null
-          status: string | null
-          total_anuncios: number | null
-          total_anuncios_historico: number | null
-          ultima_verificacao: string | null
-          updated_at: string | null
-          workspace_id: string | null
-        }
-        Insert: {
-          biblioteca_url?: string | null
-          created_at?: string | null
-          id?: string
-          links_destino?: Json | null
-          notas?: string | null
-          oferta_id?: string | null
-          pagina_id?: string | null
-          pagina_nome?: string | null
-          pagina_url?: string | null
-          plataforma: string
-          primeira_detecao?: string | null
-          status?: string | null
-          total_anuncios?: number | null
-          total_anuncios_historico?: number | null
-          ultima_verificacao?: string | null
-          updated_at?: string | null
-          workspace_id?: string | null
-        }
-        Update: {
-          biblioteca_url?: string | null
-          created_at?: string | null
-          id?: string
-          links_destino?: Json | null
-          notas?: string | null
-          oferta_id?: string | null
-          pagina_id?: string | null
-          pagina_nome?: string | null
-          pagina_url?: string | null
-          plataforma?: string
-          primeira_detecao?: string | null
-          status?: string | null
-          total_anuncios?: number | null
-          total_anuncios_historico?: number | null
-          ultima_verificacao?: string | null
-          updated_at?: string | null
-          workspace_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ad_bibliotecas_oferta_id_fkey"
-            columns: ["oferta_id"]
-            isOneToOne: false
-            referencedRelation: "ofertas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ad_bibliotecas_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       ad_creatives: {
         Row: {
           ad_library_id_external: string | null
@@ -807,150 +732,6 @@ export type Database = {
           },
         ]
       }
-      fontes_captura: {
-        Row: {
-          created_at: string | null
-          data_captura: string | null
-          footprint_categoria: string | null
-          footprint_usado: string | null
-          id: string
-          keyword_usada: string | null
-          metodo: string
-          notas: string | null
-          oferta_id: string | null
-          quantidade_resultados: number | null
-          query_usada: string | null
-          resultado_bruto: string | null
-          workspace_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          data_captura?: string | null
-          footprint_categoria?: string | null
-          footprint_usado?: string | null
-          id?: string
-          keyword_usada?: string | null
-          metodo: string
-          notas?: string | null
-          oferta_id?: string | null
-          quantidade_resultados?: number | null
-          query_usada?: string | null
-          resultado_bruto?: string | null
-          workspace_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          data_captura?: string | null
-          footprint_categoria?: string | null
-          footprint_usado?: string | null
-          id?: string
-          keyword_usada?: string | null
-          metodo?: string
-          notas?: string | null
-          oferta_id?: string | null
-          quantidade_resultados?: number | null
-          query_usada?: string | null
-          resultado_bruto?: string | null
-          workspace_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fontes_captura_oferta_id_fkey"
-            columns: ["oferta_id"]
-            isOneToOne: false
-            referencedRelation: "ofertas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fontes_captura_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      funil_paginas: {
-        Row: {
-          created_at: string | null
-          html_arquivo_url: string | null
-          html_completo: string | null
-          id: string
-          nome: string | null
-          notas: string | null
-          oferta_id: string | null
-          ordem: number
-          preco: number | null
-          preco_parcelado: string | null
-          produto_nome: string | null
-          produto_promessa: string | null
-          screenshot_url: string | null
-          stack_detectado: Json | null
-          tipo_pagina: string
-          updated_at: string | null
-          url: string | null
-          url_real: string | null
-          workspace_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          html_arquivo_url?: string | null
-          html_completo?: string | null
-          id?: string
-          nome?: string | null
-          notas?: string | null
-          oferta_id?: string | null
-          ordem: number
-          preco?: number | null
-          preco_parcelado?: string | null
-          produto_nome?: string | null
-          produto_promessa?: string | null
-          screenshot_url?: string | null
-          stack_detectado?: Json | null
-          tipo_pagina: string
-          updated_at?: string | null
-          url?: string | null
-          url_real?: string | null
-          workspace_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          html_arquivo_url?: string | null
-          html_completo?: string | null
-          id?: string
-          nome?: string | null
-          notas?: string | null
-          oferta_id?: string | null
-          ordem?: number
-          preco?: number | null
-          preco_parcelado?: string | null
-          produto_nome?: string | null
-          produto_promessa?: string | null
-          screenshot_url?: string | null
-          stack_detectado?: Json | null
-          tipo_pagina?: string
-          updated_at?: string | null
-          url?: string | null
-          url_real?: string | null
-          workspace_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "funil_paginas_oferta_id_fkey"
-            columns: ["oferta_id"]
-            isOneToOne: false
-            referencedRelation: "ofertas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "funil_paginas_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       funnel_maps: {
         Row: {
           aov_estimate: number | null
@@ -1190,81 +971,6 @@ export type Database = {
           },
         ]
       }
-      oferta_dominios: {
-        Row: {
-          created_at: string | null
-          dominio: string
-          hosting_provider: string | null
-          id: string
-          ip_address: string | null
-          is_principal: boolean | null
-          notas: string | null
-          oferta_id: string | null
-          tipo: string | null
-          trafego_fonte: string | null
-          trafego_ultimo: number | null
-          updated_at: string | null
-          whois_criado_em: string | null
-          whois_expira_em: string | null
-          whois_nameservers: string[] | null
-          whois_registrant: string | null
-          workspace_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          dominio: string
-          hosting_provider?: string | null
-          id?: string
-          ip_address?: string | null
-          is_principal?: boolean | null
-          notas?: string | null
-          oferta_id?: string | null
-          tipo?: string | null
-          trafego_fonte?: string | null
-          trafego_ultimo?: number | null
-          updated_at?: string | null
-          whois_criado_em?: string | null
-          whois_expira_em?: string | null
-          whois_nameservers?: string[] | null
-          whois_registrant?: string | null
-          workspace_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          dominio?: string
-          hosting_provider?: string | null
-          id?: string
-          ip_address?: string | null
-          is_principal?: boolean | null
-          notas?: string | null
-          oferta_id?: string | null
-          tipo?: string | null
-          trafego_fonte?: string | null
-          trafego_ultimo?: number | null
-          updated_at?: string | null
-          whois_criado_em?: string | null
-          whois_expira_em?: string | null
-          whois_nameservers?: string[] | null
-          whois_registrant?: string | null
-          workspace_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "oferta_dominios_oferta_id_fkey"
-            columns: ["oferta_id"]
-            isOneToOne: false
-            referencedRelation: "ofertas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "oferta_dominios_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       ofertas: {
         Row: {
           aov_target: number | null
@@ -1451,6 +1157,7 @@ export type Database = {
           notas: string | null
           page_id: string | null
           page_name: string | null
+          page_url: string | null
           platform: string
           sites_found: Json | null
           spied_offer_id: string
@@ -1466,6 +1173,7 @@ export type Database = {
           notas?: string | null
           page_id?: string | null
           page_name?: string | null
+          page_url?: string | null
           platform?: string
           sites_found?: Json | null
           spied_offer_id: string
@@ -1481,6 +1189,7 @@ export type Database = {
           notas?: string | null
           page_id?: string | null
           page_name?: string | null
+          page_url?: string | null
           platform?: string
           sites_found?: Json | null
           spied_offer_id?: string
@@ -1511,13 +1220,17 @@ export type Database = {
           domain: string
           domain_type: string | null
           first_seen: string | null
+          hosting_provider: string | null
           id: string
+          ip_address: string | null
           is_main: boolean | null
           notas: string | null
           spied_offer_id: string
           tech_stack: Json | null
           traffic_share: number | null
           url: string | null
+          whois_expiry: string | null
+          whois_registrar: string | null
           workspace_id: string
         }
         Insert: {
@@ -1527,13 +1240,17 @@ export type Database = {
           domain: string
           domain_type?: string | null
           first_seen?: string | null
+          hosting_provider?: string | null
           id?: string
+          ip_address?: string | null
           is_main?: boolean | null
           notas?: string | null
           spied_offer_id: string
           tech_stack?: Json | null
           traffic_share?: number | null
           url?: string | null
+          whois_expiry?: string | null
+          whois_registrar?: string | null
           workspace_id: string
         }
         Update: {
@@ -1543,13 +1260,17 @@ export type Database = {
           domain?: string
           domain_type?: string | null
           first_seen?: string | null
+          hosting_provider?: string | null
           id?: string
+          ip_address?: string | null
           is_main?: boolean | null
           notas?: string | null
           spied_offer_id?: string
           tech_stack?: Json | null
           traffic_share?: number | null
           url?: string | null
+          whois_expiry?: string | null
+          whois_registrar?: string | null
           workspace_id?: string
         }
         Relationships: [
@@ -1854,72 +1575,6 @@ export type Database = {
           },
         ]
       }
-      spike_alerts: {
-        Row: {
-          id: string
-          workspace_id: string
-          spied_offer_id: string
-          domain: string
-          period_date: string
-          previous_visits: number | null
-          current_visits: number | null
-          change_percent: number | null
-          alert_type: string
-          is_read: boolean
-          is_dismissed: boolean
-          detected_at: string
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          workspace_id: string
-          spied_offer_id: string
-          domain: string
-          period_date: string
-          previous_visits?: number | null
-          current_visits?: number | null
-          change_percent?: number | null
-          alert_type?: string
-          is_read?: boolean
-          is_dismissed?: boolean
-          detected_at?: string
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          workspace_id?: string
-          spied_offer_id?: string
-          domain?: string
-          period_date?: string
-          previous_visits?: number | null
-          current_visits?: number | null
-          change_percent?: number | null
-          alert_type?: string
-          is_read?: boolean
-          is_dismissed?: boolean
-          detected_at?: string
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "spike_alerts_spied_offer_id_fkey"
-            columns: ["spied_offer_id"]
-            isOneToOne: false
-            referencedRelation: "spied_offers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "spike_alerts_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       spied_offers: {
         Row: {
           checkout_provider: string | null
@@ -1945,8 +1600,6 @@ export type Database = {
           product_name: string | null
           product_promise: string | null
           product_ticket: number | null
-          screenshot_url: string | null
-          search_vector: unknown
           status: string | null
           subnicho: string | null
           traffic_trend: string | null
@@ -1956,6 +1609,7 @@ export type Database = {
           vsl_player: string | null
           vsl_url: string | null
           workspace_id: string
+          screenshot_url: string | null
         }
         Insert: {
           checkout_provider?: string | null
@@ -1981,8 +1635,6 @@ export type Database = {
           product_name?: string | null
           product_promise?: string | null
           product_ticket?: number | null
-          screenshot_url?: string | null
-          search_vector?: unknown
           status?: string | null
           subnicho?: string | null
           traffic_trend?: string | null
@@ -1992,6 +1644,7 @@ export type Database = {
           vsl_player?: string | null
           vsl_url?: string | null
           workspace_id: string
+          screenshot_url?: string | null
         }
         Update: {
           checkout_provider?: string | null
@@ -2017,8 +1670,6 @@ export type Database = {
           product_name?: string | null
           product_promise?: string | null
           product_ticket?: number | null
-          screenshot_url?: string | null
-          search_vector?: unknown
           status?: string | null
           subnicho?: string | null
           traffic_trend?: string | null
@@ -2028,6 +1679,7 @@ export type Database = {
           vsl_player?: string | null
           vsl_url?: string | null
           workspace_id?: string
+          screenshot_url?: string | null
         }
         Relationships: [
           {
@@ -2039,108 +1691,6 @@ export type Database = {
           },
           {
             foreignKeyName: "spied_offers_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      trafego_historico: {
-        Row: {
-          avg_visit_duration: number | null
-          bounce_rate: number | null
-          comparacao_batch_id: string | null
-          created_at: string | null
-          dominio: string
-          fonte_dados: string
-          id: string
-          import_batch_id: string | null
-          oferta_id: string | null
-          pages_per_visit: number | null
-          pageviews: number | null
-          pais_principal: string | null
-          pct_direct: number | null
-          pct_display: number | null
-          pct_email: number | null
-          pct_paid: number | null
-          pct_pais_principal: number | null
-          pct_referral: number | null
-          pct_search: number | null
-          pct_social: number | null
-          periodo_data: string
-          periodo_tipo: string
-          rank_no_batch: number | null
-          visitas: number | null
-          visitas_unicas: number | null
-          workspace_id: string | null
-        }
-        Insert: {
-          avg_visit_duration?: number | null
-          bounce_rate?: number | null
-          comparacao_batch_id?: string | null
-          created_at?: string | null
-          dominio: string
-          fonte_dados: string
-          id?: string
-          import_batch_id?: string | null
-          oferta_id?: string | null
-          pages_per_visit?: number | null
-          pageviews?: number | null
-          pais_principal?: string | null
-          pct_direct?: number | null
-          pct_display?: number | null
-          pct_email?: number | null
-          pct_paid?: number | null
-          pct_pais_principal?: number | null
-          pct_referral?: number | null
-          pct_search?: number | null
-          pct_social?: number | null
-          periodo_data: string
-          periodo_tipo: string
-          rank_no_batch?: number | null
-          visitas?: number | null
-          visitas_unicas?: number | null
-          workspace_id?: string | null
-        }
-        Update: {
-          avg_visit_duration?: number | null
-          bounce_rate?: number | null
-          comparacao_batch_id?: string | null
-          created_at?: string | null
-          dominio?: string
-          fonte_dados?: string
-          id?: string
-          import_batch_id?: string | null
-          oferta_id?: string | null
-          pages_per_visit?: number | null
-          pageviews?: number | null
-          pais_principal?: string | null
-          pct_direct?: number | null
-          pct_display?: number | null
-          pct_email?: number | null
-          pct_paid?: number | null
-          pct_pais_principal?: number | null
-          pct_referral?: number | null
-          pct_search?: number | null
-          pct_social?: number | null
-          periodo_data?: string
-          periodo_tipo?: string
-          rank_no_batch?: number | null
-          visitas?: number | null
-          visitas_unicas?: number | null
-          workspace_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "trafego_historico_oferta_id_fkey"
-            columns: ["oferta_id"]
-            isOneToOne: false
-            referencedRelation: "ofertas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trafego_historico_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
@@ -2249,53 +1799,6 @@ export type Database = {
           last_updated: string | null
         }
       }
-      mv_dashboard_metrics: {
-        Row: {
-          workspace_id: string
-          total_active_offers: number
-          hot_offers: number
-          scaling_offers: number
-          analyzing_offers: number
-          radar_offers: number
-          cloned_offers: number
-          total_offers_all: number
-          total_domains: number
-          total_traffic_points: number
-          spikes_last_30d: number
-          unread_spikes: number
-          last_offer_updated: string | null
-          refreshed_at: string | null
-        }
-      }
-      mv_traffic_summary: {
-        Row: {
-          spied_offer_id: string
-          workspace_id: string
-          source: string
-          total_visits: number
-          peak_visits: number
-          avg_visits: number
-          earliest_period: string | null
-          latest_period: string | null
-          data_points: number
-          domain_count: number
-          latest_visits: number | null
-          previous_visits: number | null
-        }
-      }
-      mv_spike_detection: {
-        Row: {
-          spied_offer_id: string
-          workspace_id: string
-          domain: string
-          source: string
-          period_date: string
-          current_visits: number | null
-          prev_visits: number | null
-          change_percent: number | null
-          alert_type: string | null
-        }
-      }
     }
     Functions: {
       bulk_upsert_traffic_data: {
@@ -2336,69 +1839,6 @@ export type Database = {
           refreshed_at: string
         }[]
       }
-      get_latest_traffic_per_offer: {
-        Args: { p_workspace_id: string; p_period_type?: string }
-        Returns: {
-          spied_offer_id: string
-          visits: number
-          period_date: string
-          source: string
-        }[]
-      }
-      get_pipeline_status: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          view_name: string
-          last_refreshed: string | null
-          row_count: number
-        }[]
-      }
-      get_spied_offers_paginated: {
-        Args: {
-          p_workspace_id: string
-          p_limit?: number
-          p_offset?: number
-          p_statuses?: string[] | null
-          p_exclude_statuses?: string[] | null
-          p_vertical?: string | null
-          p_discovery_source?: string | null
-          p_search?: string | null
-          p_sort_column?: string
-          p_sort_direction?: string
-        }
-        Returns: {
-          id: string
-          nome: string
-          main_domain: string
-          status: string
-          vertical: string | null
-          subnicho: string | null
-          geo: string | null
-          priority: number | null
-          discovery_source: string | null
-          discovered_at: string | null
-          product_name: string | null
-          product_ticket: number | null
-          product_currency: string | null
-          product_promise: string | null
-          notas: string | null
-          screenshot_url: string | null
-          traffic_trend: string | null
-          estimated_monthly_traffic: number | null
-          estimated_monthly_revenue: number | null
-          operator_name: string | null
-          checkout_provider: string | null
-          vsl_player: string | null
-          discovery_query: string | null
-          created_at: string | null
-          updated_at: string | null
-          domain_count: number
-          ad_library_count: number
-          funnel_step_count: number
-          creative_count: number
-          total_count: number
-        }[]
-      }
       get_traffic_comparison: {
         Args: {
           p_offer_ids: string[]
@@ -2414,21 +1854,6 @@ export type Database = {
           visits: number
         }[]
       }
-      get_traffic_intel_summary: {
-        Args: { p_workspace_id: string; p_period_type?: string }
-        Returns: {
-          spied_offer_id: string
-          total_visits: number
-          peak_visits: number
-          avg_visits: number
-          latest_visits: number
-          previous_visits: number
-          data_points: number
-          domain_count: number
-          earliest_period: string | null
-          latest_period: string | null
-        }[]
-      }
       is_oferta_workspace_member: {
         Args: { _oferta_id: string; _user_id: string }
         Returns: boolean
@@ -2436,14 +1861,6 @@ export type Database = {
       is_workspace_member: {
         Args: { _user_id: string; _workspace_id: string }
         Returns: boolean
-      }
-      refresh_pipeline: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          view_name: string
-          refreshed_at: string
-          duration_ms: number
-        }[]
       }
       unaccent: { Args: { "": string }; Returns: string }
     }
