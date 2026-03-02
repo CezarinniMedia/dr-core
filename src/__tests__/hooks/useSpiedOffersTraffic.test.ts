@@ -69,23 +69,44 @@ describe("useOfferTrafficData", () => {
 describe("useLatestTrafficPerOffer", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("busca trafego para similarweb", async () => {
-    mockOrder.mockResolvedValue({ data: [], error: null });
+  it("busca trafego para similarweb via RPC", async () => {
+    // Mock workspace_members lookup
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: { workspace_id: "ws-1" } }),
+        }),
+      }),
+    });
+    mockRpc.mockResolvedValue({ data: [], error: null });
 
     renderHookWithQuery(() => useLatestTrafficPerOffer("similarweb"));
 
     await waitFor(() => {
-      expect(mockFrom).toHaveBeenCalledWith("offer_traffic_data");
+      expect(mockRpc).toHaveBeenCalledWith("get_latest_traffic_per_offer", {
+        p_workspace_id: "ws-1",
+        p_period_type: "monthly_sw",
+      });
     });
   });
 
-  it("busca trafego para semrush", async () => {
-    mockOrder.mockResolvedValue({ data: [], error: null });
+  it("busca trafego para semrush via RPC", async () => {
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: { workspace_id: "ws-1" } }),
+        }),
+      }),
+    });
+    mockRpc.mockResolvedValue({ data: [], error: null });
 
     renderHookWithQuery(() => useLatestTrafficPerOffer("semrush"));
 
     await waitFor(() => {
-      expect(mockFrom).toHaveBeenCalledWith("offer_traffic_data");
+      expect(mockRpc).toHaveBeenCalledWith("get_latest_traffic_per_offer", {
+        p_workspace_id: "ws-1",
+        p_period_type: "monthly",
+      });
     });
   });
 });

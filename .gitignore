@@ -54,3 +54,7 @@ Thumbs.db
 .env.backup.*
 supabase/.temp/
 *.txt.bak
+*.sql.bak
+
+# AIOS Squads (external/generated)
+squads/

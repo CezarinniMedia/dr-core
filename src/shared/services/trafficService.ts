@@ -109,22 +109,27 @@ export function compareTraffic(
   trafficRecords: TrafficRecord[],
   dateRange?: DateRange
 ): OfferTrafficRow[] {
-  // Group traffic by offer ID
-  const trafficByOffer = new Map<string, { date: string; visits: number }[]>();
+  // Group traffic by offer ID — preserve domain for filtering
+  const trafficByOffer = new Map<string, { date: string; visits: number; domain: string }[]>();
   for (const t of trafficRecords) {
     const key = t.spied_offer_id;
     if (!trafficByOffer.has(key)) trafficByOffer.set(key, []);
-    trafficByOffer.get(key)!.push({ date: t.period_date, visits: t.visits ?? 0 });
+    trafficByOffer.get(key)!.push({ date: t.period_date, visits: t.visits ?? 0, domain: t.domain });
   }
 
   return offers.map((o) => {
-    const records = trafficByOffer.get(o.id) || [];
-    const hasTrafficData = records.length > 0;
+    const allRecords = trafficByOffer.get(o.id) || [];
+    // Filter to main_domain to avoid doubling when multiple domains have traffic for same period
+    const mainDomainRecords = o.main_domain
+      ? allRecords.filter(r => r.domain === o.main_domain)
+      : [];
+    const records = mainDomainRecords.length > 0 ? mainDomainRecords : allRecords;
+    const hasTrafficData = allRecords.length > 0;
 
-    // Aggregate visits per month across all domains
+    // Aggregate visits per month (safe now — filtered to single domain)
     const monthMap = new Map<string, number>();
     for (const r of records) {
-      monthMap.set(r.date, (monthMap.get(r.date) || 0) + r.visits);
+      monthMap.set(r.date, Math.max(monthMap.get(r.date) || 0, r.visits));
     }
     const sorted = [...monthMap.entries()].sort((a, b) => a[0].localeCompare(b[0]));
 

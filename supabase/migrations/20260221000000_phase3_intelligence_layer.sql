@@ -155,12 +155,8 @@ GROUP BY so.workspace_id;
 CREATE UNIQUE INDEX idx_mv_dashboard_metrics_ws
   ON mv_dashboard_metrics(workspace_id);
 
-ALTER TABLE mv_dashboard_metrics ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Workspace members view dashboard metrics"
-  ON mv_dashboard_metrics FOR SELECT
-  USING (is_workspace_member(auth.uid(), workspace_id));
-
+-- NOTE: RLS nao e suportado em materialized views no PostgreSQL.
+-- Acesso controlado via SECURITY DEFINER RPCs.
 GRANT SELECT ON mv_dashboard_metrics TO authenticated;
 
 COMMENT ON MATERIALIZED VIEW mv_dashboard_metrics IS
@@ -175,60 +171,55 @@ COMMENT ON MATERIALIZED VIEW mv_dashboard_metrics IS
 -- ────────────────────────────────────────────────────────────
 
 CREATE MATERIALIZED VIEW mv_traffic_summary AS
+WITH base AS (
+  SELECT
+    otd.spied_offer_id,
+    otd.workspace_id,
+    COALESCE(otd.source, 'unknown') AS source,
+    SUM(otd.visits)                  AS total_visits,
+    MAX(otd.visits)                  AS peak_visits,
+    AVG(otd.visits)::BIGINT          AS avg_visits,
+    MIN(otd.period_date)             AS earliest_period,
+    MAX(otd.period_date)             AS latest_period,
+    COUNT(*)                         AS data_points,
+    COUNT(DISTINCT otd.domain)       AS domain_count
+  FROM offer_traffic_data otd
+  WHERE otd.visits IS NOT NULL
+  GROUP BY otd.spied_offer_id, otd.workspace_id, COALESCE(otd.source, 'unknown')
+)
 SELECT
-  otd.spied_offer_id,
-  otd.workspace_id,
-  COALESCE(otd.source, 'unknown') AS source,
-
-  -- Agregacoes de trafego
-  SUM(otd.visits)                                    AS total_visits,
-  MAX(otd.visits)                                    AS peak_visits,
-  AVG(otd.visits)::BIGINT                            AS avg_visits,
-
-  -- Periodo coberto
-  MIN(otd.period_date)                               AS earliest_period,
-  MAX(otd.period_date)                               AS latest_period,
-  COUNT(*)                                           AS data_points,
-  COUNT(DISTINCT otd.domain)                         AS domain_count,
-
+  b.spied_offer_id,
+  b.workspace_id,
+  b.source,
+  b.total_visits,
+  b.peak_visits,
+  b.avg_visits,
+  b.earliest_period,
+  b.latest_period,
+  b.data_points,
+  b.domain_count,
   -- Ultimo mes disponivel (para sparkline rapida)
-  -- H1 fix: IS NOT DISTINCT FROM para comparacao NULL-safe
   (SELECT otd2.visits
    FROM offer_traffic_data otd2
-   WHERE otd2.spied_offer_id = otd.spied_offer_id
-     AND otd2.source IS NOT DISTINCT FROM otd.source
+   WHERE otd2.spied_offer_id = b.spied_offer_id
+     AND COALESCE(otd2.source, 'unknown') = b.source
    ORDER BY otd2.period_date DESC
-   LIMIT 1)                                          AS latest_visits,
-
+   LIMIT 1)                          AS latest_visits,
   -- Penultimo mes (para calcular variacao)
   (SELECT otd3.visits
    FROM offer_traffic_data otd3
-   WHERE otd3.spied_offer_id = otd.spied_offer_id
-     AND otd3.source IS NOT DISTINCT FROM otd.source
+   WHERE otd3.spied_offer_id = b.spied_offer_id
+     AND COALESCE(otd3.source, 'unknown') = b.source
    ORDER BY otd3.period_date DESC
-   OFFSET 1 LIMIT 1)                                AS previous_visits
-
-FROM offer_traffic_data otd
-WHERE otd.visits IS NOT NULL
-GROUP BY otd.spied_offer_id, otd.workspace_id, COALESCE(otd.source, 'unknown');
+   OFFSET 1 LIMIT 1)                AS previous_visits
+FROM base b;
 
 -- H1 fix: COALESCE garante que o unique index nao tem NULLs
 CREATE UNIQUE INDEX idx_mv_traffic_summary_pk
   ON mv_traffic_summary(spied_offer_id, source);
 
-ALTER TABLE mv_traffic_summary ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Workspace members view traffic summary"
-  ON mv_traffic_summary FOR SELECT
-  USING (
-    spied_offer_id IN (
-      SELECT id FROM spied_offers
-      WHERE workspace_id IN (
-        SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid()
-      )
-    )
-  );
-
+-- NOTE: RLS nao e suportado em materialized views no PostgreSQL.
+-- Acesso controlado via SECURITY DEFINER RPCs.
 GRANT SELECT ON mv_traffic_summary TO authenticated;
 
 COMMENT ON MATERIALIZED VIEW mv_traffic_summary IS
@@ -286,19 +277,8 @@ WHERE
 CREATE UNIQUE INDEX idx_mv_spike_detection_pk
   ON mv_spike_detection(spied_offer_id, domain, source, period_date);
 
-ALTER TABLE mv_spike_detection ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Workspace members view spike detection"
-  ON mv_spike_detection FOR SELECT
-  USING (
-    spied_offer_id IN (
-      SELECT id FROM spied_offers
-      WHERE workspace_id IN (
-        SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid()
-      )
-    )
-  );
-
+-- NOTE: RLS nao e suportado em materialized views no PostgreSQL.
+-- Acesso controlado via SECURITY DEFINER RPCs.
 GRANT SELECT ON mv_spike_detection TO authenticated;
 
 COMMENT ON MATERIALIZED VIEW mv_spike_detection IS

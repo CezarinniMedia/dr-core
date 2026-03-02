@@ -1,18 +1,23 @@
 import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
-import { useSpiedOffers } from "@/features/spy/hooks/useSpiedOffers";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/shared/hooks/use-toast";
 import {
   compareTraffic, filterTrafficRows, sortTrafficRows,
-  getAvailableMonths, updateOfferStatus, bulkUpdateStatus,
+  updateOfferStatus, bulkUpdateStatus,
   type OfferTrafficRow, type SortField, type SortDir,
 } from "@/shared/services";
-import { fetchAllTrafficRows, loadColumns, LS_KEY_COLUMNS, LS_KEY_PAGE_SIZE, LS_KEY_TRAFFIC_SOURCE } from "./types";
+import { fetchAllOffersLite, fetchAllTrafficRows, loadColumns, LS_KEY_COLUMNS, LS_KEY_PAGE_SIZE, LS_KEY_TRAFFIC_SOURCE } from "./types";
 
 export function useTrafficIntelligence() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { data: allOffers } = useSpiedOffers();
+
+  // Batch-paginated fetch of ALL offers (lightweight fields only)
+  const { data: allOffers } = useQuery({
+    queryKey: ["all-offers-lite"],
+    queryFn: fetchAllOffersLite,
+    staleTime: 5 * 60 * 1000,
+  });
 
   // Traffic data source
   const [trafficDataSource, setTrafficDataSource] = useState<'similarweb' | 'semrush'>(() => {
@@ -47,29 +52,29 @@ export function useTrafficIntelligence() {
   useEffect(() => { localStorage.setItem(LS_KEY_COLUMNS, JSON.stringify([...visibleColumns])); }, [visibleColumns]);
   useEffect(() => { localStorage.setItem(LS_KEY_PAGE_SIZE, pageSize); }, [pageSize]);
 
-  // Fetch ALL traffic data
+  // Fetch raw traffic data directly (bypasses potentially stale MV)
   const { data: allTraffic, isLoading: trafficLoading } = useQuery({
-    queryKey: ["all-traffic-data", periodType],
+    queryKey: ["all-traffic-rows", periodType],
     queryFn: () => fetchAllTrafficRows(periodType),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 5 * 60_000,
   });
 
-  const availableMonths = useMemo(() => {
-    if (!allTraffic) return [];
-    return getAvailableMonths(allTraffic);
-  }, [allTraffic]);
-
+  // Build rows using compareTraffic — handles sparklines, dedup, aggregation
+  const dateRange = useMemo(() => ({ from: rangeFrom, to: rangeTo }), [rangeFrom, rangeTo]);
   const rows: OfferTrafficRow[] = useMemo(() => {
     if (!allOffers) return [];
-    return compareTraffic(
-      (allOffers as any[]).map((o: any) => ({
-        id: o.id, nome: o.nome, main_domain: o.main_domain,
-        status: o.status, vertical: o.vertical, discovered_at: o.discovered_at,
-      })),
-      allTraffic || [],
-      { from: rangeFrom, to: rangeTo }
-    );
-  }, [allOffers, allTraffic, rangeFrom, rangeTo]);
+    return compareTraffic(allOffers as any[], allTraffic || [], dateRange);
+  }, [allOffers, allTraffic, dateRange]);
+
+  // Available months from raw traffic data
+  const availableMonths = useMemo(() => {
+    if (!allTraffic) return [];
+    const months = new Set<string>();
+    for (const t of allTraffic) {
+      if (t.period_date) months.add(t.period_date);
+    }
+    return [...months].sort();
+  }, [allTraffic]);
 
   const filteredRows = useMemo(() => filterTrafficRows(rows, statusFilter, search), [rows, statusFilter, search]);
   const sortedRows = useMemo(() => sortTrafficRows(filteredRows, sortField, sortDir), [filteredRows, sortField, sortDir]);
@@ -101,7 +106,10 @@ export function useTrafficIntelligence() {
     if (error) { toast({ title: "Erro", description: error, variant: "destructive" }); return; }
     queryClient.setQueriesData({ queryKey: ['spied-offers'] }, (old: any) => {
       if (!old) return old;
-      return old.map((o: any) => o.id === offerId ? { ...o, status: newStatus } : o);
+      if (old.data && Array.isArray(old.data)) {
+        return { ...old, data: old.data.map((o: any) => o.id === offerId ? { ...o, status: newStatus } : o) };
+      }
+      return old;
     });
     setTimeout(() => queryClient.invalidateQueries({ queryKey: ['spied-offers'] }), 1500);
   };
@@ -114,34 +122,49 @@ export function useTrafficIntelligence() {
     setMonthColumns(prev => { const next = new Set(prev); if (next.has(month)) next.delete(month); else next.add(month); return next; });
   };
 
-  // Chart data
+  // Chart data — built from already-loaded raw traffic (no extra RPC needed)
+  const chartOfferIds = useMemo(() => [...chartIds], [chartIds]);
+
   const chartData = useMemo(() => {
-    if (chartIds.size === 0 || !allTraffic || !allOffers) return [];
+    if (!allTraffic || !allOffers || chartOfferIds.length === 0) return [];
+
+    // Build offer name lookup
     const offerNames = new Map<string, string>();
     for (const o of allOffers as any[]) {
-      if (chartIds.has(o.id)) offerNames.set(o.id, o.main_domain || o.nome);
+      offerNames.set(o.id, o.nome || o.main_domain || o.id);
     }
 
-    const byOffer = new Map<string, Map<string, number>>();
-    for (const t of allTraffic) {
-      if (!chartIds.has(t.spied_offer_id)) continue;
-      const label = offerNames.get(t.spied_offer_id) || t.domain;
-      if (!byOffer.has(label)) byOffer.set(label, new Map());
-      const mm = byOffer.get(label)!;
-      mm.set(t.period_date, (mm.get(t.period_date) || 0) + (t.visits ?? 0));
-    }
+    // Filter for selected offers
+    const filtered = allTraffic.filter(t => chartOfferIds.includes(t.spied_offer_id));
 
-    const result: { period_date: string; visits: number; domain: string }[] = [];
-    for (const [label, mm] of byOffer) {
-      for (const [date, visits] of mm) {
-        const dateMonth = date.slice(0, 7);
-        if (rangeFrom && dateMonth < rangeFrom) continue;
-        if (rangeTo && dateMonth > rangeTo) continue;
-        result.push({ period_date: date, visits, domain: label });
+    // Aggregate per offer+month (max visits across domains to avoid double count)
+    const agg = new Map<string, { visits: number; name: string }>();
+    for (const t of filtered) {
+      const key = `${t.spied_offer_id}|${t.period_date}`;
+      const existing = agg.get(key);
+      const visits = t.visits ?? 0;
+      if (existing) {
+        existing.visits = Math.max(existing.visits, visits);
+      } else {
+        agg.set(key, { visits, name: offerNames.get(t.spied_offer_id) || t.domain });
       }
     }
-    return result;
-  }, [chartIds, allTraffic, allOffers, rangeFrom, rangeTo]);
+
+    // Apply date range filter + build chart points
+    return [...agg.entries()]
+      .filter(([key]) => {
+        const date = key.split('|')[1];
+        if (rangeFrom && date < rangeFrom) return false;
+        if (rangeTo && date > rangeTo) return false;
+        return true;
+      })
+      .map(([key, val]) => ({
+        period_date: key.split('|')[1],
+        visits: val.visits,
+        domain: val.name,
+      }))
+      .sort((a, b) => a.period_date.localeCompare(b.period_date));
+  }, [allTraffic, allOffers, chartOfferIds, rangeFrom, rangeTo]);
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
@@ -176,7 +199,10 @@ export function useTrafficIntelligence() {
     toast({ title: `${ids.length} ofertas → ${newStatus}` });
     queryClient.setQueriesData({ queryKey: ['spied-offers'] }, (old: any) => {
       if (!old) return old;
-      return old.map((o: any) => ids.includes(o.id) ? { ...o, status: newStatus } : o);
+      if (old.data && Array.isArray(old.data)) {
+        return { ...old, data: old.data.map((o: any) => ids.includes(o.id) ? { ...o, status: newStatus } : o) };
+      }
+      return old;
     });
     setSelectedIds(new Set());
     setTimeout(() => queryClient.invalidateQueries({ queryKey: ['spied-offers'] }), 1500);

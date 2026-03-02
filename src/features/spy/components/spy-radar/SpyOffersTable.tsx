@@ -42,7 +42,8 @@ interface SpyOffersTableProps {
   // Selection
   selectedIds: Set<string>;
   setSelectedIds: React.Dispatch<React.SetStateAction<Set<string>>>;
-  // Pagination
+  // Pagination — server-side: totalCount comes from DB
+  totalCount?: number;
   pageSize: string;
   setPageSize: (v: string) => void;
   currentPage: number;
@@ -57,7 +58,7 @@ interface SpyOffersTableProps {
 export function SpyOffersTable({
   offers, isLoading, visibleColumns, trafficDataSource, latestTrafficMap,
   selectedIds, setSelectedIds,
-  pageSize, setPageSize, currentPage, setCurrentPage,
+  totalCount, pageSize, setPageSize, currentPage, setCurrentPage,
   onInlineStatusChange, onNotesUpdate, onDeleteSingle, onShowQuickAdd,
 }: SpyOffersTableProps) {
   const navigate = useNavigate();
@@ -72,17 +73,13 @@ export function SpyOffersTable({
   const [editingNotesId, setEditingNotesId] = useState<string | null>(null);
   const [notesValue, setNotesValue] = useState("");
 
-  // Pagination
-  const totalOffers = offers?.length ?? 0;
+  // Pagination — server-side: data already paginated, totalCount from DB
+  const serverTotal = totalCount ?? offers?.length ?? 0;
   const isInfinite = pageSize === "all";
-  const pageSizeNum = isInfinite ? totalOffers : parseInt(pageSize);
-  const totalPages = isInfinite ? 1 : Math.max(1, Math.ceil(totalOffers / pageSizeNum));
-  const visibleOffers = useMemo(
-    () => isInfinite
-      ? (offers ?? [])
-      : (offers ?? []).slice(currentPage * pageSizeNum, (currentPage + 1) * pageSizeNum),
-    [offers, isInfinite, currentPage, pageSizeNum],
-  );
+  const pageSizeNum = isInfinite ? serverTotal : parseInt(pageSize);
+  const totalPages = isInfinite ? 1 : Math.max(1, Math.ceil(serverTotal / pageSizeNum));
+  // No client-side slicing needed — offers IS the current page
+  const visibleOffers = offers ?? [];
 
   // Virtualização — ativa apenas quando lista > 100 rows (ex: modo "all" com 12k+ registros)
   const VIRTUALIZE_THRESHOLD = 100;
@@ -118,13 +115,12 @@ export function SpyOffersTable({
     e.stopPropagation();
     setSelectedIds(prev => {
       const next = new Set(prev);
-      if (e.shiftKey && lastClickedIndex.current !== null && offers) {
+      if (e.shiftKey && lastClickedIndex.current !== null && visibleOffers.length > 0) {
+        // Shift-click uses local page indices — visibleOffers is the current page
         const start = Math.min(lastClickedIndex.current, index);
         const end = Math.max(lastClickedIndex.current, index);
-        const globalStart = currentPage * pageSizeNum + start;
-        const globalEnd = currentPage * pageSizeNum + end;
-        for (let i = globalStart; i <= globalEnd; i++) {
-          if (offers[i]) next.add(offers[i].id);
+        for (let i = start; i <= end; i++) {
+          if (visibleOffers[i]) next.add(visibleOffers[i].id);
         }
       } else if (e.metaKey || e.ctrlKey) {
         if (next.has(offerId)) next.delete(offerId); else next.add(offerId);
@@ -134,7 +130,7 @@ export function SpyOffersTable({
       lastClickedIndex.current = index;
       return next;
     });
-  }, [offers, currentPage, pageSizeNum, setSelectedIds]);
+  }, [visibleOffers, setSelectedIds]);
 
   // Computa lista de items a renderizar — virtual ou normal
   const virtualItems = shouldVirtualize ? virtualizer.getVirtualItems() : null;
@@ -232,9 +228,10 @@ export function SpyOffersTable({
           >
             {itemsToRender.map(({ offer, visibleIdx, rowStyle }) => {
               const sb = STATUS_BADGE[offer.status] || STATUS_BADGE.RADAR;
-              const domainsCount = getCount(offer, "offer_domains");
-              const adsCount = getCount(offer, "ad_creatives");
-              const funnelCount = getCount(offer, "offer_funnel_steps");
+              // RPC returns numeric counts directly; fallback to getCount for nested-array compat
+              const domainsCount = (offer as any).domain_count ?? getCount(offer, "offer_domains");
+              const adsCount = (offer as any).creative_count ?? getCount(offer, "ad_creatives");
+              const funnelCount = (offer as any).funnel_step_count ?? getCount(offer, "offer_funnel_steps");
               const isSelected = selectedIds.has(offer.id);
 
               return (
@@ -558,7 +555,7 @@ export function SpyOffersTable({
               {PAGE_SIZE_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
             </SelectContent>
           </Select>
-          <span className="text-xs text-muted-foreground">{totalOffers} oferta(s)</span>
+          <span className="text-xs text-muted-foreground">{serverTotal} oferta(s)</span>
         </div>
         {!isInfinite && totalPages > 1 && (
           <div className="flex items-center gap-2">

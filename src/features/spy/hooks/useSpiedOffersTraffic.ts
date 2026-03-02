@@ -67,7 +67,8 @@ export function useBulkInsertTrafficData() {
 }
 
 // Returns Map<spied_offer_id, latest_visits> for the selected traffic provider
-// Uses get_latest_traffic_per_offer RPC (DISTINCT ON server-side)
+// Uses RPC get_latest_traffic_per_offer — DISTINCT ON in DB instead of fetching 87k+ records
+// provider="similarweb" -> period_type="monthly_sw" | provider="semrush" -> period_type="monthly"
 export function useLatestTrafficPerOffer(provider: 'similarweb' | 'semrush') {
   return useQuery({
     queryKey: ['latest-traffic-per-offer', provider],
@@ -97,6 +98,7 @@ export function useLatestTrafficPerOffer(provider: 'similarweb' | 'semrush') {
       }
       return map;
     },
+    staleTime: 5 * 60_000, // 5min — data doesn't change every minute
   });
 }
 

@@ -28,7 +28,7 @@ export function TrafficIntelligenceView() {
           onClearStatusFilter={() => ti.setStatusFilter(new Set())}
           onAddAllToChart={ti.addAllToChart}
           trafficLoading={ti.trafficLoading}
-          trafficCount={ti.allTraffic?.length || 0}
+          trafficCount={ti.sortedRows?.length || 0}
           selectedCount={ti.selectedIds.size}
           onBulkStatus={ti.handleBulkStatus}
           onAddSelectedToChart={ti.addSelectedToChart}

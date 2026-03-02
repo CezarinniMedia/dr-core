@@ -1804,6 +1804,122 @@ export type Database = {
           },
         ]
       }
+      saved_views: {
+        Row: {
+          id: string
+          workspace_id: string
+          name: string
+          module: string
+          filters: Json
+          sort_config: Json
+          visible_columns: string[]
+          is_default: boolean
+          is_pinned: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          workspace_id: string
+          name: string
+          module?: string
+          filters?: Json
+          sort_config?: Json
+          visible_columns?: string[]
+          is_default?: boolean
+          is_pinned?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          workspace_id?: string
+          name?: string
+          module?: string
+          filters?: Json
+          sort_config?: Json
+          visible_columns?: string[]
+          is_default?: boolean
+          is_pinned?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_views_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spike_alerts: {
+        Row: {
+          id: string
+          workspace_id: string
+          spied_offer_id: string
+          domain: string
+          period_date: string
+          previous_visits: number | null
+          current_visits: number | null
+          change_percent: number | null
+          alert_type: string
+          is_read: boolean
+          is_dismissed: boolean
+          detected_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          workspace_id: string
+          spied_offer_id: string
+          domain: string
+          period_date: string
+          previous_visits?: number | null
+          current_visits?: number | null
+          change_percent?: number | null
+          alert_type?: string
+          is_read?: boolean
+          is_dismissed?: boolean
+          detected_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          workspace_id?: string
+          spied_offer_id?: string
+          domain?: string
+          period_date?: string
+          previous_visits?: number | null
+          current_visits?: number | null
+          change_percent?: number | null
+          alert_type?: string
+          is_read?: boolean
+          is_dismissed?: boolean
+          detected_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spike_alerts_spied_offer_id_fkey"
+            columns: ["spied_offer_id"]
+            isOneToOne: false
+            referencedRelation: "spied_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spike_alerts_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       spied_offers: {
         Row: {
           checkout_provider: string | null
@@ -2111,53 +2227,206 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      mv_offer_traffic_summary: {
+        Row: {
+          spied_offer_id: string
+          domain_count: number
+          total_visits: number
+          latest_period: string | null
+          earliest_period: string | null
+          latest_sw_visits: number | null
+          latest_sr_visits: number | null
+          avg_monthly_visits: number | null
+        }
+      }
+      mv_dashboard_stats: {
+        Row: {
+          workspace_id: string
+          total_offers: number
+          unique_domains: number
+          active_offers: number
+          potential_offers: number
+          last_updated: string | null
+        }
+      }
+      mv_dashboard_metrics: {
+        Row: {
+          workspace_id: string
+          total_active_offers: number
+          hot_offers: number
+          scaling_offers: number
+          analyzing_offers: number
+          radar_offers: number
+          cloned_offers: number
+          total_offers_all: number
+          total_domains: number
+          total_traffic_points: number
+          spikes_last_30d: number
+          unread_spikes: number
+          last_offer_updated: string | null
+          refreshed_at: string | null
+        }
+      }
+      mv_traffic_summary: {
+        Row: {
+          spied_offer_id: string
+          workspace_id: string
+          source: string
+          total_visits: number
+          peak_visits: number
+          avg_visits: number
+          earliest_period: string | null
+          latest_period: string | null
+          data_points: number
+          domain_count: number
+          latest_visits: number | null
+          previous_visits: number | null
+        }
+      }
+      mv_spike_detection: {
+        Row: {
+          spied_offer_id: string
+          workspace_id: string
+          domain: string
+          source: string
+          period_date: string
+          current_visits: number | null
+          prev_visits: number | null
+          change_percent: number | null
+          alert_type: string | null
+        }
+      }
     }
     Functions: {
+      bulk_upsert_traffic_data: {
+        Args: { p_records: Json }
+        Returns: number
+      }
+      detect_spikes: {
+        Args: { p_threshold?: number; p_lookback_days?: number }
+        Returns: {
+          spied_offer_id: string
+          offer_name: string
+          offer_status: string
+          workspace_id: string
+          domain: string
+          source: string
+          period_date: string
+          current_visits: number
+          prev_visits: number
+          change_percent: number
+          alert_type: string
+        }[]
+      }
+      get_dashboard_metrics: {
+        Args: { p_workspace_id: string }
+        Returns: {
+          total_active_offers: number
+          hot_offers: number
+          scaling_offers: number
+          analyzing_offers: number
+          radar_offers: number
+          cloned_offers: number
+          total_offers_all: number
+          total_domains: number
+          total_traffic_points: number
+          spikes_last_30d: number
+          unread_spikes: number
+          last_offer_updated: string
+          refreshed_at: string
+        }[]
+      }
+      get_latest_traffic_per_offer: {
+        Args: { p_workspace_id: string; p_period_type?: string }
+        Returns: {
+          spied_offer_id: string
+          visits: number
+          period_date: string
+          source: string
+        }[]
+      }
+      get_pipeline_status: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          view_name: string
+          last_refreshed: string | null
+          row_count: number
+        }[]
+      }
       get_spied_offers_paginated: {
         Args: {
-          p_discovery_source?: string
-          p_exclude_statuses?: string[]
+          p_workspace_id: string
           p_limit?: number
           p_offset?: number
-          p_search?: string
+          p_statuses?: string[] | null
+          p_exclude_statuses?: string[] | null
+          p_vertical?: string | null
+          p_discovery_source?: string | null
+          p_search?: string | null
           p_sort_column?: string
           p_sort_direction?: string
-          p_statuses?: string[]
-          p_vertical?: string
-          p_workspace_id: string
         }
         Returns: {
-          ad_library_count: number
-          checkout_provider: string
-          created_at: string
-          creative_count: number
-          discovered_at: string
-          discovery_query: string
-          discovery_source: string
-          domain_count: number
-          estimated_monthly_revenue: number
-          estimated_monthly_traffic: number
-          funnel_step_count: number
-          geo: string
           id: string
-          main_domain: string
           nome: string
-          notas: string
-          operator_name: string
-          priority: number
-          product_currency: string
-          product_name: string
-          product_promise: string
-          product_ticket: number
-          screenshot_url: string
+          main_domain: string
           status: string
-          subnicho: string
+          vertical: string | null
+          subnicho: string | null
+          geo: string | null
+          priority: number | null
+          discovery_source: string | null
+          discovered_at: string | null
+          product_name: string | null
+          product_ticket: number | null
+          product_currency: string | null
+          product_promise: string | null
+          notas: string | null
+          screenshot_url: string | null
+          traffic_trend: string | null
+          estimated_monthly_traffic: number | null
+          estimated_monthly_revenue: number | null
+          operator_name: string | null
+          checkout_provider: string | null
+          vsl_player: string | null
+          discovery_query: string | null
+          created_at: string | null
+          updated_at: string | null
+          domain_count: number
+          ad_library_count: number
+          funnel_step_count: number
+          creative_count: number
           total_count: number
-          traffic_trend: string
-          updated_at: string
-          vertical: string
-          vsl_player: string
+        }[]
+      }
+      get_traffic_comparison: {
+        Args: {
+          p_offer_ids: string[]
+          p_start_date: string
+          p_end_date: string
+        }
+        Returns: {
+          spied_offer_id: string
+          offer_name: string
+          domain: string
+          source: string
+          period_date: string
+          visits: number
+        }[]
+      }
+      get_traffic_intel_summary: {
+        Args: { p_workspace_id: string; p_period_type?: string }
+        Returns: {
+          spied_offer_id: string
+          total_visits: number
+          peak_visits: number
+          avg_visits: number
+          latest_visits: number
+          previous_visits: number
+          data_points: number
+          domain_count: number
+          earliest_period: string | null
+          latest_period: string | null
         }[]
       }
       is_oferta_workspace_member: {
@@ -2167,6 +2436,14 @@ export type Database = {
       is_workspace_member: {
         Args: { _user_id: string; _workspace_id: string }
         Returns: boolean
+      }
+      refresh_pipeline: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          view_name: string
+          refreshed_at: string
+          duration_ms: number
+        }[]
       }
       unaccent: { Args: { "": string }; Returns: string }
     }

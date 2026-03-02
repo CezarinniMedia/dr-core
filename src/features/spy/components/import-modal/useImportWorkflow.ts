@@ -279,7 +279,7 @@ export function useImportWorkflow() {
           .select("id, nome, main_domain")
           .in("main_domain", chunk);
         for (const offer of data || []) {
-          offersByMainDomain.set(offer.main_domain, { id: offer.id, nome: offer.nome });
+          offersByMainDomain.set(offer.main_domain.toLowerCase(), { id: offer.id, nome: offer.nome });
         }
       }
 
@@ -291,7 +291,7 @@ export function useImportWorkflow() {
           .select("domain, spied_offer_id")
           .in("domain", chunk);
         for (const od of data || []) {
-          offerDomainLookup.set(od.domain, od.spied_offer_id);
+          offerDomainLookup.set(od.domain.toLowerCase(), od.spied_offer_id);
         }
       }
 
@@ -425,25 +425,56 @@ export function useImportWorkflow() {
       updated = existingMatches.length;
 
       if (newMatches.length > 0) {
-        setProgressLabel(`Criando ${newMatches.length} ofertas...`);
-        const offersToCreate = newMatches.map(m => ({
-          nome: m.domain,
-          main_domain: m.domain,
-          status: "RADAR",
-          workspace_id: workspaceId,
-          discovery_source: files[0]?.classified.type || "manual",
-          discovery_query: footprintQuery || null,
-        }));
+        // Pre-check: find domains that already exist in DB (dedup against UNIQUE INDEX)
+        setProgressLabel("Verificando duplicatas...");
+        const newDomainsList = newMatches.map(m => m.domain.toLowerCase());
+        const alreadyExisting = new Map<string, string>();
 
-        for (let i = 0; i < offersToCreate.length; i += BATCH) {
-          const chunk = offersToCreate.slice(i, i + BATCH);
-          const { data, error } = await supabase.from("spied_offers").insert(chunk as any[]).select("id, main_domain");
-          if (error) throw error;
-          for (const offer of data || []) offerIdMap.set(offer.main_domain, offer.id);
-          newOffers += chunk.length;
-          const done = Math.min(i + BATCH, offersToCreate.length);
-          setProgress(Math.round((done / offersToCreate.length) * 20));
-          setProgressLabel(`Criando ofertas... ${done}/${offersToCreate.length}`);
+        for (let i = 0; i < newDomainsList.length; i += 100) {
+          const chunk = newDomainsList.slice(i, i + 100);
+          const { data } = await supabase
+            .from("spied_offers")
+            .select("id, main_domain")
+            .eq("workspace_id", workspaceId)
+            .in("main_domain", chunk);
+          for (const offer of data || []) {
+            alreadyExisting.set(offer.main_domain.toLowerCase(), offer.id);
+          }
+        }
+
+        // Map existing domains to offerIdMap instead of creating duplicates
+        const trulyNew: typeof newMatches = [];
+        for (const m of newMatches) {
+          const existingId = alreadyExisting.get(m.domain.toLowerCase());
+          if (existingId) {
+            offerIdMap.set(m.domain, existingId);
+            updated++;
+          } else {
+            trulyNew.push(m);
+          }
+        }
+
+        if (trulyNew.length > 0) {
+          setProgressLabel(`Criando ${trulyNew.length} ofertas...`);
+          const offersToCreate = trulyNew.map(m => ({
+            nome: m.domain,
+            main_domain: m.domain.toLowerCase(),
+            status: "RADAR",
+            workspace_id: workspaceId,
+            discovery_source: files[0]?.classified.type || "manual",
+            discovery_query: footprintQuery || null,
+          }));
+
+          for (let i = 0; i < offersToCreate.length; i += BATCH) {
+            const chunk = offersToCreate.slice(i, i + BATCH);
+            const { data, error } = await supabase.from("spied_offers").insert(chunk as any[]).select("id, main_domain");
+            if (error) throw error;
+            for (const offer of data || []) offerIdMap.set(offer.main_domain, offer.id);
+            newOffers += chunk.length;
+            const done = Math.min(i + BATCH, offersToCreate.length);
+            setProgress(Math.round((done / offersToCreate.length) * 20));
+            setProgressLabel(`Criando ofertas... ${done}/${offersToCreate.length}`);
+          }
         }
       }
 

@@ -1,110 +1,128 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/shared/hooks/use-toast';
 
 // ============================================
-// SPIED OFFERS (Main entity CRUD)
+// Helper: get workspace_id from authenticated user
 // ============================================
+async function getWorkspaceId(): Promise<string> {
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user?.id) {
+    console.error('[SpyRadar] Auth error:', authError?.message ?? 'User not authenticated');
+    throw new Error('Usuário não autenticado');
+  }
+  const { data: member, error: memberError } = await supabase
+    .from('workspace_members')
+    .select('workspace_id')
+    .eq('user_id', user.id)
+    .single();
+  if (memberError || !member?.workspace_id) {
+    console.error('[SpyRadar] Workspace error:', memberError?.message ?? 'No workspace found');
+    throw new Error('Workspace não encontrado para este usuário');
+  }
+  return member.workspace_id;
+}
+
+// ============================================
+// SPIED OFFERS — Paginated (Primary hook for SpyRadar)
+// Uses RPC get_spied_offers_paginated — single DB call for 1 page + counts
+// ============================================
+
+export interface PaginatedOffersResult {
+  data: PaginatedOffer[];
+  totalCount: number;
+}
+
+export interface PaginatedOffer {
+  id: string;
+  nome: string;
+  main_domain: string | null;
+  status: string | null;
+  vertical: string | null;
+  subnicho: string | null;
+  geo: string | null;
+  priority: number | null;
+  discovery_source: string | null;
+  discovered_at: string | null;
+  product_name: string | null;
+  product_ticket: number | null;
+  product_currency: string | null;
+  product_promise: string | null;
+  notas: string | null;
+  screenshot_url: string | null;
+  traffic_trend: string | null;
+  estimated_monthly_traffic: number | null;
+  estimated_monthly_revenue: number | null;
+  operator_name: string | null;
+  checkout_provider: string | null;
+  vsl_player: string | null;
+  discovery_query: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  domain_count: number;
+  ad_library_count: number;
+  funnel_step_count: number;
+  creative_count: number;
+  // Compat with SpiedOffer interface — allow arbitrary fields
+  [key: string]: unknown;
+}
 
 export function useSpiedOffers(filters?: {
   status?: string;
+  statuses?: string[];
+  excludeStatuses?: string[];
   vertical?: string;
   discovery_source?: string;
   search?: string;
+  page?: number;
+  pageSize?: number;
 }) {
+  const page = filters?.page ?? 0;
+  const pageSize = filters?.pageSize ?? 50;
+
   return useQuery({
     queryKey: ['spied-offers', filters],
-    queryFn: async () => {
-      const pageSize = 1000;
-      const PARALLEL = 5;
+    queryFn: async (): Promise<PaginatedOffersResult> => {
+      const workspaceId = await getWorkspaceId();
 
-      // Build query helper with filters applied
-      const buildQuery = (from: number) => {
-        let query = supabase
-          .from('spied_offers')
-          .select(`
-            *,
-            offer_domains(count),
-            offer_ad_libraries(count),
-            offer_funnel_steps(count),
-            ad_creatives(count)
-          `)
-          .order('updated_at', { ascending: false })
-          .range(from, from + pageSize - 1);
-
-        if (filters?.status && filters.status !== 'all') {
-          query = query.eq('status', filters.status);
-        }
-        if (filters?.vertical) {
-          query = query.eq('vertical', filters.vertical);
-        }
-        if (filters?.discovery_source) {
-          query = query.eq('discovery_source', filters.discovery_source);
-        }
-        if (filters?.search) {
-          query = query.or(
-            `nome.ilike.%${filters.search}%,main_domain.ilike.%${filters.search}%,product_name.ilike.%${filters.search}%`
-          );
-        }
-        return query;
-      };
-
-      // First page + count
-      const buildCountQuery = () => {
-        let query = supabase
-          .from('spied_offers')
-          .select('id', { count: 'exact', head: true });
-
-        if (filters?.status && filters.status !== 'all') {
-          query = query.eq('status', filters.status);
-        }
-        if (filters?.vertical) {
-          query = query.eq('vertical', filters.vertical);
-        }
-        if (filters?.discovery_source) {
-          query = query.eq('discovery_source', filters.discovery_source);
-        }
-        if (filters?.search) {
-          query = query.or(
-            `nome.ilike.%${filters.search}%,main_domain.ilike.%${filters.search}%,product_name.ilike.%${filters.search}%`
-          );
-        }
-        return query;
-      };
-
-      // Get count and first page in parallel
-      const [countResult, firstResult] = await Promise.all([
-        buildCountQuery(),
-        buildQuery(0),
-      ]);
-
-      if (firstResult.error) throw firstResult.error;
-      if (!firstResult.data || firstResult.data.length === 0) return [];
-
-      const all: any[] = [...firstResult.data];
-      const total = countResult.count || 0;
-
-      if (firstResult.data.length < pageSize || total <= pageSize) return all;
-
-      // Fetch remaining pages in parallel
-      const totalPages = Math.ceil(total / pageSize);
-      for (let batch = 1; batch < totalPages; batch += PARALLEL) {
-        const promises = [];
-        for (let p = batch; p < Math.min(batch + PARALLEL, totalPages); p++) {
-          promises.push(buildQuery(p * pageSize));
-        }
-        const results = await Promise.all(promises);
-        for (const { data, error } of results) {
-          if (error) throw error;
-          if (data) all.push(...data);
-        }
+      // Build statuses array: single status OR multi-status filter
+      let statuses: string[] | null = null;
+      if (filters?.statuses && filters.statuses.length > 0) {
+        statuses = filters.statuses;
+      } else if (filters?.status && filters.status !== 'all') {
+        statuses = [filters.status];
       }
 
-      return all;
+      const { data, error } = await supabase.rpc('get_spied_offers_paginated', {
+        p_workspace_id: workspaceId,
+        p_limit: pageSize,
+        p_offset: page * pageSize,
+        p_statuses: statuses,
+        p_exclude_statuses: filters?.excludeStatuses ?? null,
+        p_vertical: filters?.vertical || null,
+        p_discovery_source: filters?.discovery_source || null,
+        p_search: filters?.search || null,
+      });
+
+      if (error) {
+        console.error('[SpyRadar] RPC error:', error.message, { page, pageSize, filters });
+        throw new Error(`Falha ao buscar ofertas: ${error.message}`);
+      }
+
+      const rows = (data || []) as PaginatedOffer[];
+      const totalCount = rows.length > 0 ? Number(rows[0].total_count) : 0;
+
+      return { data: rows, totalCount };
     },
+    placeholderData: keepPreviousData,
+    staleTime: 2 * 60_000, // 2min
+    retry: 1, // Only 1 retry instead of default 3 — avoids compounding timeouts
+    retryDelay: 1000,
   });
 }
 
+// Lazy-load: only loads offer core + domains/libraries/funnel/creatives (NOT traffic data).
+// Traffic data is loaded separately in SpyTrafficTab via useOfferTrafficData when tab is opened.
 export function useSpiedOffer(id: string) {
   return useQuery({
     queryKey: ['spied-offer', id],
@@ -116,7 +134,6 @@ export function useSpiedOffer(id: string) {
           offer_domains(*),
           offer_ad_libraries(*),
           offer_funnel_steps(*),
-          offer_traffic_data(*),
           ad_creatives(*)
         `)
         .eq('id', id)
@@ -142,9 +159,27 @@ export function useCreateSpiedOffer() {
         .eq('user_id', user?.id ?? '')
         .single();
 
+      const workspaceId = member?.workspace_id;
+
+      // Dedup check: if main_domain is provided, check if it already exists
+      const domain = typeof offer.main_domain === 'string' ? offer.main_domain.trim().toLowerCase() : null;
+      if (domain) {
+        const { data: existing } = await supabase
+          .from('spied_offers')
+          .select('id, nome')
+          .eq('workspace_id', workspaceId)
+          .ilike('main_domain', domain.replace(/[%_\\]/g, '\\$&'))
+          .limit(1)
+          .maybeSingle();
+
+        if (existing) {
+          throw new Error(`Domínio "${domain}" já existe no radar: "${existing.nome}"`);
+        }
+      }
+
       const { data, error } = await supabase
         .from('spied_offers')
-        .insert({ ...offer, workspace_id: member?.workspace_id } as any)
+        .insert({ ...offer, workspace_id: workspaceId } as any)
         .select()
         .single();
 

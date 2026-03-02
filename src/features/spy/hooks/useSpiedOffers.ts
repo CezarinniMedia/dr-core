@@ -7,6 +7,8 @@ export {
   useCreateSpiedOffer,
   useUpdateSpiedOffer,
   useDeleteSpiedOffer,
+  type PaginatedOffersResult,
+  type PaginatedOffer,
 } from './useSpiedOffersCRUD';
 
 export {

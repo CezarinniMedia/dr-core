@@ -8,7 +8,7 @@ import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/components/ui/table";
 import { useToast } from "@/shared/hooks/use-toast";
-import { useCreateSpiedOffer, useSpiedOffers } from "@/features/spy/hooks/useSpiedOffers";
+import { useCreateSpiedOffer } from "@/features/spy/hooks/useSpiedOffers";
 import { supabase } from "@/integrations/supabase/client";
 import { extractDomainsFromText } from "@/shared/lib/parseSemrushCSV";
 import { CheckCircle, XCircle, Search } from "lucide-react";

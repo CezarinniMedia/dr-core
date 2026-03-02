@@ -71,6 +71,47 @@ export function loadColumns(): Set<string> {
   return new Set(DEFAULT_COLUMNS);
 }
 
+// Lightweight batch fetch for ALL offers — overcomes PostgREST 1000-row cap
+export async function fetchAllOffersLite() {
+  type Row = { id: string; nome: string; main_domain: string | null; status: string | null; vertical: string | null; discovered_at: string | null };
+  const pageSize = 1000;
+  const PARALLEL = 5;
+
+  const { data: first, error: firstErr, count } = await supabase
+    .from("spied_offers")
+    .select("id, nome, main_domain, status, vertical, discovered_at", { count: "exact" })
+    .order("updated_at", { ascending: false })
+    .range(0, pageSize - 1);
+
+  if (firstErr) throw firstErr;
+  if (!first || first.length === 0) return [] as Row[];
+
+  const all: Row[] = [...first];
+  if (first.length < pageSize || !count || count <= pageSize) return all;
+
+  const totalPages = Math.ceil(count / pageSize);
+  for (let batch = 1; batch < totalPages; batch += PARALLEL) {
+    const promises = [];
+    for (let p = batch; p < Math.min(batch + PARALLEL, totalPages); p++) {
+      const from = p * pageSize;
+      promises.push(
+        supabase
+          .from("spied_offers")
+          .select("id, nome, main_domain, status, vertical, discovered_at")
+          .order("updated_at", { ascending: false })
+          .range(from, from + pageSize - 1)
+      );
+    }
+    const results = await Promise.all(promises);
+    for (const { data, error } of results) {
+      if (error) throw error;
+      if (data) all.push(...data);
+    }
+  }
+
+  return all;
+}
+
 // Parallel paginated fetch — gets row count first, then fetches pages 5 at a time
 export async function fetchAllTrafficRows(periodType: string) {
   type Row = { spied_offer_id: string; domain: string; period_date: string; visits: number | null };

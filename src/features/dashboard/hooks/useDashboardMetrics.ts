@@ -40,12 +40,16 @@ export function useDashboardMetrics() {
         p_workspace_id: workspaceId,
       });
 
-      if (error) throw new Error(error.message);
+      // Graceful fallback if RPC not available
+      if (error) {
+        if (error.code === 'PGRST202') return null;
+        throw new Error(error.message);
+      }
       if (!data || data.length === 0) return null;
       return data[0] as DashboardMetrics;
     },
     staleTime: 5 * 60_000,
-    retry: 2,
+    retry: 1,
   });
 }
 
@@ -81,7 +85,10 @@ export function useDetectSpikes(threshold = 100, lookbackDays = 90) {
         p_lookback_days: lookbackDays,
       });
 
-      if (error) throw new Error(error.message);
+      if (error) {
+        if (error.code === 'PGRST202') return [];
+        throw new Error(error.message);
+      }
       return data ?? [];
     },
     staleTime: 5 * 60_000,

@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect, Suspense, lazy } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { useSpiedOffers, useDeleteSpiedOffer, useLatestTrafficPerOffer } from "@/features/spy/hooks/useSpiedOffers";
+import { useSpiedOffers, useDeleteSpiedOffer, useLatestTrafficPerOffer, type PaginatedOffer } from "@/features/spy/hooks/useSpiedOffers";
 import { Loader2, LayoutList, BarChart3, Info, Radio } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { TooltipProvider } from "@/shared/components/ui/tooltip";
@@ -9,7 +9,6 @@ import { EmptyState } from "@/shared/components/ui/EmptyState";
 import { ErrorState } from "@/shared/components/ui/ErrorState";
 import { useToast } from "@/shared/hooks/use-toast";
 import {
-  filterOffers as filterOffersService,
   updateOfferStatus,
   updateOfferNotes,
   bulkUpdateStatus,
@@ -124,7 +123,11 @@ export default function SpyRadar() {
     if (error) { toast({ title: "Erro", description: error, variant: "destructive" }); return; }
     queryClient.setQueriesData({ queryKey: ['spied-offers'] }, (old: any) => {
       if (!old) return old;
-      return old.map((o: any) => o.id === offerId ? { ...o, status: newStatus } : o);
+      // Paginated format: { data: [], totalCount }
+      if (old.data && Array.isArray(old.data)) {
+        return { ...old, data: old.data.map((o: any) => o.id === offerId ? { ...o, status: newStatus } : o) };
+      }
+      return old;
     });
     setTimeout(() => queryClient.invalidateQueries({ queryKey: ['spied-offers'] }), 1500);
   };
@@ -134,16 +137,34 @@ export default function SpyRadar() {
     if (error) { toast({ title: "Erro", description: error, variant: "destructive" }); return; }
     queryClient.setQueriesData({ queryKey: ['spied-offers'] }, (old: any) => {
       if (!old) return old;
-      return old.map((o: any) => o.id === offerId ? { ...o, notas: notes } : o);
+      if (old.data && Array.isArray(old.data)) {
+        return { ...old, data: old.data.map((o: any) => o.id === offerId ? { ...o, notas: notes } : o) };
+      }
+      return old;
     });
     toast({ title: "Notas salvas!" });
   };
 
-  const { data: allOffersRaw, isLoading, isError, refetch } = useSpiedOffers({
+  // Server-side paginated query — all filtering + pagination happens in the DB
+  const { data: paginatedResult, isLoading, isError, error: spyError, refetch } = useSpiedOffers({
     vertical: vertical || undefined,
     discovery_source: source || undefined,
     search: search || undefined,
+    statuses: statusFilter.size > 0 ? [...statusFilter] : undefined,
+    excludeStatuses: !showArchived ? ['VAULT'] : undefined,
+    page: currentPage,
+    pageSize: pageSize === 'all' ? 500 : parseInt(pageSize),
   });
+
+  const offers = paginatedResult?.data as PaginatedOffer[] | undefined;
+  const totalOffers = paginatedResult?.totalCount ?? 0;
+
+  // Log errors for debugging — surfaces the actual failure reason in console
+  useEffect(() => {
+    if (spyError) {
+      console.error('[SpyRadar] Error loading offers:', spyError);
+    }
+  }, [spyError]);
 
   const { data: latestTrafficMap } = useLatestTrafficPerOffer(trafficDataSource);
 
@@ -151,21 +172,6 @@ export default function SpyRadar() {
     setTrafficDataSource(src);
     localStorage.setItem(LS_KEY_TRAFFIC_SOURCE, src);
   };
-
-  const offers = useMemo(() => {
-    if (!allOffersRaw) return allOffersRaw;
-    let filtered = allOffersRaw as any[];
-    // Hide VAULT offers unless toggle is on
-    if (!showArchived) {
-      filtered = filtered.filter((o: any) => o.status !== "VAULT");
-    }
-    if (statusFilter.size > 0) {
-      filtered = filterOffersService(filtered, { statusFilter });
-    }
-    return filtered;
-  }, [allOffersRaw, statusFilter, showArchived]);
-
-  const totalOffers = offers?.length ?? 0;
 
   const handleFilterChange = useCallback(() => {
     setActiveViewId(null);
@@ -193,7 +199,10 @@ export default function SpyRadar() {
     toast({ title: `${ids.length} ofertas → ${newStatus}` });
     queryClient.setQueriesData({ queryKey: ['spied-offers'] }, (old: any) => {
       if (!old) return old;
-      return old.map((o: any) => ids.includes(o.id) ? { ...o, status: newStatus } : o);
+      if (old.data && Array.isArray(old.data)) {
+        return { ...old, data: old.data.map((o: any) => ids.includes(o.id) ? { ...o, status: newStatus } : o) };
+      }
+      return old;
     });
     setSelectedIds(new Set());
     setTimeout(() => queryClient.invalidateQueries({ queryKey: ['spied-offers'] }), 1500);
@@ -290,7 +299,7 @@ export default function SpyRadar() {
                 </div>
               </div>
             ) : isError ? (
-              <ErrorState message="Erro ao carregar ofertas espionadas." onRetry={() => refetch()} />
+              <ErrorState message={spyError instanceof Error ? spyError.message : "Erro ao carregar ofertas espionadas."} onRetry={() => refetch()} />
             ) : !offers || offers.length === 0 ? (
               <EmptyState
                 icon={Radio}
@@ -310,6 +319,7 @@ export default function SpyRadar() {
                 latestTrafficMap={latestTrafficMap}
                 selectedIds={selectedIds}
                 setSelectedIds={setSelectedIds}
+                totalCount={totalOffers}
                 pageSize={pageSize}
                 setPageSize={(v) => { setPageSize(v); setCurrentPage(0); }}
                 currentPage={currentPage}
