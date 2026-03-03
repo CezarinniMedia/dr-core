@@ -58,7 +58,7 @@ export function SpikeAlertCard({
           "flex items-start gap-3 p-[var(--space-card-padding)]",
           "rounded-[var(--radius-lg)]",
           "transition-colors duration-200",
-          onClick && "cursor-pointer hover:bg-[var(--bg-raised)]",
+          onClick && "cursor-pointer hover:bg-[var(--bg-raised)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)] focus-visible:shadow-[var(--glow-primary)]",
           className
         )}
         style={{
@@ -67,7 +67,8 @@ export function SpikeAlertCard({
         onClick={onClick}
         role={onClick ? "button" : undefined}
         tabIndex={onClick ? 0 : undefined}
-        onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") onClick(); } : undefined}
+        aria-label={onClick ? `Spike alert: ${offerName} +${changePercent}% on ${domain}` : undefined}
+        onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } } : undefined}
       >
         <GlowDot active={isNew} />
 

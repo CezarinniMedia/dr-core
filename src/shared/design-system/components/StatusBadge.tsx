@@ -107,7 +107,7 @@ const statusConfig: Record<OfferStatus, StatusConfig> = {
   never_scaled: {
     label: "Never Scaled",
     icon: Ban,
-    textColor: "var(--border-subtle)",
+    textColor: "var(--text-muted)",
     bgColor: "var(--text-muted-10)",
     borderColor: "var(--text-muted-20)",
   },
@@ -170,8 +170,9 @@ export function StatusBadge({
         className
       )}
       style={style}
+      aria-label={`Status: ${config.label}`}
     >
-      <Icon className={cn(size === "sm" ? "w-3 h-3" : "w-3.5 h-3.5")} />
+      <Icon className={cn(size === "sm" ? "w-3 h-3" : "w-3.5 h-3.5")} aria-hidden="true" />
       {config.label}
     </span>
   );

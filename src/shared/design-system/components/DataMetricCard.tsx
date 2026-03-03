@@ -56,7 +56,7 @@ export function DataMetricCard({
           {label}
         </span>
         {Icon && (
-          <Icon className="w-4 h-4 text-[color:var(--text-muted)]" />
+          <Icon className="w-4 h-4 text-[color:var(--text-muted)]" aria-hidden="true" />
         )}
       </div>
 

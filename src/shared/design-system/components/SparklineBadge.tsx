@@ -68,6 +68,8 @@ export function SparklineBadge({
       height={height}
       viewBox={`0 0 ${width} ${height}`}
       className={cn("flex-shrink-0", className)}
+      aria-hidden="true"
+      role="img"
     >
       <path
         d={path}
