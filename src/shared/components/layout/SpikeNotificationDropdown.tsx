@@ -186,7 +186,7 @@ function SpikeItem({
 }) {
   const changeStr =
     spike.change_percent != null
-      ? `+${Math.round(spike.change_percent)}%`
+      ? `${spike.change_percent >= 0 ? "+" : ""}${Math.round(spike.change_percent)}%`
       : "";
 
   return (
@@ -211,13 +211,12 @@ function SpikeItem({
     >
       {/* Glow dot */}
       <div
-        className="flex-shrink-0 mt-1.5 w-2 h-2 rounded-full"
+        className={`flex-shrink-0 mt-1.5 w-2 h-2 rounded-full ${isNew ? "animate-glow-pulse" : ""}`}
         style={
           isNew
             ? {
                 background: "var(--semantic-spike, #F97316)",
                 boxShadow: "0 0 6px rgba(249, 115, 22, 0.5)",
-                animation: "glow-pulse 2s ease-in-out infinite",
               }
             : {
                 background: "var(--text-muted, #6B7280)",

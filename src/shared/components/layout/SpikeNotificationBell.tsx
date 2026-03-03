@@ -71,18 +71,25 @@ export function SpikeNotificationBell() {
     if (!isOpen) setSelectedIndex(-1);
   }, [isOpen]);
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts (e.code for macOS compat — Alt produces special chars with e.key)
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
+      // Skip when typing in inputs/textareas
+      const target = e.target as HTMLElement;
+      const isEditable =
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable;
+
       // Alt+S — toggle dropdown
-      if (e.altKey && !e.shiftKey && e.key.toLowerCase() === "s") {
+      if (e.altKey && !e.shiftKey && e.code === "KeyS" && !isEditable) {
         e.preventDefault();
         setIsOpen((prev) => !prev);
         return;
       }
 
       // Alt+Shift+S — mark all as seen
-      if (e.altKey && e.shiftKey && e.key.toLowerCase() === "s") {
+      if (e.altKey && e.shiftKey && e.code === "KeyS" && !isEditable) {
         e.preventDefault();
         markAllAsSeen();
         return;
@@ -153,14 +160,13 @@ export function SpikeNotificationBell() {
 
           {hasSpikes && (
             <span
-              className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-[5px] rounded-full text-[11px] font-bold border-2 border-[var(--bg-base,#0A0A0A)]"
+              className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-[5px] rounded-full text-[11px] font-bold border-2 border-[var(--bg-base,#0A0A0A)] animate-glow-pulse"
               style={{
                 background: "var(--semantic-spike, #F97316)",
                 color: "var(--bg-base, #0A0A0A)",
                 boxShadow: isIntenseGlow
                   ? "0 0 12px rgba(249, 115, 22, 0.6)"
                   : "0 0 8px rgba(249, 115, 22, 0.4)",
-                animation: "glow-pulse 2s ease-in-out infinite",
               }}
             >
               {displayCount}

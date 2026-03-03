@@ -25,7 +25,9 @@ export function SpikeNotificationToast({
   onDismiss,
 }: SpikeNotificationToastProps) {
   const changeStr =
-    changePercent != null ? `+${Math.round(changePercent)}%` : "";
+    changePercent != null
+      ? `${changePercent >= 0 ? "+" : ""}${Math.round(changePercent)}%`
+      : "";
 
   return (
     <div
