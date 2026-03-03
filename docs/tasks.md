@@ -33,7 +33,7 @@
 
 ### Implementacao dos Wireframes (ALTA prioridade)
 Cada item = 1 sessao @dev, 1 branch, 1 PR. Fazer DB migrations primeiro.
-- [ ] DB Migrations: offers +spied_offer_id +source, ad_creatives +decision_metrics +decision_notes +decided_at +test_started_at, spike_alerts +seen_at (@data-engineer)
+- [x] DB Migrations: ofertas +spied_offer_id +source, ad_creatives +decision_metrics +decision_notes +decided_at +test_started_at, spike_alerts +seen_at (@data-engineer) — 20260303000000_fase05_ux_wireframe_fields.sql
 - [ ] Daily Briefing page em /briefing (@dev)
 - [ ] Spike Notification System -- header badge + dropdown + toast realtime (@dev)
 - [ ] Clone to Own modal no SpyOfferDetail (@dev)

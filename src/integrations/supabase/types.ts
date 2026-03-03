@@ -89,6 +89,10 @@ export type Database = {
           thumbnail_url: string | null
           tipo: string
           workspace_id: string
+          decision_metrics: Json | null
+          decision_notes: string | null
+          decided_at: string | null
+          test_started_at: string | null
         }
         Insert: {
           ad_library_id_external?: string | null
@@ -116,6 +120,10 @@ export type Database = {
           thumbnail_url?: string | null
           tipo: string
           workspace_id: string
+          decision_metrics?: Json | null
+          decision_notes?: string | null
+          decided_at?: string | null
+          test_started_at?: string | null
         }
         Update: {
           ad_library_id_external?: string | null
@@ -143,6 +151,10 @@ export type Database = {
           thumbnail_url?: string | null
           tipo?: string
           workspace_id?: string
+          decision_metrics?: Json | null
+          decision_notes?: string | null
+          decided_at?: string | null
+          test_started_at?: string | null
         }
         Relationships: [
           {
@@ -1011,6 +1023,8 @@ export type Database = {
           vertical: string | null
           vsl_player: string | null
           workspace_id: string
+          spied_offer_id: string | null
+          source: string | null
         }
         Insert: {
           aov_target?: number | null
@@ -1051,6 +1065,8 @@ export type Database = {
           vertical?: string | null
           vsl_player?: string | null
           workspace_id: string
+          spied_offer_id?: string | null
+          source?: string | null
         }
         Update: {
           aov_target?: number | null
@@ -1091,6 +1107,8 @@ export type Database = {
           vertical?: string | null
           vsl_player?: string | null
           workspace_id?: string
+          spied_offer_id?: string | null
+          source?: string | null
         }
         Relationships: [
           {
@@ -1098,6 +1116,13 @@ export type Database = {
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ofertas_spied_offer_id_fkey"
+            columns: ["spied_offer_id"]
+            isOneToOne: false
+            referencedRelation: "spied_offers"
             referencedColumns: ["id"]
           },
         ]
@@ -1571,6 +1596,75 @@ export type Database = {
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spike_alerts: {
+        Row: {
+          id: string
+          workspace_id: string
+          spied_offer_id: string
+          domain: string
+          period_date: string
+          previous_visits: number | null
+          current_visits: number | null
+          change_percent: number | null
+          alert_type: string
+          is_read: boolean | null
+          is_dismissed: boolean | null
+          detected_at: string | null
+          created_at: string | null
+          updated_at: string | null
+          seen_at: string | null
+        }
+        Insert: {
+          id?: string
+          workspace_id: string
+          spied_offer_id: string
+          domain: string
+          period_date: string
+          previous_visits?: number | null
+          current_visits?: number | null
+          change_percent?: number | null
+          alert_type?: string
+          is_read?: boolean | null
+          is_dismissed?: boolean | null
+          detected_at?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+          seen_at?: string | null
+        }
+        Update: {
+          id?: string
+          workspace_id?: string
+          spied_offer_id?: string
+          domain?: string
+          period_date?: string
+          previous_visits?: number | null
+          current_visits?: number | null
+          change_percent?: number | null
+          alert_type?: string
+          is_read?: boolean | null
+          is_dismissed?: boolean | null
+          detected_at?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+          seen_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spike_alerts_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spike_alerts_spied_offer_id_fkey"
+            columns: ["spied_offer_id"]
+            isOneToOne: false
+            referencedRelation: "spied_offers"
             referencedColumns: ["id"]
           },
         ]
