@@ -24,7 +24,7 @@ Conteudo:
   - Hierarquia de cores: violet=acao, amber=warmth/clone, teal=dados, orange=urgencia, gold=sucesso premium
   - Animacoes permitidas: glow-pulse (feedback), fade-in (entrada), shimmer (loading), sparkline-draw (dados)
   - Animacoes PROIBIDAS: bounce, shake, rotate (ADHD-unfriendly)
-- Mapeamento Vision para Implementacao:
+- Mapeamento Vision → Implementacao:
   - Implementado nesta sessao (lista)
   - Backlog (Tier 2/3 components, useFormDialog, VirtualizedTable, RGBA migration)
 
@@ -32,12 +32,12 @@ Conteudo:
 
 Adicione entrada no TOPO:
 
-Titulo: [Vision Design System Foundation] - 2026-03-03
+## [Vision Design System Foundation] - 2026-03-03
 
-Added:
+### Added
 - Design System tokens.yaml as source of truth (70+ tokens)
 - 21 opacity tokens + 5 glass/overlay tokens
-- Vision to shadcn HSL bridge (index.css .dark block rewritten)
+- Vision ↔ shadcn HSL bridge (index.css .dark block rewritten)
 - Tailwind config extended with Vision colors, shadows, animations
 - JetBrains Mono font import + Inter 300 weight
 - 5 atomic components: LEDGlowBorder, AmbientGlow, GlassmorphismCard, StatusBadge, SparklineBadge
@@ -47,9 +47,9 @@ Added:
 - Accessibility report (WCAG AA compliance)
 - DESIGN-SYSTEM.md pattern library
 
-UX Research:
+### UX Research
 - ADHD operator profile (attention P20, visual memory P90)
 - 15 ADHD-UX design rules synthesized from context-brief + analyst output
-- Audit score: 59% Vision adherence, target 82% after full migration
+- Audit score: 59% Vision adherence → target 82% after full migration
 
 Quando terminar, diga "Fase 7 concluida".
