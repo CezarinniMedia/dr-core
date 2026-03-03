@@ -1,56 +1,68 @@
 import { cn } from "@/shared/lib/utils";
 
-type GlowVariant = "primary" | "amber" | "teal" | "success" | "error";
-type GlowPosition = "bottom" | "left" | "top" | "right";
+type GlowVariant = "primary" | "amber" | "teal" | "success" | "error" | "spike";
+type GlowIntensity = "subtle" | "medium" | "strong";
+type GlowPosition = "left" | "bottom" | "top" | "right";
 
 interface LEDGlowBorderProps {
   children: React.ReactNode;
   variant?: GlowVariant;
+  intensity?: GlowIntensity;
+  animated?: boolean;
   position?: GlowPosition;
   className?: string;
 }
 
-const glowStyles: Record<GlowVariant, Record<GlowPosition, string>> = {
-  primary: {
-    bottom: "border-b border-b-[var(--accent-primary)] shadow-[0_1px_8px_rgba(124,58,237,0.3)]",
-    left: "border-l-2 border-l-[var(--accent-primary)] shadow-[-2px_0_12px_rgba(124,58,237,0.2)]",
-    top: "border-t border-t-[var(--accent-primary)] shadow-[0_-1px_8px_rgba(124,58,237,0.2)]",
-    right: "border-r-2 border-r-[var(--accent-primary)] shadow-[2px_0_12px_rgba(124,58,237,0.2)]",
-  },
-  amber: {
-    bottom: "border-b border-b-[var(--accent-amber)] shadow-[0_1px_8px_rgba(212,165,116,0.3)]",
-    left: "border-l-2 border-l-[var(--accent-amber)] shadow-[-2px_0_12px_rgba(212,165,116,0.2)]",
-    top: "border-t border-t-[var(--accent-amber)] shadow-[0_-1px_8px_rgba(212,165,116,0.2)]",
-    right: "border-r-2 border-r-[var(--accent-amber)] shadow-[2px_0_12px_rgba(212,165,116,0.2)]",
-  },
-  teal: {
-    bottom: "border-b border-b-[var(--accent-teal)] shadow-[0_1px_8px_rgba(0,212,170,0.3)]",
-    left: "border-l-2 border-l-[var(--accent-teal)] shadow-[-2px_0_12px_rgba(0,212,170,0.2)]",
-    top: "border-t border-t-[var(--accent-teal)] shadow-[0_-1px_8px_rgba(0,212,170,0.2)]",
-    right: "border-r-2 border-r-[var(--accent-teal)] shadow-[2px_0_12px_rgba(0,212,170,0.2)]",
-  },
-  success: {
-    bottom: "border-b border-b-[var(--semantic-success)] shadow-[0_1px_8px_rgba(34,197,94,0.3)]",
-    left: "border-l-2 border-l-[var(--semantic-success)] shadow-[-2px_0_12px_rgba(34,197,94,0.2)]",
-    top: "border-t border-t-[var(--semantic-success)] shadow-[0_-1px_8px_rgba(34,197,94,0.2)]",
-    right: "border-r-2 border-r-[var(--semantic-success)] shadow-[2px_0_12px_rgba(34,197,94,0.2)]",
-  },
-  error: {
-    bottom: "border-b border-b-[var(--semantic-error)] shadow-[0_1px_8px_rgba(239,68,68,0.3)]",
-    left: "border-l-2 border-l-[var(--semantic-error)] shadow-[-2px_0_12px_rgba(239,68,68,0.2)]",
-    top: "border-t border-t-[var(--semantic-error)] shadow-[0_-1px_8px_rgba(239,68,68,0.2)]",
-    right: "border-r-2 border-r-[var(--semantic-error)] shadow-[2px_0_12px_rgba(239,68,68,0.2)]",
-  },
+const colorMap: Record<GlowVariant, { border: string; rgb: string }> = {
+  primary: { border: "var(--accent-primary)", rgb: "124,58,237" },
+  amber: { border: "var(--accent-amber)", rgb: "212,165,116" },
+  teal: { border: "var(--accent-teal)", rgb: "0,212,170" },
+  success: { border: "var(--semantic-success)", rgb: "34,197,94" },
+  error: { border: "var(--semantic-error)", rgb: "239,68,68" },
+  spike: { border: "var(--semantic-spike)", rgb: "249,115,22" },
+};
+
+const intensityOpacity: Record<GlowIntensity, { shadow: number; spread: number }> = {
+  subtle: { shadow: 0.1, spread: 8 },
+  medium: { shadow: 0.2, spread: 12 },
+  strong: { shadow: 0.3, spread: 20 },
+};
+
+const positionStyles: Record<GlowPosition, (border: string, rgb: string, intensity: GlowIntensity) => React.CSSProperties> = {
+  bottom: (border, rgb, intensity) => ({
+    borderBottom: `1px solid ${border}`,
+    boxShadow: `0 1px ${intensityOpacity[intensity].spread}px rgba(${rgb},${intensityOpacity[intensity].shadow})`,
+  }),
+  top: (border, rgb, intensity) => ({
+    borderTop: `1px solid ${border}`,
+    boxShadow: `0 -1px ${intensityOpacity[intensity].spread}px rgba(${rgb},${intensityOpacity[intensity].shadow})`,
+  }),
+  left: (border, rgb, intensity) => ({
+    borderLeft: `2px solid ${border}`,
+    boxShadow: `-2px 0 ${intensityOpacity[intensity].spread}px rgba(${rgb},${intensityOpacity[intensity].shadow})`,
+  }),
+  right: (border, rgb, intensity) => ({
+    borderRight: `2px solid ${border}`,
+    boxShadow: `2px 0 ${intensityOpacity[intensity].spread}px rgba(${rgb},${intensityOpacity[intensity].shadow})`,
+  }),
 };
 
 export function LEDGlowBorder({
   children,
   variant = "primary",
+  intensity = "subtle",
+  animated = false,
   position = "bottom",
   className,
 }: LEDGlowBorderProps) {
+  const { border, rgb } = colorMap[variant];
+  const style = positionStyles[position](border, rgb, intensity);
+
   return (
-    <div className={cn(glowStyles[variant][position], className)}>
+    <div
+      className={cn(animated && "animate-glow-pulse", className)}
+      style={style}
+    >
       {children}
     </div>
   );
