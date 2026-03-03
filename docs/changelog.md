@@ -1,5 +1,27 @@
 # Changelog - DR OPS
 
+## [Vision Design System Foundation] - 2026-03-03
+
+### Added
+- Design System tokens.yaml as source of truth -- 96 tokens
+- 21 opacity tokens + 5 glass/overlay tokens
+- Vision to shadcn HSL bridge -- index.css .dark block rewritten
+- Tailwind config extended with Vision colors, shadows, animations
+- JetBrains Mono font import + Inter 300 weight
+- 5 atomic components: LEDGlowBorder, AmbientGlow, GlassmorphismCard, StatusBadge, SparklineBadge
+- 2 molecule components: DataMetricCard, SpikeAlertCard
+- ADHD Design Principles checklist -- 15 rules
+- 5 wireframes: Daily Briefing, Clone to Own, Command Palette, Creative Lifecycle, Spike Notification
+- Accessibility report -- WCAG AA compliance
+- DESIGN-SYSTEM.md pattern library
+
+### UX Research
+- ADHD operator profile -- attention P20, visual memory P90
+- 15 ADHD-UX design rules synthesized from context-brief + analyst output
+- Audit score: 59% Vision adherence, target 82% after full migration
+
+---
+
 ## 2026-02-21/22 - VISION: System Redesign Completo (7 fases, 7/7 QA PASS) (Claude Opus 4.6)
 
 **Branch:** `feature/vision-1-foundation` | **60+ commits** | **248 arquivos** | **+21.7k LOC** | **Timeline:** 2 dias
