@@ -52,6 +52,17 @@
 - **Comportamento:** exemplo durante o importador universal de csv: na coluna 'Tipo CSV' a informação 'semrush: Bulk Analysis' que deveria estar em apenas uma linha, está em 3 linhas / 'ação' a informação está em duas linhas / 'Dados' em 4 linhas. Todas desnecessariamente mal configuradas, deveriam estar em apenas uma. E esse tipo de problema tem no sistema todo em diversas coisas, não apenas listas, mas botões também etc.
 - **Impacto:** faz perder tempo, atrapalha a funcionalidade e fica com Visual amador/nao profissional
 
+## TECH DEBT (documentado, baixo risco, fix futuro)
+
+### DEBT-001: ILIKE pattern injection no Command Palette global search
+- **Onde:** `src/shared/hooks/useCommandPalette.ts` linhas 85-92
+- **Comportamento:** `.or(\`nome.ilike.${pattern},main_domain.ilike.${pattern}\`)` passa input do usuario direto no pattern ILIKE sem escapar `%` e `_`
+- **Risco:** BAIXO — RLS protege dados, usuario so ve seus proprios registros. Pior caso: resultados inesperados com wildcards
+- **Fix sugerido:** Criar helper `escapeIlike(term)` que escapa `%` → `\%` e `_` → `\_` antes de montar o pattern
+- **Origem:** QA review B4 (2026-03-03), aceito como tech debt
+
+---
+
 ## MENORES (incomodam mas nao bloqueiam)
 
 ### BUG-009: Filtros de ofertas (modulo Ofertas) muito pequenos

@@ -1,5 +1,41 @@
 # Changelog - DR OPS
 
+## [Command Palette Rewrite] - 2026-03-03
+
+### Reescrita completa do Command Palette (Cmd+K)
+Reescrito de ~170 LOC basico para ~470 LOC full-featured, seguindo wireframe UX.
+
+**Arquitetura:**
+- **Global Modal Context** — `useModalContext` (React Context) permite qualquer componente abrir modals (import, quickAdd, fullForm, exportCsv) sem prop drilling
+- **`ModalProvider`** wrapping `DashboardLayout` — estado centralizado de modals
+- **`useCommandPalette` hook** — recentes (localStorage), busca global debounced (200ms), deteccao de contexto de rota
+
+**Funcionalidades:**
+- 4 secoes: Recentes, Navegacao (8 rotas + atalhos Alt+1-6,0), Acoes Rapidas (5), Contextuais (por rota)
+- Busca global cross-module via Supabase: `spied_offers`, `offers`, `offer_domains`, `ad_creatives`, `avatars` (5 tabelas, 3 resultados por tipo, max 10 total)
+- Recentes com localStorage (max 5 itens, dedup por id e path)
+- Acoes contextuais por rota (spy, spy-detail, criativos, arsenal)
+- LED strip violeta em item selecionado (`data-[selected=true]:border-l-2`)
+- Glassmorphism container com ambient glow violet
+- Empty state com SearchX + atalho "Quick Add Oferta"
+- Acessibilidade: `VisuallyHidden` para DialogTitle, kbd badges
+
+**Keyboard Shortcuts registrados em DashboardLayout:**
+- `Cmd+K` toggle palette, `Escape` fechar, `Ctrl+I` import, `Ctrl+N` quick add, `Ctrl+E` export CSV
+- `Alt+1-6` navegacao entre modulos, `Alt+0` briefing
+
+**Arquivos:**
+- NEW: `src/shared/hooks/useModalContext.tsx`
+- NEW: `src/shared/hooks/useCommandPalette.ts`
+- REWRITE: `src/shared/components/layout/command-palette/CommandPalette.tsx`
+- UPDATE: `src/shared/components/layout/DashboardLayout.tsx` (ModalProvider + shortcuts)
+- UPDATE: `src/pages/SpyRadar.tsx` (consume useModalContext)
+- UPDATE: `package.json` (+@radix-ui/react-visually-hidden)
+
+**QA:** 2 rounds — 5 bugs corrigidos, 1 tech debt documentado (ILIKE injection). Verdict: PASS.
+
+---
+
 ## [Vision Design System Foundation] - 2026-03-03
 
 ### Added

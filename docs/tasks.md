@@ -37,7 +37,7 @@ Cada item = 1 sessao @dev, 1 branch, 1 PR. Fazer DB migrations primeiro.
 - [ ] Daily Briefing page em /briefing (@dev)
 - [ ] Spike Notification System -- header badge + dropdown + toast realtime (@dev)
 - [ ] Clone to Own modal no SpyOfferDetail (@dev)
-- [ ] Command Palette rewrite -- Cmd+K enhanced (@dev)
+- [x] Command Palette rewrite -- Cmd+K enhanced (@dev) — Done 2026-03-03, commit b24d78c
 - [ ] Creative Lifecycle WINNER/KILLED (@dev)
 
 ### Migracao de Codigo (MEDIA prioridade)
