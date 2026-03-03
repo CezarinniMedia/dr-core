@@ -113,17 +113,34 @@ export async function fetchAllOffersLite() {
 }
 
 // Parallel paginated fetch — gets row count first, then fetches pages 5 at a time
-export async function fetchAllTrafficRows(periodType: string) {
+// Filter by source (more reliable than period_type — historical records may have wrong period_type)
+// SimilarWeb: source = 'similarweb'
+// SEMrush: source starts with 'semrush' (semrush_bulk, semrush_csv, semrush_trend, etc.)
+function buildSourceFilter(dataSource: 'similarweb' | 'semrush') {
+  if (dataSource === 'similarweb') return { column: 'source', value: 'similarweb' as string, op: 'eq' as const };
+  return { column: 'source', value: 'similarweb', op: 'neq' as const };
+}
+
+export async function fetchAllTrafficRows(dataSource: 'similarweb' | 'semrush') {
   type Row = { spied_offer_id: string; domain: string; period_date: string; visits: number | null };
   const pageSize = 1000;
   const PARALLEL = 5;
+  const { op, value } = buildSourceFilter(dataSource);
 
-  const { data: first, error: firstErr, count } = await supabase
+  const baseQuery = () => supabase
     .from("offer_traffic_data")
-    .select("spied_offer_id, domain, period_date, visits", { count: "exact" })
-    .eq("period_type", periodType)
-    .order("period_date", { ascending: true })
-    .range(0, pageSize - 1);
+    .select("spied_offer_id, domain, period_date, visits")
+    .order("period_date", { ascending: true });
+
+  const applyFilter = (q: ReturnType<typeof baseQuery>) =>
+    op === 'eq' ? q.eq('source', value) : q.neq('source', value);
+
+  const { data: first, error: firstErr, count } = await applyFilter(
+    supabase
+      .from("offer_traffic_data")
+      .select("spied_offer_id, domain, period_date, visits", { count: "exact" })
+      .order("period_date", { ascending: true })
+  ).range(0, pageSize - 1);
 
   if (firstErr) throw firstErr;
   if (!first || first.length === 0) return [] as Row[];
@@ -136,14 +153,7 @@ export async function fetchAllTrafficRows(periodType: string) {
     const promises = [];
     for (let p = batch; p < Math.min(batch + PARALLEL, totalPages); p++) {
       const from = p * pageSize;
-      promises.push(
-        supabase
-          .from("offer_traffic_data")
-          .select("spied_offer_id, domain, period_date, visits")
-          .eq("period_type", periodType)
-          .order("period_date", { ascending: true })
-          .range(from, from + pageSize - 1)
-      );
+      promises.push(applyFilter(baseQuery()).range(from, from + pageSize - 1));
     }
     const results = await Promise.all(promises);
     for (const { data, error } of results) {

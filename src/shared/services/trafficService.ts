@@ -126,10 +126,11 @@ export function compareTraffic(
     const records = mainDomainRecords.length > 0 ? mainDomainRecords : allRecords;
     const hasTrafficData = allRecords.length > 0;
 
-    // Aggregate visits per month (safe now — filtered to single domain)
+    // Aggregate visits per YYYY-MM — handles records stored on different days of same month
     const monthMap = new Map<string, number>();
     for (const r of records) {
-      monthMap.set(r.date, Math.max(monthMap.get(r.date) || 0, r.visits));
+      const month = r.date.slice(0, 7); // "YYYY-MM"
+      monthMap.set(month, Math.max(monthMap.get(month) || 0, r.visits));
     }
     const sorted = [...monthMap.entries()].sort((a, b) => a[0].localeCompare(b[0]));
 
