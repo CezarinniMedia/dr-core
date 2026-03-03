@@ -177,8 +177,8 @@ export function useTrafficIntelligence() {
   }, [sortedRows, selectedIds]);
 
   const addAllToChart = useCallback(() => {
-    setChartIds(new Set(sortedRows.filter(r => r.hasTrafficData).map(r => r.id)));
-  }, [sortedRows]);
+    setChartIds(new Set(paginatedRows.filter(r => r.hasTrafficData).map(r => r.id)));
+  }, [paginatedRows]);
 
   const handleBulkStatus = async (newStatus: string) => {
     const ids = Array.from(selectedIds);
