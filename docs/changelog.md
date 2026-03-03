@@ -1,5 +1,77 @@
 # Changelog - DR OPS
 
+## 2026-02-21/22 - VISION: System Redesign Completo (7 fases, 7/7 QA PASS) (Claude Opus 4.6)
+
+**Branch:** `feature/vision-1-foundation` | **60+ commits** | **248 arquivos** | **+21.7k LOC** | **Timeline:** 2 dias
+
+O Brownfield Discovery identificou 40 debitos tecnicos. Em vez de resolver um a um, o Vision aplicou uma visao arquitetural unificada em 7 fases — transformando o sistema de "MVP funcional" em software profissional.
+
+### Vision-1: Foundation (Design System + Feature Architecture)
+- **Design System:** 45 CSS custom properties em `tokens.css` (cores, spacing, sombras, animacoes)
+- **Primitives:** AmbientGlow, GlassmorphismCard, LEDGlowBorder
+- **Components:** DataMetricCard, SparklineBadge, StatusBadge
+- **Feature-based architecture:** `src/features/` com 6 modulos (spy, dashboard, offers, avatar, creatives, arsenal)
+- **Command Palette:** Cmd+K global com navegacao rapida (cmdk)
+- **Keyboard shortcuts:** Hook `useKeyboardShortcuts` para atalhos globais
+
+### Vision-2A: Sacred Features (SPY Excellence)
+- **Grafico comparativo multi-dominio:** N dominios, 12 cores, glassmorphism tooltip, area fill com gradiente
+- **Sparkline com spike detection:** >100% = pulso laranja, tendencia teal/red/muted
+- **MonthRangePicker:** Estilo Semrush, 6 presets (1M/3M/6M/YTD/1A/2A), meses em portugues
+
+### Vision-2: Design System Integration
+- **Web Worker CSV:** `csv-processor.worker.ts` — processamento off-thread para 14k+ linhas
+- **Tokens aplicados:** SPY Radar, Offer Detail (7 tabs), filter bar, status badges, bulk actions
+- **Vault toggle:** Ocultar ofertas VAULT por padrao
+
+### Vision-3: Intelligence Layer (Backend + Frontend)
+- **Backend (820-line migration):**
+  - 3 Materialized Views: `mv_dashboard_metrics`, `mv_traffic_summary`, `mv_spike_detection`
+  - 4 RPCs (SECURITY DEFINER): `bulk_upsert_traffic_data`, `get_dashboard_metrics`, `get_traffic_comparison`, `detect_spikes`
+  - Tabela `spike_alerts` com trigger `pg_notify` para realtime
+  - pg_cron: dashboard 4h, traffic 6h, spikes 2h (CONCURRENTLY)
+- **Frontend (910 LOC):**
+  - Dashboard reescrito: 5 KPIs reais, spike alerts realtime, donut chart de status, heatmap de atividade, activity feed
+  - Hook `useRealtimeSubscription` para Supabase Realtime
+
+### Vision-4: Modules (Ofertas, Avatar, Criativos, Arsenal)
+- **Ofertas:** 3 views (cards/table/kanban), drag-drop status, CRUD completo
+- **Avatar:** Criacao manual, JSONB edit, export Markdown
+- **Criativos:** Naming engine, duplicacao, Kanban board
+- **Arsenal (NOVO):** Dorks, footprints, keywords com CRUD, favoritos, copy, busca server-side
+
+### Vision-5: Automation (Import Tracking, Saved Views, Pipeline)
+- **Import tracking:** Historico de jobs com retry e config prefill
+- **Saved Views:** Filtros persistentes com pin, Cmd+K access, URL deep-linking
+- **Pipeline semi-auto:** Refresh manual com advisory lock, status das 3 MVs
+- RPCs: `refresh_pipeline()`, `get_pipeline_status()`
+
+### Vision-6: Accessibility, Testing & Performance
+- **Acessibilidade:** eslint-plugin-jsx-a11y (17 regras), aria-labels em 10 componentes, 20 testes axe-core
+- **Testes:** 0 → 209 testes (13 arquivos) — lib, hooks, a11y
+- **Performance:** TrafficTable virtualizado (TanStack Virtual, 12k+ rows), vendor chunk splitting (react, supabase, query, ui, charts)
+- **Type safety:** `any` → tipos proprios com type guards
+
+### Post-Vision Fixes (ainda no branch)
+- CSV deduplication improvements
+- Server-side pagination para SpyRadar com RPC fallbacks
+- Fix traffic doubling na Traffic Intelligence
+- RPC GROUP BY CTE optimizations
+- 2-phase search strategy (exact + fuzzy)
+- Traffic Intelligence filtrado por source (nao period_type)
+
+### Brownfield Diferido (pos-merge)
+- BD-2.2 (service layer formal), BD-2.3 (route splitting), BD-2.4 (deprecar legacy tables)
+- BD-3.3 (skeleton loaders global), BD-3.4 (breadcrumb navigation)
+- 160 `no-explicit-any`, ~45 `text-muted-foreground`, `useWorkspaceId` duplicado
+
+### QA Summary
+- **18 rounds** de QA across 7 fases
+- **~53 issues** encontrados, **~50 resolvidos**, 3 LOW diferidos como tech debt
+- **0 CRITICAL** remanescentes
+
+---
+
 ## 2026-02-19 - Radar lista: screenshot preview, notas inline, colunas expandidas + 3 bugfixes (Claude Sonnet 4.6)
 
 ### Screenshot preview na lista (`SpyRadar.tsx`)
