@@ -1,7 +1,7 @@
 import { cn } from "@/shared/lib/utils";
-import { TrendingUp, TrendingDown, Minus, type LucideIcon } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { SparklineBadge } from "./SparklineBadge";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 interface DataMetricCardProps {
   value: string | number;
@@ -9,7 +9,7 @@ interface DataMetricCardProps {
   change?: number;
   trend?: "up" | "down" | "stable";
   sparklineData?: number[];
-  icon?: LucideIcon;
+  icon?: ReactNode;
   glowOnHover?: boolean;
   className?: string;
 }
@@ -20,7 +20,7 @@ export function DataMetricCard({
   change,
   trend,
   sparklineData,
-  icon: Icon,
+  icon,
   glowOnHover = false,
   className,
 }: DataMetricCardProps) {
@@ -55,8 +55,10 @@ export function DataMetricCard({
         <span className="text-[length:var(--text-label)] text-[color:var(--text-secondary)] [font-weight:var(--font-regular)]">
           {label}
         </span>
-        {Icon && (
-          <Icon className="w-4 h-4 text-[color:var(--text-muted)]" aria-hidden="true" />
+        {icon && (
+          <span className="text-[color:var(--text-muted)]" aria-hidden="true">
+            {icon}
+          </span>
         )}
       </div>
 
