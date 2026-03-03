@@ -14,6 +14,7 @@ import { Loader2 } from "lucide-react";
 import Login from "./pages/Login";
 
 // Code splitting por rota — cada página carrega sob demanda
+const BriefingPage = lazy(() => import("./pages/BriefingPage"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Ofertas = lazy(() => import("./pages/Ofertas"));
 const OfertaDetail = lazy(() => import("./pages/OfertaDetail"));
@@ -57,6 +58,7 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route element={<DashboardLayout />}>
+                <Route path="/briefing" element={<BriefingPage />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/ofertas" element={<Ofertas />} />
                 <Route path="/ofertas/:id" element={<OfertaDetail />} />

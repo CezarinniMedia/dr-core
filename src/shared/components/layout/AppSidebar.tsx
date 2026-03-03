@@ -1,5 +1,6 @@
 import {
   LayoutDashboard,
+  Newspaper,
   Package,
   Users,
   Search,
@@ -24,6 +25,7 @@ import {
 } from "@/shared/components/ui/sidebar";
 
 const mainNav = [
+  { title: "Briefing", href: "/briefing", icon: Newspaper },
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { title: "Ofertas", href: "/ofertas", icon: Package },
   { title: "Avatar & Research", href: "/avatar", icon: Users },
