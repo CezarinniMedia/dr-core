@@ -11,6 +11,7 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/shared/components/ui/sidebar";
 import { LogOut, User, Settings } from "lucide-react";
+import { SpikeNotificationBell } from "./SpikeNotificationBell";
 
 export function AppHeader() {
   const { user, signOut } = useAuth();
@@ -30,6 +31,7 @@ export function AppHeader() {
       </div>
 
       <div className="flex items-center gap-2">
+      <SpikeNotificationBell />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className="flex items-center gap-2.5 hover:opacity-80 transition-opacity outline-none">
