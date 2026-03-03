@@ -1,16 +1,30 @@
-import { useMemo, useState } from "react";
-import { Navigate, Outlet } from "react-router-dom";
+import { useMemo, useState, useCallback } from "react";
+import { Navigate, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "@/shared/hooks/useAuth";
 import { useKeyboardShortcuts } from "@/shared/hooks/useKeyboardShortcuts";
+import { ModalProvider, useModalContext } from "@/shared/hooks/useModalContext";
 import { SidebarProvider } from "@/shared/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { AppHeader } from "./AppHeader";
 import { CommandPalette } from "./command-palette/CommandPalette";
 import { Loader2 } from "lucide-react";
 
-export function DashboardLayout() {
+const NAV_ROUTES = ["/spy", "/dashboard", "/ofertas", "/criativos", "/avatar", "/arsenal"];
+
+function DashboardLayoutInner() {
   const { user, loading } = useAuth();
   const [commandOpen, setCommandOpen] = useState(false);
+  const navigate = useNavigate();
+  const { openModal } = useModalContext();
+
+  const handleAltNav = useCallback(
+    (index: number) => {
+      if (index < NAV_ROUTES.length) {
+        navigate(NAV_ROUTES[index]);
+      }
+    },
+    [navigate]
+  );
 
   const shortcuts = useMemo(
     () => [
@@ -25,8 +39,35 @@ export function DashboardLayout() {
         handler: () => setCommandOpen(false),
         description: "Close modals/palette",
       },
+      // Global modal shortcuts
+      {
+        key: "i",
+        ctrl: true,
+        handler: () => openModal("import"),
+        description: "Open Import CSV",
+      },
+      {
+        key: "n",
+        ctrl: true,
+        handler: () => openModal("quickAdd"),
+        description: "Quick Add Oferta",
+      },
+      {
+        key: "e",
+        ctrl: true,
+        handler: () => openModal("exportCsv"),
+        description: "Export CSV",
+      },
+      // Alt+number navigation
+      { key: "1", alt: true, handler: () => handleAltNav(0), description: "Go to Spy Radar" },
+      { key: "2", alt: true, handler: () => handleAltNav(1), description: "Go to Dashboard" },
+      { key: "3", alt: true, handler: () => handleAltNav(2), description: "Go to Ofertas" },
+      { key: "4", alt: true, handler: () => handleAltNav(3), description: "Go to Criativos" },
+      { key: "5", alt: true, handler: () => handleAltNav(4), description: "Go to Avatares" },
+      { key: "6", alt: true, handler: () => handleAltNav(5), description: "Go to Arsenal" },
+      { key: "0", alt: true, handler: () => navigate("/briefing"), description: "Go to Briefing" },
     ],
-    []
+    [openModal, handleAltNav, navigate]
   );
 
   useKeyboardShortcuts(shortcuts);
@@ -54,5 +95,13 @@ export function DashboardLayout() {
       </div>
       <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
     </SidebarProvider>
+  );
+}
+
+export function DashboardLayout() {
+  return (
+    <ModalProvider>
+      <DashboardLayoutInner />
+    </ModalProvider>
   );
 }

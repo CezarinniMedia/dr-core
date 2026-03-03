@@ -8,6 +8,7 @@ import { TooltipProvider } from "@/shared/components/ui/tooltip";
 import { EmptyState } from "@/shared/components/ui/EmptyState";
 import { ErrorState } from "@/shared/components/ui/ErrorState";
 import { useToast } from "@/shared/hooks/use-toast";
+import { useModalContext } from "@/shared/hooks/useModalContext";
 import {
   updateOfferStatus,
   updateOfferNotes,
@@ -43,6 +44,7 @@ export default function SpyRadar() {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: savedViewsList = [] } = useSavedViews("spy");
+  const { openModal, closeModal, isOpen } = useModalContext();
 
   // Filters
   const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set());
@@ -52,11 +54,6 @@ export default function SpyRadar() {
 
   // Columns
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(loadSpyColumns);
-
-  // Modals
-  const [showQuickAdd, setShowQuickAdd] = useState(false);
-  const [showFullForm, setShowFullForm] = useState(false);
-  const [showImport, setShowImport] = useState(false);
 
   // Delete
   const [deleteTarget, setDeleteTarget] = useState<"single" | "bulk" | null>(null);
@@ -245,9 +242,9 @@ export default function SpyRadar() {
     <TooltipProvider delayDuration={200}>
       <div className="max-w-7xl space-y-6">
         <SpyRadarHeader
-          onQuickAdd={() => setShowQuickAdd(true)}
-          onFullForm={() => setShowFullForm(true)}
-          onImport={() => setShowImport(true)}
+          onQuickAdd={() => openModal("quickAdd")}
+          onFullForm={() => openModal("fullForm")}
+          onImport={() => openModal("import")}
         />
 
         <Tabs value={mainTab} onValueChange={setMainTab}>
@@ -306,9 +303,9 @@ export default function SpyRadar() {
                 title="Nenhuma oferta no radar ainda"
                 description="Comece importando um CSV do PublicWWW ou adicionando ofertas manualmente."
                 actionLabel="Importar CSV"
-                onAction={() => setShowImport(true)}
+                onAction={() => openModal("import")}
                 secondaryActionLabel="Quick Add"
-                onSecondaryAction={() => setShowQuickAdd(true)}
+                onSecondaryAction={() => openModal("quickAdd")}
               />
             ) : (
               <SpyOffersTable
@@ -327,7 +324,7 @@ export default function SpyRadar() {
                 onInlineStatusChange={handleInlineStatusChange}
                 onNotesUpdate={handleNotesUpdate}
                 onDeleteSingle={(id) => { setDeleteId(id); setDeleteTarget("single"); }}
-                onShowQuickAdd={() => setShowQuickAdd(true)}
+                onShowQuickAdd={() => openModal("quickAdd")}
               />
             )}
           </TabsContent>
@@ -344,9 +341,9 @@ export default function SpyRadar() {
         </Tabs>
 
         <Suspense fallback={<ModalLoader />}>
-          <QuickAddOfferModal open={showQuickAdd} onClose={() => setShowQuickAdd(false)} />
-          <FullOfferFormModal open={showFullForm} onClose={() => setShowFullForm(false)} />
-          <UniversalImportModal open={showImport} onClose={() => setShowImport(false)} />
+          <QuickAddOfferModal open={isOpen("quickAdd")} onClose={closeModal} />
+          <FullOfferFormModal open={isOpen("fullForm")} onClose={closeModal} />
+          <UniversalImportModal open={isOpen("import")} onClose={closeModal} />
         </Suspense>
 
         <SpyDeleteDialog
