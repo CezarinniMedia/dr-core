@@ -8,6 +8,8 @@ import {
 } from "@/shared/services";
 import { fetchAllOffersLite, fetchAllTrafficRows, loadColumns, LS_KEY_COLUMNS, LS_KEY_PAGE_SIZE, LS_KEY_TRAFFIC_SOURCE } from "./types";
 
+const MAX_CHART_ITEMS = 50;
+
 export function useTrafficIntelligence() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -177,8 +179,12 @@ export function useTrafficIntelligence() {
   }, [sortedRows, selectedIds]);
 
   const addAllToChart = useCallback(() => {
-    setChartIds(new Set(paginatedRows.filter(r => r.hasTrafficData).map(r => r.id)));
-  }, [paginatedRows]);
+    const eligible = paginatedRows.filter(r => r.hasTrafficData);
+    if (eligible.length > MAX_CHART_ITEMS) {
+      toast({ title: `Limitado a ${MAX_CHART_ITEMS} ofertas no grafico`, description: `${eligible.length} disponiveis — mostrando as primeiras ${MAX_CHART_ITEMS}.` });
+    }
+    setChartIds(new Set(eligible.slice(0, MAX_CHART_ITEMS).map(r => r.id)));
+  }, [paginatedRows, toast]);
 
   const handleBulkStatus = async (newStatus: string) => {
     const ids = Array.from(selectedIds);
@@ -199,7 +205,13 @@ export function useTrafficIntelligence() {
   const addSelectedToChart = () => {
     setChartIds(prev => {
       const next = new Set(prev);
-      selectedIds.forEach(id => next.add(id));
+      for (const id of selectedIds) {
+        if (next.size >= MAX_CHART_ITEMS) {
+          toast({ title: `Limite de ${MAX_CHART_ITEMS} ofertas no grafico atingido` });
+          break;
+        }
+        next.add(id);
+      }
       return next;
     });
   };
