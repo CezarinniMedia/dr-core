@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSpiedOffer, useUpdateSpiedOffer, useDeleteSpiedOffer } from "@/features/spy/hooks/useSpiedOffers";
 import { FullOfferFormModal } from "@/features/spy/components/FullOfferFormModal";
+import { CloneToOwnOfferModal } from "@/features/spy/components/CloneToOwnOfferModal";
 import { SpyOverviewTab } from "@/features/spy/components/tabs/SpyOverviewTab";
 import { SpyDomainsTab } from "@/features/spy/components/tabs/SpyDomainsTab";
 import { SpyLibrariesTab } from "@/features/spy/components/tabs/SpyLibrariesTab";
@@ -30,7 +31,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
-import { Edit, Trash2, ExternalLink, LayoutList, Globe, BookOpen, Palette, Map, BarChart3, FileText, Radar, Tag, DollarSign, Layers, Megaphone } from "lucide-react";
+import { Edit, Trash2, ExternalLink, LayoutList, Globe, BookOpen, Palette, Map, BarChart3, FileText, Radar, Tag, DollarSign, Layers, Megaphone, Copy } from "lucide-react";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { PageBreadcrumb } from "@/shared/components/ui/PageBreadcrumb";
 
@@ -59,6 +60,7 @@ export default function SpyOfferDetail() {
   const deleteMutation = useDeleteSpiedOffer();
   const [showEdit, setShowEdit] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
+  const [showClone, setShowClone] = useState(false);
 
   if (isLoading) return (
     <div className="p-6 space-y-6">
@@ -151,6 +153,15 @@ export default function SpyOfferDetail() {
               ))}
             </SelectContent>
           </Select>
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-[var(--border-interactive)] hover:border-[var(--accent-amber)] hover:shadow-[0_0_12px_rgba(212,165,116,0.2)]"
+            onClick={() => setShowClone(true)}
+            title="Criar oferta propria a partir desta oferta espionada"
+          >
+            <Copy className="h-3.5 w-3.5 mr-1" /> Clonar
+          </Button>
           <Button variant="outline" size="sm" className="border-[var(--border-default)]" onClick={() => setShowEdit(true)}>
             <Edit className="h-3.5 w-3.5 mr-1" /> Editar
           </Button>
@@ -207,6 +218,9 @@ export default function SpyOfferDetail() {
           <SpyNotesTab offerId={id!} currentNotes={offer.notas} />
         </TabsContent>
       </Tabs>
+
+      {/* Clone Modal */}
+      <CloneToOwnOfferModal open={showClone} onOpenChange={setShowClone} offer={offer} />
 
       {/* Edit Modal */}
       <FullOfferFormModal open={showEdit} onClose={() => setShowEdit(false)} editData={offer} />

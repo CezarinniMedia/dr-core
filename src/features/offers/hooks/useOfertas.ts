@@ -33,6 +33,8 @@ export interface Oferta {
   trafego_atual: number | null;
   trafego_tendencia: string | null;
   notas: string | null;
+  spied_offer_id: string | null;
+  source: string | null;
   created_at: string;
   updated_at: string;
 }
