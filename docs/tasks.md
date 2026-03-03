@@ -4,6 +4,7 @@
 
 ## Estado Atual
 - **Vision:** 6/6 fases PASS (feature/vision-1-foundation)
+- **UX Design System:** 8/8 fases DONE (6 commits na branch)
 - **Brownfield:** 17/17 stories Done
 - **Testes:** 209 passando, 0 falhas
 - **Build:** Clean, typecheck clean
@@ -25,6 +26,34 @@
 - [ ] Verificar realtime subscription (spike_alerts) funcionando em producao
 - [ ] Testar import CSV com Web Worker em producao
 - [ ] Confirmar refresh automatico das MVs (pg_cron jobs)
+
+---
+
+## FASE 0.5: UX Design System — Backlog (pos-merge)
+
+### Implementacao dos Wireframes (ALTA prioridade)
+Cada item = 1 sessao @dev, 1 branch, 1 PR. Fazer DB migrations primeiro.
+- [ ] DB Migrations: offers +spied_offer_id +source, ad_creatives +decision_metrics +decision_notes +decided_at +test_started_at, spike_alerts +seen_at (@data-engineer)
+- [ ] Daily Briefing page em /briefing (@dev)
+- [ ] Spike Notification System -- header badge + dropdown + toast realtime (@dev)
+- [ ] Clone to Own modal no SpyOfferDetail (@dev)
+- [ ] Command Palette rewrite -- Cmd+K enhanced (@dev)
+- [ ] Creative Lifecycle WINNER/KILLED (@dev)
+
+### Migracao de Codigo (MEDIA prioridade)
+Do consolidation-report. Podem ser feitas entre features ou depois.
+- [ ] Migrar 37 RGBA inline para opacity tokens -- Cluster A (@dev)
+- [ ] Extrair useFormDialog hook + FormDialog -- Cluster B, 11 modals (@dev)
+- [ ] Extrair VirtualizedTable -- Cluster C, 2 god tables (@dev)
+- [ ] Migrar 4 entity cards para EntityCard -- Cluster D (@dev)
+
+### AIOS Framework
+- [ ] Criar .claude/rules/ralph-loop-usage.md -- regras de uso do Ralph Loop para todos os agentes (@devops)
+  - Sintaxe correta: /ralph-loop:ralph-loop
+  - Flags PRIMEIRO, prompt DEPOIS
+  - Paths curtos (max ~95 chars total)
+  - Aspas simples para completion-promise
+  - Prompt detalhado em arquivo .md, inline so referencia
 
 ---
 
