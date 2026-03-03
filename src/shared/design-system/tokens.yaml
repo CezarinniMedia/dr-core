@@ -1,0 +1,462 @@
+# DR OPS Design System — Token Source of Truth
+# Derivado de: docs/vision/aesthetic-profile.md (240 refs visuais)
+# Formula: Command Center + Warm Glow in Darkness + Precision Tool + Stealth Wealth
+# Implementacao CSS: src/shared/design-system/tokens.css
+# Atualizado: 2026-03-03 (Phase 4 — Tokenize + Bridge + Setup)
+
+meta:
+  version: "2.0"
+  theme: dark-only
+  philosophy: "luz quente cirurgica emergindo de escuridao profunda"
+  fonts:
+    primary: Inter (300-700)
+    mono: JetBrains Mono (400-600)
+
+# =============================================================================
+# BACKGROUNDS & SURFACES
+# Temperatura base: ligeiramente fria (blue/navy undertone)
+# Warmth vem dos accents, nao do background
+# =============================================================================
+backgrounds:
+  bg-void:
+    value: "#000000"
+    hsl: "0 0% 0%"
+    usage: "Pure black — max contrast areas, page background"
+  bg-base:
+    value: "#0A0A0A"
+    hsl: "0 0% 4%"
+    usage: "App background principal"
+    shadcn-bridge: "--background"
+  bg-deep:
+    value: "#0D1117"
+    hsl: "215 23% 5%"
+    usage: "Background alternativo com temperatura fria"
+  bg-surface:
+    value: "#141414"
+    hsl: "0 0% 8%"
+    usage: "Cards, panels, containers"
+    shadcn-bridge: "--card"
+  bg-elevated:
+    value: "#1A1A1A"
+    hsl: "0 0% 10%"
+    usage: "Modals, popovers, elevated cards"
+    shadcn-bridge: "--popover"
+  bg-raised:
+    value: "#1E1E2E"
+    hsl: "240 24% 15%"
+    usage: "Hover states, higher elevation"
+  bg-subtle:
+    value: "#252830"
+    hsl: "220 11% 17%"
+    usage: "Inputs, interactive areas, section headers"
+    shadcn-bridge: "--secondary, --muted"
+
+# =============================================================================
+# PRIMARY ACCENT — Violet
+# Conecta "futurismo tecnologico" com "luxury premium"
+# Frequencia: 40%+ das refs UI
+# =============================================================================
+primary-accent:
+  accent-primary:
+    value: "#7C3AED"
+    hsl: "263 84% 58%"
+    usage: "Accent principal, CTAs primarios, active states"
+    shadcn-bridge: "--primary, --ring"
+  accent-primary-light:
+    value: "#8B5CF6"
+    usage: "Hover states, badges premium"
+  accent-primary-soft:
+    value: "#A855F7"
+    usage: "Glows, ambient effects, background gradients"
+  accent-primary-muted:
+    value: "rgba(124, 58, 237, 0.2)"
+    usage: "Background de elementos ativos (sidebar item active)"
+
+# =============================================================================
+# SECONDARY ACCENTS
+# Amber/Gold = signature pessoal (LED strip lighting traduzido para UI)
+# =============================================================================
+secondary-accents:
+  accent-teal:
+    value: "#00D4AA"
+    usage: "Charts, dados positivos, links, highlights interativos"
+    frequency: "39% refs UI"
+  accent-cyan:
+    value: "#06B6D4"
+    usage: "Informacional, sparklines, graficos secundarios"
+    frequency: "25% refs UI"
+  accent-green:
+    value: "#22C55E"
+    usage: "Success, active states, metricas positivas, status scaling"
+    frequency: "35% refs UI"
+  accent-blue:
+    value: "#3B82F6"
+    usage: "Links, info, graficos secundarios"
+    frequency: "25% refs UI"
+  accent-amber:
+    value: "#D4A574"
+    usage: "LED-glow accent (signature pessoal), warm highlights"
+    frequency: "15% UI, 60%+ pessoal"
+    shadcn-bridge: "--accent"
+  accent-gold:
+    value: "#C4954A"
+    usage: "Premium badges, accents metalicos, hover warm"
+    frequency: "10% UI, 40%+ pessoal"
+  accent-orange:
+    value: "#F97316"
+    usage: "Warm CTAs, alerts, notificacoes urgentes"
+    frequency: "20% refs UI"
+
+# =============================================================================
+# SEMANTIC COLORS
+# =============================================================================
+semantic:
+  semantic-success:
+    value: "#22C55E"
+    usage: "Acao completada, import concluido, oferta ativa"
+  semantic-warning:
+    value: "#EAB308"
+    usage: "Atencao necessaria, dados incompletos, monitoramento"
+  semantic-error:
+    value: "#EF4444"
+    usage: "Erro, falha, oferta morta, trafego em queda"
+    shadcn-bridge: "--destructive"
+  semantic-danger:
+    value: "#F43F5E"
+    usage: "Acoes destrutivas (delete), alertas criticos"
+  semantic-info:
+    value: "#3B82F6"
+    usage: "Informacional, ajuda, tooltips"
+  semantic-spike:
+    value: "#F97316"
+    usage: "Sudden spike detectado (>100% variacao)"
+  semantic-hot:
+    value: "#EF4444"
+    usage: "Oferta hot — prioridade maxima de analise"
+
+# =============================================================================
+# TEXT COLORS
+# Body = off-white (F5F0EB), nunca pure white para body
+# =============================================================================
+text:
+  text-primary:
+    value: "#FFFFFF"
+    hsl: "0 0% 100%"
+    usage: "Headings, numeros de KPI, texto principal"
+    shadcn-bridge: "--foreground, --card-foreground, --popover-foreground"
+  text-body:
+    value: "#F5F0EB"
+    hsl: "30 33% 94%"
+    usage: "Body text (off-white inspiracao pessoal)"
+    shadcn-bridge: "--secondary-foreground"
+  text-secondary:
+    value: "#949494"
+    hsl: "0 0% 58%"
+    usage: "Labels, descricoes, metadata"
+    shadcn-bridge: "--muted-foreground"
+  text-muted:
+    value: "#6B7280"
+    hsl: "220 9% 46%"
+    usage: "Placeholders, texto desabilitado, timestamps"
+
+# =============================================================================
+# BORDERS
+# SEMPRE thin (1px), diferenciacao via glow
+# =============================================================================
+borders:
+  border-default:
+    value: "#1F1F1F"
+    hsl: "0 0% 12%"
+    usage: "Bordas padrao de cards e containers"
+    shadcn-bridge: "--border"
+  border-subtle:
+    value: "#2D2D2D"
+    usage: "Bordas mais visiveis, separadores"
+  border-interactive:
+    value: "#3D3D3D"
+    hsl: "0 0% 24%"
+    usage: "Bordas de inputs, hover states"
+    shadcn-bridge: "--input"
+  border-glow:
+    value: "rgba(124, 58, 237, 0.25)"
+    usage: "Border com glow effect (LED strip → UI)"
+  border-glow-warm:
+    value: "rgba(212, 165, 116, 0.25)"
+    usage: "Border com warm glow (amber LED signature)"
+
+# =============================================================================
+# RADIUS
+# =============================================================================
+radius:
+  radius-sm:
+    value: "6px"
+    usage: "Small elements, badges, pills"
+  radius-md:
+    value: "8px"
+    usage: "Buttons, inputs, small cards"
+  radius-lg:
+    value: "12px"
+    usage: "Cards, containers, panels"
+  radius-xl:
+    value: "16px"
+    usage: "Modais, large containers"
+
+# =============================================================================
+# SHADOWS / GLOWS
+# LED Strip Lighting traduzido para box-shadow
+# =============================================================================
+glows:
+  glow-primary:
+    value: "0 0 20px rgba(124, 58, 237, 0.15)"
+    usage: "Violet glow — cards focados, active elements"
+  glow-amber:
+    value: "0 0 20px rgba(212, 165, 116, 0.15)"
+    usage: "Warm amber glow — LED signature"
+  glow-teal:
+    value: "0 0 20px rgba(0, 212, 170, 0.15)"
+    usage: "Teal glow — data highlights, charts"
+  glow-success:
+    value: "0 0 12px rgba(34, 197, 94, 0.15)"
+    usage: "Success glow — completed actions"
+  glow-error:
+    value: "0 0 12px rgba(239, 68, 68, 0.15)"
+    usage: "Error glow — destructive actions, alerts"
+
+# =============================================================================
+# TYPOGRAPHY — Type Scale
+# Inter (primary) + JetBrains Mono (technical data)
+# =============================================================================
+type-scale:
+  text-kpi:
+    value: "48px"
+    weight: 700
+    usage: "KPI numbers, large metric displays"
+  text-page-title:
+    value: "24px"
+    weight: 600
+    usage: "Page titles"
+  text-section-head:
+    value: "18px"
+    weight: 600
+    usage: "Section headings"
+  text-card-title:
+    value: "16px"
+    weight: 500
+    usage: "Card titles"
+  text-body-size:
+    value: "14px"
+    weight: 400
+    usage: "Body text, paragraphs"
+  text-label:
+    value: "12px"
+    weight: 400
+    usage: "Labels, form labels"
+  text-caption:
+    value: "11px"
+    weight: 400
+    usage: "Captions, timestamps, metadata"
+
+font-weights:
+  font-bold:
+    value: 700
+    usage: "KPIs, page titles"
+  font-semibold:
+    value: 600
+    usage: "Section heads, emphasis"
+  font-medium:
+    value: 500
+    usage: "Card titles, badges"
+  font-regular:
+    value: 400
+    usage: "Body text, labels"
+
+# =============================================================================
+# ANIMATION PATTERNS
+# Do aesthetic-profile sec 9.4
+# =============================================================================
+animations:
+  fade-in:
+    duration: "150ms"
+    easing: "ease-out"
+    usage: "Transicao de conteudo, modais, tooltips"
+    keyframes: "from { opacity: 0 } to { opacity: 1 }"
+  glow-pulse:
+    duration: "2s"
+    easing: "ease-in-out"
+    iteration: "infinite"
+    usage: "Spike detection, alerts, new data"
+  border-glow-transition:
+    duration: "200ms"
+    easing: "ease"
+    usage: "Hover states, focus states"
+  sparkline-draw:
+    duration: "400ms"
+    easing: "ease-out"
+    usage: "Render inicial de sparklines"
+  slide-in:
+    duration: "200ms"
+    easing: "ease"
+    usage: "Sidebar expand, panel reveal"
+  progress-fill:
+    duration: "real"
+    easing: "linear"
+    usage: "Upload, import, loading bars"
+  shimmer:
+    duration: "1.5s"
+    easing: "linear"
+    iteration: "infinite"
+    usage: "Loading states, skeleton screens"
+
+animation-tokens:
+  duration-fast: "150ms"
+  duration-normal: "200ms"
+  duration-slow: "400ms"
+  duration-glow-pulse: "2s"
+  duration-shimmer: "1.5s"
+  ease-out: "cubic-bezier(0.16, 1, 0.3, 1)"
+  ease-in-out: "cubic-bezier(0.45, 0, 0.55, 1)"
+
+# =============================================================================
+# SPACING
+# Complementa Tailwind utilities
+# =============================================================================
+spacing:
+  space-card-gap:
+    value: "16px"
+    usage: "Gap entre cards em grids"
+  space-section-gap:
+    value: "24px"
+    usage: "Gap entre secoes de pagina"
+  space-card-padding:
+    value: "16px"
+    usage: "Padding interno de cards padrao"
+  space-card-padding-lg:
+    value: "24px"
+    usage: "Padding interno de cards grandes"
+
+# =============================================================================
+# LAYOUT
+# =============================================================================
+layout:
+  sidebar-width:
+    value: "240px"
+    usage: "Sidebar expandida"
+  sidebar-width-collapsed:
+    value: "64px"
+    usage: "Sidebar colapsada (icon-only)"
+  content-max-width:
+    value: "1440px"
+    usage: "Largura maxima do conteudo"
+
+# =============================================================================
+# OPACITY TOKENS (NEW — Phase 4)
+# Consolidacao de 37 variantes RGBA inline → 21 tokens padronizados
+# Niveis: -10 (10%), -20 (20%), -40 (40%)
+# =============================================================================
+opacity:
+  # Primary Violet
+  accent-primary-10:
+    value: "rgba(124, 58, 237, 0.1)"
+    usage: "Backgrounds sutis, hover states violet"
+  accent-primary-20:
+    value: "rgba(124, 58, 237, 0.2)"
+    usage: "Borders, badges, active states violet"
+  accent-primary-40:
+    value: "rgba(124, 58, 237, 0.4)"
+    usage: "Fills mais densos violet"
+
+  # Teal
+  accent-teal-10:
+    value: "rgba(0, 212, 170, 0.1)"
+    usage: "Backgrounds sutis teal"
+  accent-teal-20:
+    value: "rgba(0, 212, 170, 0.2)"
+    usage: "Borders, badges teal"
+  accent-teal-40:
+    value: "rgba(0, 212, 170, 0.4)"
+    usage: "Fills densos teal, heatmap levels"
+
+  # Amber
+  accent-amber-10:
+    value: "rgba(212, 165, 116, 0.1)"
+    usage: "Backgrounds sutis amber"
+  accent-amber-20:
+    value: "rgba(212, 165, 116, 0.2)"
+    usage: "Borders, badges amber"
+
+  # Blue
+  accent-blue-10:
+    value: "rgba(59, 130, 246, 0.1)"
+    usage: "Backgrounds sutis blue"
+  accent-blue-20:
+    value: "rgba(59, 130, 246, 0.2)"
+    usage: "Borders, badges blue"
+
+  # Green
+  accent-green-10:
+    value: "rgba(34, 197, 94, 0.1)"
+    usage: "Backgrounds sutis green"
+  accent-green-20:
+    value: "rgba(34, 197, 94, 0.2)"
+    usage: "Borders, badges green"
+  accent-green-40:
+    value: "rgba(34, 197, 94, 0.4)"
+    usage: "Fills densos green"
+
+  # Semantic Error
+  semantic-error-10:
+    value: "rgba(239, 68, 68, 0.1)"
+    usage: "Backgrounds sutis error"
+  semantic-error-20:
+    value: "rgba(239, 68, 68, 0.2)"
+    usage: "Borders, badges error"
+
+  # Semantic Warning
+  semantic-warning-10:
+    value: "rgba(234, 179, 8, 0.1)"
+    usage: "Backgrounds sutis warning"
+  semantic-warning-20:
+    value: "rgba(234, 179, 8, 0.2)"
+    usage: "Borders, badges warning"
+
+  # Text Muted
+  text-muted-10:
+    value: "rgba(107, 114, 128, 0.1)"
+    usage: "Backgrounds sutis muted"
+  text-muted-20:
+    value: "rgba(107, 114, 128, 0.2)"
+    usage: "Borders, separadores muted"
+
+  # Gold
+  accent-gold-20:
+    value: "rgba(196, 149, 74, 0.2)"
+    usage: "Premium badges gold background"
+
+  # Spike
+  semantic-spike-10:
+    value: "rgba(249, 115, 22, 0.1)"
+    usage: "Background spike alerts"
+  semantic-spike-20:
+    value: "rgba(249, 115, 22, 0.2)"
+    usage: "Border spike alerts"
+
+# =============================================================================
+# GLASS & OVERLAY TOKENS (NEW — Phase 4)
+# Glassmorphism + backdrop overlays
+# =============================================================================
+glass:
+  glass-solid:
+    value: "rgba(20, 20, 20, 0.92)"
+    usage: "Glass card solido (tooltips, menus)"
+  glass-interactive:
+    value: "rgba(20, 20, 20, 0.8)"
+    usage: "Glass card interativo (modais, popovers)"
+  overlay-dark:
+    value: "rgba(0, 0, 0, 0.5)"
+    usage: "Overlay escuro (backdrop de modais)"
+  overlay-light:
+    value: "rgba(0, 0, 0, 0.3)"
+    usage: "Overlay leve (backdrop de drawers)"
+  border-glass:
+    value: "rgba(255, 255, 255, 0.05)"
+    usage: "Border sutil para glass cards"
