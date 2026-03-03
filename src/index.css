@@ -31,8 +31,8 @@
     --muted: 220 11% 93%;
     --muted-foreground: 0 0% 42%;
 
-    /* Accent: Amber (Vision --accent-amber) */
-    --accent: 24 40% 64%;
+    /* Accent: Amber (Vision --accent-amber: #D4A574) */
+    --accent: 31 53% 64%;
     --accent-foreground: 0 0% 4%;
 
     --destructive: 0 84% 60%;
@@ -85,15 +85,15 @@
     --primary-foreground: 0 0% 100%;
 
     /* Secondary: Subtle surface — from --bg-subtle: #252830 */
-    --secondary: 220 11% 17%;
+    --secondary: 224 13% 17%;
     --secondary-foreground: 30 33% 94%; /* --text-body: #F5F0EB */
 
     /* Muted — from --bg-subtle + --text-secondary */
-    --muted: 220 11% 17%;              /* --bg-subtle: #252830 */
+    --muted: 224 13% 17%;              /* --bg-subtle: #252830 */
     --muted-foreground: 0 0% 58%;      /* --text-secondary: #949494 */
 
     /* Accent: Amber — from --accent-amber: #D4A574 */
-    --accent: 24 40% 64%;
+    --accent: 31 53% 64%;
     --accent-foreground: 0 0% 100%;
 
     /* Destructive — from --semantic-error: #EF4444 */
@@ -108,7 +108,7 @@
     /* Status */
     --success: 142 71% 45%;           /* --semantic-success: #22C55E */
     --success-foreground: 0 0% 100%;
-    --warning: 48 96% 47%;            /* --semantic-warning: #EAB308 */
+    --warning: 45 93% 47%;            /* --semantic-warning: #EAB308 */
     --warning-foreground: 0 0% 100%;
     --info: 217 91% 60%;              /* --semantic-info: #3B82F6 */
     --info-foreground: 0 0% 100%;
