@@ -1,28 +1,42 @@
 import { cn } from "@/shared/lib/utils";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, type LucideIcon } from "lucide-react";
+import { SparklineBadge } from "./SparklineBadge";
+import { useState } from "react";
 
 interface DataMetricCardProps {
-  label: string;
   value: string | number;
+  label: string;
   change?: number;
-  changePeriod?: string;
-  sparkline?: React.ReactNode;
-  icon?: React.ReactNode;
+  trend?: "up" | "down" | "stable";
+  sparklineData?: number[];
+  icon?: LucideIcon;
+  glowOnHover?: boolean;
   className?: string;
 }
 
 export function DataMetricCard({
-  label,
   value,
+  label,
   change,
-  changePeriod,
-  sparkline,
-  icon,
+  trend,
+  sparklineData,
+  icon: Icon,
+  glowOnHover = false,
   className,
 }: DataMetricCardProps) {
+  const [hovered, setHovered] = useState(false);
+
   const isPositive = change !== undefined && change > 0;
   const isNegative = change !== undefined && change < 0;
   const isNeutral = change === undefined || change === 0;
+
+  const hoverGlowStyle: React.CSSProperties =
+    glowOnHover && hovered
+      ? {
+          borderColor: "var(--accent-primary)",
+          boxShadow: "0 1px 8px var(--accent-primary-10)",
+        }
+      : {};
 
   return (
     <div
@@ -33,40 +47,43 @@ export function DataMetricCard({
         "hover:border-[var(--border-interactive)]",
         className
       )}
+      style={hoverGlowStyle}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between mb-3">
         <span className="text-[length:var(--text-label)] text-[color:var(--text-secondary)] [font-weight:var(--font-regular)]">
           {label}
         </span>
-        {icon && (
-          <span className="text-[color:var(--text-muted)]">{icon}</span>
+        {Icon && (
+          <Icon className="w-4 h-4 text-[color:var(--text-muted)]" />
         )}
       </div>
 
       <div className="flex items-end justify-between gap-3">
         <div>
           <div
-            className="text-[length:var(--text-page-title)] [font-weight:var(--font-bold)] text-[color:var(--text-primary)] leading-none"
+            className="text-[length:var(--text-kpi)] [font-weight:var(--font-bold)] text-[color:var(--text-primary)] leading-none"
             style={{ fontVariantNumeric: "tabular-nums" }}
           >
             {value}
           </div>
 
           {change !== undefined && (
-            <div className="flex items-center gap-1 mt-1.5">
+            <div className="flex items-center gap-1 mt-2">
               {isPositive && (
-                <TrendingUp className="w-3 h-3 text-[color:var(--semantic-success)]" />
+                <TrendingUp className="w-3.5 h-3.5 text-[color:var(--accent-green)]" />
               )}
               {isNegative && (
-                <TrendingDown className="w-3 h-3 text-[color:var(--semantic-error)]" />
+                <TrendingDown className="w-3.5 h-3.5 text-[color:var(--semantic-error)]" />
               )}
               {isNeutral && (
-                <Minus className="w-3 h-3 text-[color:var(--text-muted)]" />
+                <Minus className="w-3.5 h-3.5 text-[color:var(--text-muted)]" />
               )}
               <span
                 className={cn(
-                  "text-[length:var(--text-caption)] [font-weight:var(--font-medium)]",
-                  isPositive && "text-[color:var(--semantic-success)]",
+                  "text-[length:var(--text-label)] [font-weight:var(--font-medium)]",
+                  isPositive && "text-[color:var(--accent-green)]",
                   isNegative && "text-[color:var(--semantic-error)]",
                   isNeutral && "text-[color:var(--text-muted)]"
                 )}
@@ -74,17 +91,14 @@ export function DataMetricCard({
                 {isPositive ? "+" : ""}
                 {change}%
               </span>
-              {changePeriod && (
-                <span className="text-[length:var(--text-caption)] text-[color:var(--text-muted)]">
-                  {changePeriod}
-                </span>
-              )}
             </div>
           )}
         </div>
 
-        {sparkline && (
-          <div className="flex-shrink-0">{sparkline}</div>
+        {sparklineData && sparklineData.length > 0 && (
+          <div className="flex-shrink-0">
+            <SparklineBadge data={sparklineData} trend={trend} />
+          </div>
         )}
       </div>
     </div>
