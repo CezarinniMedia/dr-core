@@ -1,11 +1,11 @@
 # Estado do Projeto - DR OPS
-**Ultima atualizacao:** 2026-03-01
-**Atualizado por:** Claude Opus 4.6 (@pm Morgan)
+**Ultima atualizacao:** 2026-03-02
+**Atualizado por:** Claude Sonnet 4.6 (@dev Dex)
 
 ## Status Geral
 - **Fase:** Pos-Vision. 6 fases implementadas, todas com QA PASS. Aguardando merge para dev/main.
 - **Branch ativa:** `feature/vision-1-foundation` (pronta para merge)
-- **Prioridade atual:** Merge → Deploy → Operacao → Proximas features
+- **Prioridade atual:** Design System (com @ux) → Merge → Deploy → Operacao → Proximas features
 - **Deploy:** GitHub (CezarinniMedia/dr-core) auto-deploy → Hostinger
 - **Testes:** 209 testes (13 arquivos), 0 falhas
 - **Build:** PASS (14.23s), typecheck clean (0 erros)
@@ -148,6 +148,10 @@ src/
 - 87k+ registros de trafego historico
 - Fontes: PublicWWW (footprint cdn.utmify.com.br) + Semrush (monthly) + SimilarWeb (monthly_sw)
 - Target: 500k+ registros de trafego em 6 meses
+
+## Fixes Pos-Vision (2026-03-02)
+- **Traffic Intelligence restaurada:** 4 bugs corrigidos (zeros, 1 mes, valores dobrados, agregacao errada). Ver `docs/bugs.md` BUG-013 a BUG-016 e handoff `docs/sessions/2026-03/session-2026-03-02-traffic-intelligence-fixes.md`
+- Filtro de fonte na Inteligencia de Trafego agora usa campo `source` (mais confiavel que `period_type`)
 
 ## Issues Conhecidos (Pos-Vision)
 - **ESLint projeto-wide:** 160 erros pre-existentes (maioria @typescript-eslint/no-explicit-any em services/workers) — fora do escopo Vision

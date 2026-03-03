@@ -1,5 +1,5 @@
 # Bugs Conhecidos - DR OPS
-**Ultima atualizacao:** 2026-02-17
+**Ultima atualizacao:** 2026-03-02
 
 ## CRITICOS (bloqueiam uso ou corrompem dados)
 
@@ -25,10 +25,8 @@
 - **Comportamento:** Ao esconder sidebar, conteudo vai todo pra esquerda com espaco vazio a direita
 - **Causa provavel:** CSS do conteudo principal nao faz flex-grow ou nao recalcula largura
 
-### BUG-005: Dashboard mostra dados zerados
-- **Onde:** Dashboard
-- **Comportamento:** Ofertas Ativas: 0, Avatares: 0, Criativos: 0 (mesmo com dados no sistema)
-- **Causa provavel:** Queries do dashboard nao consultam as tabelas corretas ou nao contam registros do radar
+### ~~BUG-005: Dashboard mostra dados zerados~~ (CORRIGIDO — Vision-3)
+- **Correcao:** Dashboard reescrito com Intelligence Dashboard usando RPCs reais (get_dashboard_metrics, mv_dashboard_metrics)
 
 ### BUG-006: Criativos - card nao reabre apos criado
 - **Onde:** Criativos → Kanban
@@ -64,11 +62,33 @@
 - **Onde:** Ofertas
 - **Comportamento:** Clicar na area do card nao abre, so o texto do nome
 
-### BUG-011: Tooltips ausentes
-- **Onde:** Sistema inteiro
-- **Comportamento:** Nenhum elemento tem tooltip explicativo ao hover
-- **Impacto:** Usuario precisa adivinhar o que cada coisa significa
+### ~~BUG-011: Tooltips ausentes~~ (CORRIGIDO — Vision-6)
+- **Correcao:** Tooltips adicionados nos componentes principais via aria-label e Tooltip/TooltipContent do shadcn/ui
 
 ### BUG-012: Trend sparkline nao acompanha periodo selecionado
 - **Onde:** Inteligencia de Trafego
 - **Comportamento:** Mini-grafico de trend sempre mostra periodo completo, mesmo com filtro ativo
+
+---
+
+## CORRIGIDOS NESTA SESSAO (2026-03-02)
+
+### ~~BUG-013: Inteligencia de Trafego sem dados (zeros em todos os campos)~~ (CORRIGIDO)
+- **Onde:** Radar → Inteligencia de Trafego (colunas Trend, Ultimo Mes, Variacao, Pico)
+- **Causa:** Imports `getWorkspaceId` e `TrafficSummaryRow` ausentes em `useTrafficIntelligence.ts` apos revert — query falhava silenciosamente, `trafficSummary` ficava undefined
+- **Correcao:** Restaurado para abordagem `compareTraffic + fetchAllTrafficRows` (query direta na tabela), eliminando dependencia das RPCs/MVs que podem nao estar deployadas
+
+### ~~BUG-014: Inteligencia de Trafego mostrando apenas 1 mes de dados~~ (CORRIGIDO)
+- **Onde:** Radar → Inteligencia de Trafego
+- **Causa:** `fetchAllTrafficRows` filtrava por `period_type` ('monthly_sw' para SimilarWeb). Registros historicos (Nov/Dez) foram importados com `period_type='monthly'` mesmo sendo fonte SimilarWeb, deixando apenas o mes mais recente visivel
+- **Correcao:** Filtro migrado de `period_type` para campo `source` ('similarweb' ou '!= similarweb') que e mais confiavel e consistente com os dados reais do banco
+
+### ~~BUG-015: Chart de trafego dobrando valores (ex: 283K → 566K)~~ (CORRIGIDO)
+- **Onde:** Radar → Inteligencia de Trafego → grafico comparativo
+- **Causa:** Chart data usava soma (`+`) ao agregar visitas por periodo, somando registros de variantes de dominio (ex: site.com + www.site.com = dobro)
+- **Correcao:** Trocado para `Math.max` por `YYYY-MM` — previne duplicacao independente de quantas variantes de dominio existam
+
+### ~~BUG-016: compareTraffic agregando por data completa causava distorcoes~~ (CORRIGIDO)
+- **Onde:** `trafficService.ts` → funcao `compareTraffic`
+- **Causa:** Agrupava por `period_date` completo (ex: '2026-01-01'). Se mesmo mes tivesse registros em datas diferentes (ex: '2026-01-01' e '2026-01-31'), apareciam como dois meses distintos
+- **Correcao:** Agrupamento mudado para `YYYY-MM` com `Math.max`, garantindo 1 valor por mes por oferta
