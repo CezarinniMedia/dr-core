@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/shared/hooks/use-toast";
+import type { Json } from "@/integrations/supabase/types";
 
 export interface DecisionMetrics {
   ctr: number | null;
@@ -23,6 +24,13 @@ export const DEFAULT_BENCHMARKS: Benchmarks = {
 export type DecisionVerdict = "WINNER" | "KILLED";
 
 export type Recommendation = "WINNER" | "KILL" | "MIXED";
+
+export function getDaysInTest(testStartedAt: string | null | undefined): number | null {
+  if (!testStartedAt) return null;
+  const start = new Date(testStartedAt);
+  const now = new Date();
+  return Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+}
 
 export function calculateRecommendation(
   metrics: DecisionMetrics,
@@ -66,6 +74,7 @@ interface DecisionPayload {
 export function useCreativeDecision() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const undoKill = useUndoKill();
 
   const mutation = useMutation({
     mutationFn: async ({ id, verdict, metrics, notes }: DecisionPayload) => {
@@ -75,7 +84,7 @@ export function useCreativeDecision() {
         .from("criativos")
         .update({
           status,
-          decision_metrics: metrics as any,
+          decision_metrics: metrics as unknown as Json,
           decision_notes: notes || null,
           decided_at: new Date().toISOString(),
         })
@@ -98,6 +107,10 @@ export function useCreativeDecision() {
         toast({
           title: "Criativo killed",
           description: "Learning salvo.",
+          action: {
+            label: "Desfazer",
+            onClick: () => undoKill.mutate(variables.id),
+          } as any,
         });
       }
     },
@@ -112,7 +125,6 @@ export function useCreativeDecision() {
 
   return {
     submitDecision: mutation.mutate,
-    submitDecisionAsync: mutation.mutateAsync,
     isSubmitting: mutation.isPending,
   };
 }

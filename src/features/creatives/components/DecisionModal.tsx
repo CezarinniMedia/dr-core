@@ -10,11 +10,12 @@ import { Button } from "@/shared/components/ui/button";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
-import { Trophy, X, Zap, CheckCircle, XCircle } from "lucide-react";
+import { Trophy, X, Zap, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import {
   useCreativeDecision,
   calculateRecommendation,
   getMetricStatus,
+  getDaysInTest,
   DEFAULT_BENCHMARKS,
   type DecisionMetrics,
   type Recommendation,
@@ -25,13 +26,6 @@ interface DecisionModalProps {
   open: boolean;
   onClose: () => void;
   criativo: Criativo | null;
-}
-
-function getDaysInTest(testStartedAt: string | null | undefined): number | null {
-  if (!testStartedAt) return null;
-  const start = new Date(testStartedAt);
-  const now = new Date();
-  return Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 export function DecisionModal({ open, onClose, criativo }: DecisionModalProps) {
@@ -220,8 +214,8 @@ export function DecisionModal({ open, onClose, criativo }: DecisionModalProps) {
               background: "transparent",
             }}
           >
-            <X className="h-3.5 w-3.5" />
-            Matar
+            {isSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
+            {isSubmitting ? "Salvando..." : "Matar"}
           </Button>
           <Button
             disabled={isSubmitting}
@@ -233,8 +227,8 @@ export function DecisionModal({ open, onClose, criativo }: DecisionModalProps) {
               border: "none",
             }}
           >
-            <Trophy className="h-3.5 w-3.5" />
-            WINNER!
+            {isSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trophy className="h-3.5 w-3.5" />}
+            {isSubmitting ? "Salvando..." : "WINNER!"}
           </Button>
         </div>
       </DialogContent>

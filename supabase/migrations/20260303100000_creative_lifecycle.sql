@@ -17,7 +17,8 @@ ALTER TABLE criativos ADD COLUMN IF NOT EXISTS test_started_at TIMESTAMPTZ;
 
 -- 2. Migrate existing status values
 -- PRODUCAO → TEST (em produção = em teste)
-UPDATE criativos SET status = 'TEST' WHERE status = 'PRODUCAO';
+-- Backfill test_started_at with updated_at so >72h alerts work for migrated rows
+UPDATE criativos SET status = 'TEST', test_started_at = COALESCE(updated_at, created_at, now()) WHERE status = 'PRODUCAO';
 
 -- ATIVO → WINNER (ativo = estava funcionando)
 UPDATE criativos SET status = 'WINNER', decided_at = updated_at WHERE status = 'ATIVO';

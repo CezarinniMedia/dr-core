@@ -1,10 +1,10 @@
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { useUpdateCriativoStatus, useDuplicateCriativo } from "@/features/creatives/hooks/useCriativos";
-import { Copy, FileText, FlaskConical, Trophy, X, Zap, MoreHorizontal } from "lucide-react";
+import { Copy, FileText, FlaskConical, Trophy, X, Zap } from "lucide-react";
 import { ReactNode, useCallback, useRef, useState } from "react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/shared/components/ui/tooltip";
-import type { DecisionMetrics } from "@/features/creatives/hooks/useCreativeDecision";
+import { getDaysInTest, type DecisionMetrics } from "@/features/creatives/hooks/useCreativeDecision";
 
 // --- Types ---
 
@@ -106,15 +106,6 @@ function isTransitionAllowed(from: string, to: ColumnId): boolean {
 
 function needsDecision(from: string, to: ColumnId): boolean {
   return DECISION_REQUIRED.some(([f, t]) => f === from && t === to);
-}
-
-// --- Helpers ---
-
-function getDaysInTest(testStartedAt: string | null | undefined): number | null {
-  if (!testStartedAt) return null;
-  const start = new Date(testStartedAt);
-  const now = new Date();
-  return Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 // --- Component ---
