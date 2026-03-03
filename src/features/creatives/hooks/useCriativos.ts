@@ -108,9 +108,24 @@ export function useUpdateCriativoStatus() {
 
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const updateData: Record<string, unknown> = { status };
+
+      // Auto-set test_started_at when entering TEST
+      if (status === "TEST") {
+        updateData.test_started_at = new Date().toISOString();
+      }
+
+      // Clear test_started_at when returning to DRAFT
+      if (status === "DRAFT") {
+        updateData.test_started_at = null;
+        updateData.decision_metrics = null;
+        updateData.decision_notes = null;
+        updateData.decided_at = null;
+      }
+
       const { data, error } = await supabase
         .from("criativos")
-        .update({ status })
+        .update(updateData)
         .eq("id", id)
         .select()
         .single();

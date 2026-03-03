@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useOfertas } from "@/features/offers/hooks/useOfertas";
 import { useCriativos } from "@/features/creatives/hooks/useCriativos";
-import { KanbanBoard } from "@/features/creatives/components/KanbanBoard";
+import { KanbanBoard, type Criativo } from "@/features/creatives/components/KanbanBoard";
+import { DecisionModal } from "@/features/creatives/components/DecisionModal";
 import { HookGeneratorModal } from "@/features/creatives/components/HookGeneratorModal";
 import { CriativoFormDialog } from "@/features/creatives/components/CriativoFormDialog";
 import { HooksList } from "@/features/creatives/components/HooksList";
@@ -21,8 +22,17 @@ export default function CriativosPage() {
   const [selectedOferta, setSelectedOferta] = useState<string>("");
   const [showHookGenerator, setShowHookGenerator] = useState(false);
   const [showCriativoForm, setShowCriativoForm] = useState(false);
+  const [decisionCriativo, setDecisionCriativo] = useState<Criativo | null>(null);
   const { data: ofertas } = useOfertas();
   const { data: criativos } = useCriativos(selectedOferta || undefined);
+
+  const handleRequestDecision = useCallback((criativo: Criativo) => {
+    setDecisionCriativo(criativo);
+  }, []);
+
+  const handleCloseDecision = useCallback(() => {
+    setDecisionCriativo(null);
+  }, []);
 
   return (
     <div className="max-w-6xl space-y-6">
@@ -74,12 +84,15 @@ export default function CriativosPage() {
 
           <TabsContent value="kanban" className="mt-4">
             {criativos && criativos.length > 0 ? (
-              <KanbanBoard criativos={criativos as any} />
+              <KanbanBoard
+                criativos={criativos as Criativo[]}
+                onRequestDecision={handleRequestDecision}
+              />
             ) : (
               <EmptyState
                 icon={Sparkles}
                 title="Nenhum criativo ainda"
-                description="Crie o primeiro criativo ou gere hooks para começar."
+                description="Crie o primeiro criativo ou gere hooks para comecar."
                 actionLabel="Novo Criativo"
                 onAction={() => setShowCriativoForm(true)}
                 secondaryActionLabel="Gerar Hooks"
@@ -114,6 +127,13 @@ export default function CriativosPage() {
           />
         </>
       )}
+
+      {/* Decision Modal */}
+      <DecisionModal
+        open={decisionCriativo !== null}
+        onClose={handleCloseDecision}
+        criativo={decisionCriativo}
+      />
     </div>
   );
 }

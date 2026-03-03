@@ -672,6 +672,9 @@ export type Database = {
           copy_body: string | null
           created_at: string | null
           cta: string | null
+          decided_at: string | null
+          decision_metrics: Json | null
+          decision_notes: string | null
           file_url: string | null
           hook_text: string
           id: string
@@ -682,6 +685,7 @@ export type Database = {
           shot_list: Json | null
           status: string | null
           tags: Json | null
+          test_started_at: string | null
           thumbnail_url: string | null
           tipo: string
           updated_at: string | null
@@ -692,6 +696,9 @@ export type Database = {
           copy_body?: string | null
           created_at?: string | null
           cta?: string | null
+          decided_at?: string | null
+          decision_metrics?: Json | null
+          decision_notes?: string | null
           file_url?: string | null
           hook_text: string
           id?: string
@@ -702,6 +709,7 @@ export type Database = {
           shot_list?: Json | null
           status?: string | null
           tags?: Json | null
+          test_started_at?: string | null
           thumbnail_url?: string | null
           tipo: string
           updated_at?: string | null
@@ -712,6 +720,9 @@ export type Database = {
           copy_body?: string | null
           created_at?: string | null
           cta?: string | null
+          decided_at?: string | null
+          decision_metrics?: Json | null
+          decision_notes?: string | null
           file_url?: string | null
           hook_text?: string
           id?: string
@@ -722,6 +733,7 @@ export type Database = {
           shot_list?: Json | null
           status?: string | null
           tags?: Json | null
+          test_started_at?: string | null
           thumbnail_url?: string | null
           tipo?: string
           updated_at?: string | null
