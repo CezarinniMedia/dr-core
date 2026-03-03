@@ -1,6 +1,7 @@
 import React from "react";
 import {
   ArrowUpRight, ArrowDownRight, ArrowRight, Zap, Sparkles,
+  Radar, Search, Flame, TrendingUp, TrendingDown, Copy, Skull, Archive, Ban,
 } from "lucide-react";
 import {
   stripMarkdown as stripMdService,
@@ -10,21 +11,21 @@ import {
 // ─── Status ───────────────────────────────────────────────────────────────
 
 export const STATUS_OPTIONS = [
-  { value: "RADAR", label: "Radar" },
-  { value: "ANALYZING", label: "Analyzing" },
-  { value: "HOT", label: "HOT" },
-  { value: "SCALING", label: "Scaling" },
-  { value: "DYING", label: "Dying" },
-  { value: "DEAD", label: "Dead" },
-  { value: "CLONED", label: "Cloned" },
-  { value: "VAULT", label: "Vault" },
-  { value: "NEVER_SCALED", label: "Never Scaled" },
+  { value: "RADAR", label: "Radar", icon: Radar },
+  { value: "ANALYZING", label: "Analyzing", icon: Search },
+  { value: "HOT", label: "Hot", icon: Flame },
+  { value: "SCALING", label: "Scaling", icon: TrendingUp },
+  { value: "DYING", label: "Dying", icon: TrendingDown },
+  { value: "DEAD", label: "Dead", icon: Skull },
+  { value: "CLONED", label: "Cloned", icon: Copy },
+  { value: "VAULT", label: "Vault", icon: Archive },
+  { value: "NEVER_SCALED", label: "Never Scaled", icon: Ban },
 ];
 
 export const STATUS_BADGE: Record<string, { label: string; className: string; tip: string }> = {
   RADAR: { label: "Radar", className: "bg-[rgba(107,114,128,0.1)] text-[color:var(--text-muted)] border border-[rgba(107,114,128,0.2)]", tip: "Recem-descoberta, aguardando analise" },
   ANALYZING: { label: "Analyzing", className: "bg-[rgba(59,130,246,0.1)] text-[color:var(--accent-blue)] border border-[rgba(59,130,246,0.2)]", tip: "Sob investigacao ativa" },
-  HOT: { label: "HOT", className: "bg-[rgba(239,68,68,0.1)] text-[color:var(--semantic-hot)] border border-[rgba(239,68,68,0.2)] animate-glow-pulse", tip: "Sinais fortes — merece atencao imediata" },
+  HOT: { label: "Hot", className: "bg-[rgba(239,68,68,0.1)] text-[color:var(--semantic-hot)] border border-[rgba(239,68,68,0.2)] animate-glow-pulse", tip: "Sinais fortes — merece atencao imediata" },
   SCALING: { label: "Scaling", className: "bg-[rgba(34,197,94,0.1)] text-[color:var(--accent-green)] border border-[rgba(34,197,94,0.2)]", tip: "Crescimento acelerado — hora de agir" },
   DYING: { label: "Dying", className: "bg-[rgba(234,179,8,0.1)] text-[color:var(--semantic-warning)] border border-[rgba(234,179,8,0.2)]", tip: "Trafego em queda, perdendo forca" },
   DEAD: { label: "Dead", className: "bg-[rgba(107,114,128,0.1)] text-[color:var(--text-muted)] border border-[rgba(107,114,128,0.2)] line-through", tip: "Parou completamente, referencia historica" },

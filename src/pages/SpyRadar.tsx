@@ -116,17 +116,21 @@ export default function SpyRadar() {
   };
 
   const handleInlineStatusChange = async (offerId: string, newStatus: string) => {
-    const { error } = await updateOfferStatus(offerId, newStatus);
-    if (error) { toast({ title: "Erro", description: error, variant: "destructive" }); return; }
+    // Optimistic update — cache first for instant UI feedback
     queryClient.setQueriesData({ queryKey: ['spied-offers'] }, (old: any) => {
       if (!old) return old;
-      // Paginated format: { data: [], totalCount }
       if (old.data && Array.isArray(old.data)) {
         return { ...old, data: old.data.map((o: any) => o.id === offerId ? { ...o, status: newStatus } : o) };
       }
       return old;
     });
-    setTimeout(() => queryClient.invalidateQueries({ queryKey: ['spied-offers'] }), 1500);
+    const { error } = await updateOfferStatus(offerId, newStatus);
+    if (error) {
+      toast({ title: "Erro", description: error, variant: "destructive" });
+      queryClient.invalidateQueries({ queryKey: ['spied-offers'] });
+      return;
+    }
+    queryClient.invalidateQueries({ queryKey: ['spied-offers'] });
   };
 
   const handleNotesUpdate = async (offerId: string, notes: string) => {

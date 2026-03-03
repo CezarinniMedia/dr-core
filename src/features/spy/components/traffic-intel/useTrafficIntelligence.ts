@@ -105,8 +105,7 @@ export function useTrafficIntelligence() {
   };
 
   const handleInlineStatusChange = async (offerId: string, newStatus: string) => {
-    const { error } = await updateOfferStatus(offerId, newStatus);
-    if (error) { toast({ title: "Erro", description: error, variant: "destructive" }); return; }
+    // Optimistic update — cache first for instant UI feedback
     queryClient.setQueriesData({ queryKey: ['spied-offers'] }, (old: any) => {
       if (!old) return old;
       if (old.data && Array.isArray(old.data)) {
@@ -114,7 +113,19 @@ export function useTrafficIntelligence() {
       }
       return old;
     });
-    setTimeout(() => queryClient.invalidateQueries({ queryKey: ['spied-offers'] }), 1500);
+    queryClient.setQueryData(['all-offers-lite'], (old: any) => {
+      if (!old || !Array.isArray(old)) return old;
+      return old.map((o: any) => o.id === offerId ? { ...o, status: newStatus } : o);
+    });
+    const { error } = await updateOfferStatus(offerId, newStatus);
+    if (error) {
+      toast({ title: "Erro", description: error, variant: "destructive" });
+      queryClient.invalidateQueries({ queryKey: ['spied-offers'] });
+      queryClient.invalidateQueries({ queryKey: ['all-offers-lite'] });
+      return;
+    }
+    queryClient.invalidateQueries({ queryKey: ['spied-offers'] });
+    queryClient.invalidateQueries({ queryKey: ['all-offers-lite'] });
   };
 
   const toggleColumn = (key: string) => {
@@ -125,36 +136,22 @@ export function useTrafficIntelligence() {
     setMonthColumns(prev => { const next = new Set(prev); if (next.has(month)) next.delete(month); else next.add(month); return next; });
   };
 
-  // Chart data — computed client-side from already-fetched traffic data
-  // Uses YYYY-MM aggregation + Math.max to prevent doubling across domain variants
+  // Chart data — derived from compareTraffic rows (same main_domain logic + aggregation)
+  // Ensures chart data is 100% consistent with table sparklines and lastMonth values
   const chartData = useMemo(() => {
-    if (chartIds.size === 0 || !allTraffic || !allOffers) return [];
-    const offerNames = new Map<string, string>();
-    for (const o of allOffers as any[]) {
-      if (chartIds.has(o.id)) offerNames.set(o.id, o.main_domain || o.nome);
-    }
-
-    // Group by offer label + YYYY-MM, take MAX (not sum) to prevent domain doubling
-    const byOffer = new Map<string, Map<string, number>>();
-    for (const t of allTraffic) {
-      if (!chartIds.has(t.spied_offer_id)) continue;
-      const label = offerNames.get(t.spied_offer_id) || t.domain;
-      const month = t.period_date.slice(0, 7); // "YYYY-MM"
-      if (!byOffer.has(label)) byOffer.set(label, new Map());
-      const mm = byOffer.get(label)!;
-      mm.set(month, Math.max(mm.get(month) || 0, t.visits ?? 0));
-    }
-
+    if (chartIds.size === 0) return [];
     const result: { period_date: string; visits: number; domain: string }[] = [];
-    for (const [label, mm] of byOffer) {
-      for (const [month, visits] of mm) {
+    for (const row of rows) {
+      if (!chartIds.has(row.id)) continue;
+      const label = row.domain === "—" ? row.nome : row.domain;
+      for (const [month, visits] of row.monthlyData) {
         if (rangeFrom && month < rangeFrom) continue;
         if (rangeTo && month > rangeTo) continue;
         result.push({ period_date: `${month}-01`, visits, domain: label });
       }
     }
     return result;
-  }, [chartIds, allTraffic, allOffers, rangeFrom, rangeTo]);
+  }, [chartIds, rows, rangeFrom, rangeTo]);
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });

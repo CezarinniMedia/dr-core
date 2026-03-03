@@ -196,11 +196,15 @@ const TrafficRowContent = memo(function TrafficRowContent({ row, isSelected, isC
                 </DropdownMenuTrigger>
               </TooltipTrigger>
               <DropdownMenuContent align="start" className="w-40">
-                {STATUS_OPTIONS.map(s => (
-                  <DropdownMenuItem key={s.value} onClick={() => onInlineStatusChange(row.id, s.value)}>
-                    {s.label}
-                  </DropdownMenuItem>
-                ))}
+                {STATUS_OPTIONS.map(s => {
+                  const Icon = s.icon;
+                  return (
+                    <DropdownMenuItem key={s.value} onClick={() => onInlineStatusChange(row.id, s.value)}>
+                      <Icon className="h-3.5 w-3.5 mr-2 shrink-0" />
+                      {s.label}
+                    </DropdownMenuItem>
+                  );
+                })}
               </DropdownMenuContent>
             </DropdownMenu>
             <TooltipContent side="right" className="text-xs max-w-[200px]">{sb.tip}</TooltipContent>

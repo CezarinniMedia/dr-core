@@ -1,4 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Radar, Search, Flame, TrendingUp, TrendingDown, Copy, Skull, Archive, Ban,
+} from "lucide-react";
 
 // Design system chart palette — aligned with vision-architecture tokens
 export const CHART_LINE_COLORS = [
@@ -17,21 +20,21 @@ export const CHART_LINE_COLORS = [
 ];
 
 export const STATUS_OPTIONS = [
-  { value: "RADAR", label: "Radar" },
-  { value: "ANALYZING", label: "Analyzing" },
-  { value: "HOT", label: "HOT" },
-  { value: "SCALING", label: "Scaling" },
-  { value: "DYING", label: "Dying" },
-  { value: "DEAD", label: "Dead" },
-  { value: "CLONED", label: "Cloned" },
-  { value: "VAULT", label: "Vault" },
-  { value: "NEVER_SCALED", label: "Never Scaled" },
+  { value: "RADAR", label: "Radar", icon: Radar },
+  { value: "ANALYZING", label: "Analyzing", icon: Search },
+  { value: "HOT", label: "Hot", icon: Flame },
+  { value: "SCALING", label: "Scaling", icon: TrendingUp },
+  { value: "DYING", label: "Dying", icon: TrendingDown },
+  { value: "DEAD", label: "Dead", icon: Skull },
+  { value: "CLONED", label: "Cloned", icon: Copy },
+  { value: "VAULT", label: "Vault", icon: Archive },
+  { value: "NEVER_SCALED", label: "Never Scaled", icon: Ban },
 ];
 
 export const STATUS_BADGE: Record<string, { label: string; className: string; tip: string }> = {
   RADAR: { label: "Radar", className: "bg-muted text-muted-foreground", tip: "Recém-descoberta, aguardando análise" },
   ANALYZING: { label: "Analyzing", className: "bg-warning/20 text-warning", tip: "Sob investigação ativa" },
-  HOT: { label: "HOT", className: "bg-destructive/20 text-destructive", tip: "Sinais fortes — merece atenção imediata" },
+  HOT: { label: "Hot", className: "bg-destructive/20 text-destructive", tip: "Sinais fortes — merece atenção imediata" },
   SCALING: { label: "Scaling", className: "bg-success/20 text-success animate-pulse", tip: "Crescimento acelerado — hora de agir" },
   DYING: { label: "Dying", className: "bg-accent/20 text-accent", tip: "Tráfego em queda, perdendo força" },
   DEAD: { label: "Dead", className: "bg-muted text-muted-foreground", tip: "Parou completamente, referência histórica" },
