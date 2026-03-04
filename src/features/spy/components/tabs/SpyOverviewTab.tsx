@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
-import { ExternalLink, Copy, Eye, X, ZoomIn, ZoomOut, MoreHorizontal, Pencil } from "lucide-react";
+import { ExternalLink, Copy, Eye, X, ZoomIn, ZoomOut, MoreHorizontal, Pencil, Brain, TrendingUp, Megaphone, Palette, Clock, Building, Timer, ShoppingCart } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +12,7 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useUpdateSpiedOffer } from "@/features/spy/hooks/useSpiedOffers";
+import { Switch } from "@/shared/components/ui/switch";
 import { useToast } from "@/shared/hooks/use-toast";
 
 interface SpyOverviewTabProps {
@@ -323,6 +324,12 @@ export function SpyOverviewTab({ offer }: SpyOverviewTabProps) {
         </div>
       </div>
 
+      {/* Intelligence card — full width */}
+      <IntelligenceCard offer={offer} />
+
+      {/* Scale Signals card — full width */}
+      <ScaleSignalsCard offer={offer} />
+
       <div className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)]">
         <div className="px-4 pt-4 pb-2">
           <h3 className="text-[length:var(--text-label)] [font-weight:var(--font-semibold)] text-[color:var(--text-secondary)]">Produto</h3>
@@ -396,6 +403,121 @@ export function SpyOverviewTab({ offer }: SpyOverviewTabProps) {
           <InfoRow label="Tendência" value={offer.traffic_trend} />
           <InfoRow label="Prioridade" value={offer.priority !== null && offer.priority !== undefined ? `${offer.priority}/10` : null} />
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Funnel / Angle labels ────────────────────────────────────────────────
+
+const FUNNEL_LABELS: Record<string, { label: string; className: string }> = {
+  vsl_direta: { label: "VSL Direta", className: "bg-blue-500/20 text-blue-400" },
+  preland_vsl: { label: "Preland + VSL", className: "bg-purple-500/20 text-purple-400" },
+  quiz_vsl: { label: "Quiz + VSL", className: "bg-cyan-500/20 text-cyan-400" },
+  webinar: { label: "Webinar", className: "bg-amber-500/20 text-amber-400" },
+  challenge: { label: "Challenge", className: "bg-green-500/20 text-green-400" },
+};
+
+const ANGLE_LABELS: Record<string, { label: string; className: string }> = {
+  dor: { label: "Dor", className: "bg-red-500/20 text-red-400" },
+  desejo: { label: "Desejo", className: "bg-pink-500/20 text-pink-400" },
+  curiosidade: { label: "Curiosidade", className: "bg-yellow-500/20 text-yellow-400" },
+  autoridade: { label: "Autoridade", className: "bg-blue-500/20 text-blue-400" },
+  medo: { label: "Medo", className: "bg-orange-500/20 text-orange-400" },
+  prova_social: { label: "Prova Social", className: "bg-green-500/20 text-green-400" },
+};
+
+const SCALE_SIGNAL_CONFIG = [
+  { key: "ads_running", label: "Ads Ativos", icon: Megaphone },
+  { key: "multiple_creatives", label: "Criativos Variados", icon: Palette },
+  { key: "traffic_growing", label: "Trafego Crescendo", icon: TrendingUp },
+  { key: "new_domain", label: "Dominio Novo", icon: Clock },
+  { key: "corporate_structure", label: "Estrutura Corp.", icon: Building },
+  { key: "urgency_elements", label: "Urgencia na Pagina", icon: Timer },
+  { key: "upsells_present", label: "Upsells Presentes", icon: ShoppingCart },
+];
+
+function countScaleSignals(signals: Record<string, boolean> | null | undefined): number {
+  if (!signals || typeof signals !== "object") return 0;
+  return Object.values(signals).filter(Boolean).length;
+}
+
+function IntelligenceCard({ offer }: { offer: any }) {
+  const funnel = offer.funnel_type ? FUNNEL_LABELS[offer.funnel_type] : null;
+  const angle = offer.creative_angle ? ANGLE_LABELS[offer.creative_angle] : null;
+  const score = offer.relevance_score;
+
+  if (!funnel && !angle && !score) return null;
+
+  return (
+    <div className="md:col-span-2 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)]">
+      <div className="px-4 pt-4 pb-2">
+        <h3 className="text-[length:var(--text-label)] [font-weight:var(--font-semibold)] text-[color:var(--text-secondary)] flex items-center gap-1.5">
+          <Brain className="h-4 w-4" /> Inteligencia
+        </h3>
+      </div>
+      <div className="px-4 pb-4 flex flex-wrap gap-6 text-sm">
+        <div className="flex items-center gap-2">
+          <span className="text-[color:var(--text-muted)] text-xs">Funil</span>
+          {funnel ? (
+            <Badge variant="outline" className={funnel.className}>{funnel.label}</Badge>
+          ) : (
+            <span className="text-xs text-[color:var(--text-muted)]">—</span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[color:var(--text-muted)] text-xs">Angulo</span>
+          {angle ? (
+            <Badge variant="outline" className={angle.className}>{angle.label}</Badge>
+          ) : (
+            <span className="text-xs text-[color:var(--text-muted)]">—</span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[color:var(--text-muted)] text-xs">Relevancia</span>
+          <div className="flex gap-0.5">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <div
+                key={n}
+                className={`h-2.5 w-2.5 rounded-full ${n <= (score || 0) ? "bg-[var(--accent-primary)]" : "bg-[var(--border-default)]"}`}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ScaleSignalsCard({ offer }: { offer: any }) {
+  const updateMutation = useUpdateSpiedOffer();
+  const signals: Record<string, boolean> = (offer.scale_signals && typeof offer.scale_signals === "object") ? offer.scale_signals : {};
+  const count = countScaleSignals(signals);
+
+  const handleToggle = (key: string, checked: boolean) => {
+    const updated = { ...signals, [key]: checked };
+    updateMutation.mutate({ id: offer.id, data: { scale_signals: updated } });
+  };
+
+  return (
+    <div className="md:col-span-2 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)]">
+      <div className="px-4 pt-4 pb-2 flex items-center justify-between">
+        <h3 className="text-[length:var(--text-label)] [font-weight:var(--font-semibold)] text-[color:var(--text-secondary)] flex items-center gap-1.5">
+          <TrendingUp className="h-4 w-4" /> Sinais de Escala
+        </h3>
+        <span className="text-xs text-[color:var(--text-muted)]">{count}/7 sinais</span>
+      </div>
+      <div className="px-4 pb-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        {SCALE_SIGNAL_CONFIG.map(({ key, label, icon: Icon }) => (
+          <label key={key} className="flex items-center gap-2 cursor-pointer">
+            <Switch
+              checked={!!signals[key]}
+              onCheckedChange={(checked) => handleToggle(key, checked)}
+            />
+            <Icon className="h-3.5 w-3.5 text-[color:var(--text-muted)]" />
+            <span className="text-xs text-[color:var(--text-body)]">{label}</span>
+          </label>
+        ))}
       </div>
     </div>
   );

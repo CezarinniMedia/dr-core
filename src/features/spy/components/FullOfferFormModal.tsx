@@ -25,7 +25,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/shared/components/ui/collapsible";
-import { ChevronDown, Loader2, Pencil, PlusCircle, LayoutList, Search, BarChart3, Network, FileText, Link, Banknote } from "lucide-react";
+import { ChevronDown, Loader2, Pencil, PlusCircle, LayoutList, Search, BarChart3, Network, FileText, Link, Banknote, Brain } from "lucide-react";
+import { VERTICAL_OPTIONS } from "@/features/spy/components/spy-radar/constants";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 
 interface FullOfferFormModalProps {
@@ -89,9 +90,9 @@ export function FullOfferFormModal({ open, onClose, editData }: FullOfferFormMod
                   <Select value={form.vertical || ""} onValueChange={(v) => set("vertical", v)}>
                     <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="nutra">Nutra</SelectItem>
-                      <SelectItem value="info">Info</SelectItem>
-                      <SelectItem value="tech">Tech</SelectItem>
+                      {VERTICAL_OPTIONS.map((v) => (
+                        <SelectItem key={v.value} value={v.value}>{v.label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </Field>
@@ -136,6 +137,47 @@ export function FullOfferFormModal({ open, onClose, editData }: FullOfferFormMod
                     type="date"
                     value={form.domain_created_at || ""}
                     onChange={(e) => set("domain_created_at", e.target.value || null)}
+                  />
+                </Field>
+              </div>
+            </Section>
+
+            {/* Section: Inteligencia */}
+            <Section title={<span className="flex items-center gap-1.5"><Brain className="h-4 w-4" /> Inteligencia</span>}>
+              <div className="grid grid-cols-3 gap-3">
+                <Field label="Tipo de Funil">
+                  <Select value={form.funnel_type || ""} onValueChange={(v) => set("funnel_type", v)}>
+                    <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="vsl_direta">VSL Direta</SelectItem>
+                      <SelectItem value="preland_vsl">Preland + VSL</SelectItem>
+                      <SelectItem value="quiz_vsl">Quiz + VSL</SelectItem>
+                      <SelectItem value="webinar">Webinar</SelectItem>
+                      <SelectItem value="challenge">Challenge</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Angulo Criativo">
+                  <Select value={form.creative_angle || ""} onValueChange={(v) => set("creative_angle", v)}>
+                    <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="dor">Dor</SelectItem>
+                      <SelectItem value="desejo">Desejo</SelectItem>
+                      <SelectItem value="curiosidade">Curiosidade</SelectItem>
+                      <SelectItem value="autoridade">Autoridade</SelectItem>
+                      <SelectItem value="medo">Medo</SelectItem>
+                      <SelectItem value="prova_social">Prova Social</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label={`Relevancia: ${form.relevance_score || 0}/5`}>
+                  <Slider
+                    value={[form.relevance_score || 0]}
+                    onValueChange={([v]) => set("relevance_score", v)}
+                    min={0}
+                    max={5}
+                    step={1}
+                    className="mt-2"
                   />
                 </Field>
               </div>

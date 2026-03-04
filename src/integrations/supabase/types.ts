@@ -1716,6 +1716,10 @@ export type Database = {
           vsl_url: string | null
           workspace_id: string
           screenshot_url: string | null
+          funnel_type: string | null
+          creative_angle: string | null
+          scale_signals: Json | null
+          relevance_score: number | null
         }
         Insert: {
           checkout_provider?: string | null
@@ -1751,6 +1755,10 @@ export type Database = {
           vsl_url?: string | null
           workspace_id: string
           screenshot_url?: string | null
+          funnel_type?: string | null
+          creative_angle?: string | null
+          scale_signals?: Json | null
+          relevance_score?: number | null
         }
         Update: {
           checkout_provider?: string | null
@@ -1786,6 +1794,10 @@ export type Database = {
           vsl_url?: string | null
           workspace_id?: string
           screenshot_url?: string | null
+          funnel_type?: string | null
+          creative_angle?: string | null
+          scale_signals?: Json | null
+          relevance_score?: number | null
         }
         Relationships: [
           {

@@ -129,12 +129,28 @@ export const PAGE_SIZE_OPTIONS = [
   { value: "all", label: "Todas (infinito)" },
 ];
 
+// ─── Verticals ───────────────────────────────────────────────────────────
+
+export const VERTICAL_OPTIONS = [
+  { value: "nutra", label: "Nutra" },
+  { value: "info", label: "Info" },
+  { value: "tech", label: "Tech" },
+  { value: "financas", label: "Financas" },
+  { value: "relacionamento", label: "Relacionamento" },
+  { value: "educacao", label: "Educacao" },
+  { value: "outro", label: "Outro" },
+];
+
 // ─── Visual maps ──────────────────────────────────────────────────────────
 
 export const VERTICAL_BADGE: Record<string, string> = {
   nutra: "bg-success/20 text-success",
   info: "bg-info/20 text-info",
   tech: "bg-primary/20 text-primary",
+  financas: "bg-yellow-500/20 text-yellow-400",
+  relacionamento: "bg-pink-500/20 text-pink-400",
+  educacao: "bg-cyan-500/20 text-cyan-400",
+  outro: "bg-gray-500/20 text-gray-400",
 };
 
 export const TREND_ICON: Record<string, React.ReactNode> = {

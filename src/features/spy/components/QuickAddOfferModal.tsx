@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import { Loader2, Zap } from "lucide-react";
+import { VERTICAL_OPTIONS } from "@/features/spy/components/spy-radar/constants";
 
 interface QuickAddOfferModalProps {
   open: boolean;
@@ -125,9 +126,9 @@ export function QuickAddOfferModal({ open, onClose }: QuickAddOfferModalProps) {
               <Select value={form.vertical} onValueChange={(v) => set("vertical", v)}>
                 <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="nutra">Nutra</SelectItem>
-                  <SelectItem value="info">Info</SelectItem>
-                  <SelectItem value="tech">Tech</SelectItem>
+                  {VERTICAL_OPTIONS.map((v) => (
+                    <SelectItem key={v.value} value={v.value}>{v.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

@@ -31,7 +31,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
-import { Edit, Trash2, ExternalLink, LayoutList, Globe, BookOpen, Palette, Map, BarChart3, FileText, Radar, Tag, DollarSign, Layers, Megaphone, Copy } from "lucide-react";
+import { Edit, Trash2, ExternalLink, LayoutList, Globe, BookOpen, Palette, Map, BarChart3, FileText, Radar, Tag, DollarSign, Layers, Megaphone, Copy, TrendingUp } from "lucide-react";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { PageBreadcrumb } from "@/shared/components/ui/PageBreadcrumb";
 
@@ -46,6 +46,11 @@ const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   VAULT: { label: "Vault", className: "bg-[rgba(107,114,128,0.1)] text-[color:var(--text-muted)] border border-[rgba(107,114,128,0.2)]" },
   NEVER_SCALED: { label: "Never Scaled", className: "bg-[rgba(107,114,128,0.05)] text-[color:var(--text-muted)] border border-[rgba(107,114,128,0.15)]" },
 };
+
+function countScaleSignals(signals: Record<string, boolean> | null | undefined): number {
+  if (!signals || typeof signals !== "object") return 0;
+  return Object.values(signals).filter(Boolean).length;
+}
 
 function formatCurrency(value: number | null | undefined) {
   if (!value) return "—";
@@ -172,12 +177,13 @@ export default function SpyOfferDetail() {
       </div>
 
       {/* KPI Stats — DataMetricCards from design system */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <DataMetricCard label="Vertical" value={offer.vertical || "—"} icon={<Tag className="h-4 w-4" />} />
         <DataMetricCard label="Ticket" value={formatCurrency(offer.product_ticket)} icon={<DollarSign className="h-4 w-4" />} />
         <DataMetricCard label="Dominios" value={String(domainsCount)} icon={<Globe className="h-4 w-4" />} />
         <DataMetricCard label="Ads Salvos" value={String(adsCount)} icon={<Megaphone className="h-4 w-4" />} />
         <DataMetricCard label="Steps Funil" value={String(funnelCount)} icon={<Layers className="h-4 w-4" />} />
+        <DataMetricCard label="Scale Score" value={`${countScaleSignals(offer.scale_signals)}/7`} icon={<TrendingUp className="h-4 w-4" />} />
       </div>
 
       {/* Tabs */}

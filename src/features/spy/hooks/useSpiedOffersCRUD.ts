@@ -57,6 +57,10 @@ export interface PaginatedOffer {
   checkout_provider: string | null;
   vsl_player: string | null;
   discovery_query: string | null;
+  funnel_type: string | null;
+  creative_angle: string | null;
+  scale_signals: Record<string, boolean> | null;
+  relevance_score: number | null;
   created_at: string | null;
   updated_at: string | null;
   domain_count: number;
