@@ -6,6 +6,7 @@ import { ModalProvider, useModalContext } from "@/shared/hooks/useModalContext";
 import { SidebarProvider } from "@/shared/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { AppHeader } from "./AppHeader";
+import { DemoModeBanner } from "@/shared/components/DemoMode";
 import { CommandPalette } from "./command-palette/CommandPalette";
 import { Loader2 } from "lucide-react";
 
@@ -89,6 +90,7 @@ function DashboardLayoutInner() {
       <AppSidebar />
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
         <AppHeader />
+        <DemoModeBanner />
         <main className="flex-1 overflow-y-auto p-6 bg-background">
           <Outlet />
         </main>
