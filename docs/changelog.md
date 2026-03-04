@@ -1,5 +1,17 @@
 # Changelog - DR OPS
 
+## [Traffic Chart Crash Fix] - 2026-03-03
+
+### fix(spy): Grafico de trafego crashava ao adicionar muitas ofertas
+- **Problema:** Botao "Comparar visiveis" usava `sortedRows` (todas as ofertas filtradas), criando centenas de `<Area>` no Recharts e travando o browser
+- **Fix 1:** `addAllToChart` agora usa `paginatedRows` — so ofertas da pagina atual (10, 25, 50 conforme page size)
+- **Fix 2:** Safety cap `MAX_CHART_ITEMS = 50` com toast em `addAllToChart` e `addSelectedToChart`
+- **Reload safe:** `chartIds` e `useState` puro — refresh limpa automaticamente
+- **QA:** PASS (2 rounds, concerns C1/C2 resolvidos)
+- **Arquivo:** `src/features/spy/components/traffic-intel/useTrafficIntelligence.ts`
+
+---
+
 ## [Command Palette Rewrite] - 2026-03-03
 
 ### Reescrita completa do Command Palette (Cmd+K)

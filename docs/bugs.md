@@ -13,6 +13,13 @@
 - **Onde:** Radar de Ofertas → Importar CSV
 - **Correcao:** Reescrito para usar operacoes batch (chunks de 500) em vez de insercao 1-por-1. Domain matching usa batch queries (.in()) em vez de queries individuais. Progress bar granular com label descritivo por fase (criando ofertas, inserindo dominios, importando trafego).
 
+### ~~BUG-017: Grafico de trafego trava browser ao adicionar muitas ofertas~~ (CORRIGIDO)
+- **Onde:** Inteligencia de Trafego → botao "Comparar visiveis" / "Adicionar ao grafico"
+- **Comportamento:** `addAllToChart` adicionava TODAS as ofertas filtradas (sortedRows, potencialmente centenas) ao chart Recharts, causando centenas de `<Area>` com animacoes e crashando o browser
+- **Correcao:** (1) `addAllToChart` agora usa `paginatedRows` (somente pagina atual). (2) Safety cap `MAX_CHART_ITEMS = 50` com toast informativo em `addAllToChart` e `addSelectedToChart`. (3) `chartIds` e `useState` puro sem localStorage — refresh limpa tudo.
+- **Commits:** afab241, 5fe8c87
+- **QA:** PASS (2 rounds — concerns C1/C2 corrigidos)
+
 ### BUG-003: Graficos de trafego nao respeitam filtros de data
 - **Onde:** Oferta individual → aba Trafego + Inteligencia de Trafego
 - **Comportamento:** Ao selecionar periodo personalizado, grafico nem sempre atualiza

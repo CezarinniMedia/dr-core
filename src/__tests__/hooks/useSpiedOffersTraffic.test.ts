@@ -78,14 +78,14 @@ describe("useLatestTrafficPerOffer", () => {
         }),
       }),
     });
-    mockRpc.mockResolvedValue({ data: [], error: null });
+    mockRpc.mockResolvedValue({ data: [{ spied_offer_id: "o1", visits: 1000 }], error: null });
 
     renderHookWithQuery(() => useLatestTrafficPerOffer("similarweb"));
 
     await waitFor(() => {
       expect(mockRpc).toHaveBeenCalledWith("get_latest_traffic_per_offer", {
         p_workspace_id: "ws-1",
-        p_period_type: "monthly_sw",
+        p_source: "similarweb",
       });
     });
   });
@@ -98,15 +98,45 @@ describe("useLatestTrafficPerOffer", () => {
         }),
       }),
     });
-    mockRpc.mockResolvedValue({ data: [], error: null });
+    mockRpc.mockResolvedValue({ data: [{ spied_offer_id: "o1", visits: 500 }], error: null });
 
     renderHookWithQuery(() => useLatestTrafficPerOffer("semrush"));
 
     await waitFor(() => {
       expect(mockRpc).toHaveBeenCalledWith("get_latest_traffic_per_offer", {
         p_workspace_id: "ws-1",
-        p_period_type: "monthly",
+        p_source: "semrush",
       });
+    });
+  });
+
+  it("usa fallback paginado quando RPC falha", async () => {
+    const mockRange = vi.fn().mockResolvedValue({
+      data: [{ spied_offer_id: "o1", visits: 300, period_date: "2026-01-01" }],
+      error: null,
+      count: 1,
+    });
+    const mockNeq = vi.fn().mockReturnValue({ range: mockRange });
+    const mockOrderFallback = vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ range: mockRange }), neq: mockNeq });
+    const mockSelectFallback = vi.fn().mockReturnValue({ order: mockOrderFallback });
+
+    // First call: workspace_members lookup
+    mockFrom.mockReturnValueOnce({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: { workspace_id: "ws-1" } }),
+        }),
+      }),
+    });
+    // RPC fails
+    mockRpc.mockResolvedValue({ data: null, error: { message: "function not found", code: "PGRST202" } });
+    // Second call: fallback paginated query (first page + count)
+    mockFrom.mockReturnValueOnce({ select: mockSelectFallback });
+
+    renderHookWithQuery(() => useLatestTrafficPerOffer("semrush"));
+
+    await waitFor(() => {
+      expect(mockRpc).toHaveBeenCalled();
     });
   });
 });
