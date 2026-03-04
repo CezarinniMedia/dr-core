@@ -32,6 +32,7 @@ import {
 } from "./constants";
 import { ScreenshotLightbox } from "./ScreenshotLightbox";
 import type { SpiedOffer } from "@/shared/services/offerService";
+import { formatTrafficNumber } from "@/shared/services/trafficService";
 
 interface SpyOffersTableProps {
   offers: SpiedOffer[] | undefined;
@@ -418,7 +419,7 @@ export function SpyOffersTable({
                     <TableCell className="text-sm">
                       {(() => {
                         const trafficVal = latestTrafficMap?.get(offer.id) ?? offer.estimated_monthly_traffic;
-                        return trafficVal ? `${(trafficVal / 1000).toFixed(0)}k` : "—";
+                        return trafficVal ? formatTrafficNumber(trafficVal) : "—";
                       })()}
                       {offer.traffic_trend && <span className="ml-1">{TREND_ICON[offer.traffic_trend] || ""}</span>}
                     </TableCell>
