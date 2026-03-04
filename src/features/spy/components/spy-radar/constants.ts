@@ -2,6 +2,8 @@ import React from "react";
 import {
   ArrowUpRight, ArrowDownRight, ArrowRight, Zap, Sparkles,
   Radar, Search, Flame, TrendingUp, TrendingDown, Copy, Skull, Archive, Ban,
+  Megaphone, Palette, Clock, Building, Timer, ShoppingCart,
+  type LucideIcon,
 } from "lucide-react";
 import {
   stripMarkdown as stripMdService,
@@ -152,6 +154,59 @@ export const VERTICAL_BADGE: Record<string, string> = {
   educacao: "bg-cyan-500/20 text-cyan-400",
   outro: "bg-gray-500/20 text-gray-400",
 };
+
+// ─── Intelligence ─────────────────────────────────────────────────────────
+
+export const FUNNEL_OPTIONS = [
+  { value: "vsl_direta", label: "VSL Direta" },
+  { value: "preland_vsl", label: "Preland + VSL" },
+  { value: "quiz_vsl", label: "Quiz + VSL" },
+  { value: "webinar", label: "Webinar" },
+  { value: "challenge", label: "Challenge" },
+];
+
+export const ANGLE_OPTIONS = [
+  { value: "dor", label: "Dor" },
+  { value: "desejo", label: "Desejo" },
+  { value: "curiosidade", label: "Curiosidade" },
+  { value: "autoridade", label: "Autoridade" },
+  { value: "medo", label: "Medo" },
+  { value: "prova_social", label: "Prova Social" },
+];
+
+export const FUNNEL_BADGE: Record<string, { label: string; className: string }> = {
+  vsl_direta: { label: "VSL Direta", className: "bg-blue-500/20 text-blue-400" },
+  preland_vsl: { label: "Preland + VSL", className: "bg-purple-500/20 text-purple-400" },
+  quiz_vsl: { label: "Quiz + VSL", className: "bg-cyan-500/20 text-cyan-400" },
+  webinar: { label: "Webinar", className: "bg-amber-500/20 text-amber-400" },
+  challenge: { label: "Challenge", className: "bg-green-500/20 text-green-400" },
+};
+
+export const ANGLE_BADGE: Record<string, { label: string; className: string }> = {
+  dor: { label: "Dor", className: "bg-red-500/20 text-red-400" },
+  desejo: { label: "Desejo", className: "bg-pink-500/20 text-pink-400" },
+  curiosidade: { label: "Curiosidade", className: "bg-yellow-500/20 text-yellow-400" },
+  autoridade: { label: "Autoridade", className: "bg-blue-500/20 text-blue-400" },
+  medo: { label: "Medo", className: "bg-orange-500/20 text-orange-400" },
+  prova_social: { label: "Prova Social", className: "bg-green-500/20 text-green-400" },
+};
+
+export const SCALE_SIGNAL_CONFIG: { key: string; label: string; icon: LucideIcon }[] = [
+  { key: "ads_running", label: "Ads Ativos", icon: Megaphone },
+  { key: "multiple_creatives", label: "Criativos Variados", icon: Palette },
+  { key: "traffic_growing", label: "Trafego Crescendo", icon: TrendingUp },
+  { key: "new_domain", label: "Dominio Novo", icon: Clock },
+  { key: "corporate_structure", label: "Estrutura Corp.", icon: Building },
+  { key: "urgency_elements", label: "Urgencia na Pagina", icon: Timer },
+  { key: "upsells_present", label: "Upsells Presentes", icon: ShoppingCart },
+];
+
+export function countScaleSignals(signals: Record<string, boolean> | null | undefined): number {
+  if (!signals || typeof signals !== "object") return 0;
+  return Object.values(signals).filter(Boolean).length;
+}
+
+// ─── Trend ────────────────────────────────────────────────────────────────
 
 export const TREND_ICON: Record<string, React.ReactNode> = {
   UP: React.createElement(ArrowUpRight, { className: "h-3.5 w-3.5 text-green-500" }),

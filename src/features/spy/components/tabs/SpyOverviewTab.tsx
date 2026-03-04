@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
-import { ExternalLink, Copy, Eye, X, ZoomIn, ZoomOut, MoreHorizontal, Pencil, Brain, TrendingUp, Megaphone, Palette, Clock, Building, Timer, ShoppingCart } from "lucide-react";
+import { ExternalLink, Copy, Eye, X, ZoomIn, ZoomOut, MoreHorizontal, Pencil, Brain, TrendingUp } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +14,7 @@ import { ptBR } from "date-fns/locale";
 import { useUpdateSpiedOffer } from "@/features/spy/hooks/useSpiedOffers";
 import { Switch } from "@/shared/components/ui/switch";
 import { useToast } from "@/shared/hooks/use-toast";
+import { FUNNEL_BADGE, ANGLE_BADGE, SCALE_SIGNAL_CONFIG, countScaleSignals } from "@/features/spy/components/spy-radar/constants";
 
 interface SpyOverviewTabProps {
   offer: any;
@@ -408,43 +409,9 @@ export function SpyOverviewTab({ offer }: SpyOverviewTabProps) {
   );
 }
 
-// ─── Funnel / Angle labels ────────────────────────────────────────────────
-
-const FUNNEL_LABELS: Record<string, { label: string; className: string }> = {
-  vsl_direta: { label: "VSL Direta", className: "bg-blue-500/20 text-blue-400" },
-  preland_vsl: { label: "Preland + VSL", className: "bg-purple-500/20 text-purple-400" },
-  quiz_vsl: { label: "Quiz + VSL", className: "bg-cyan-500/20 text-cyan-400" },
-  webinar: { label: "Webinar", className: "bg-amber-500/20 text-amber-400" },
-  challenge: { label: "Challenge", className: "bg-green-500/20 text-green-400" },
-};
-
-const ANGLE_LABELS: Record<string, { label: string; className: string }> = {
-  dor: { label: "Dor", className: "bg-red-500/20 text-red-400" },
-  desejo: { label: "Desejo", className: "bg-pink-500/20 text-pink-400" },
-  curiosidade: { label: "Curiosidade", className: "bg-yellow-500/20 text-yellow-400" },
-  autoridade: { label: "Autoridade", className: "bg-blue-500/20 text-blue-400" },
-  medo: { label: "Medo", className: "bg-orange-500/20 text-orange-400" },
-  prova_social: { label: "Prova Social", className: "bg-green-500/20 text-green-400" },
-};
-
-const SCALE_SIGNAL_CONFIG = [
-  { key: "ads_running", label: "Ads Ativos", icon: Megaphone },
-  { key: "multiple_creatives", label: "Criativos Variados", icon: Palette },
-  { key: "traffic_growing", label: "Trafego Crescendo", icon: TrendingUp },
-  { key: "new_domain", label: "Dominio Novo", icon: Clock },
-  { key: "corporate_structure", label: "Estrutura Corp.", icon: Building },
-  { key: "urgency_elements", label: "Urgencia na Pagina", icon: Timer },
-  { key: "upsells_present", label: "Upsells Presentes", icon: ShoppingCart },
-];
-
-function countScaleSignals(signals: Record<string, boolean> | null | undefined): number {
-  if (!signals || typeof signals !== "object") return 0;
-  return Object.values(signals).filter(Boolean).length;
-}
-
 function IntelligenceCard({ offer }: { offer: any }) {
-  const funnel = offer.funnel_type ? FUNNEL_LABELS[offer.funnel_type] : null;
-  const angle = offer.creative_angle ? ANGLE_LABELS[offer.creative_angle] : null;
+  const funnel = offer.funnel_type ? FUNNEL_BADGE[offer.funnel_type] : null;
+  const angle = offer.creative_angle ? ANGLE_BADGE[offer.creative_angle] : null;
   const score = offer.relevance_score;
 
   if (!funnel && !angle && !score) return null;

@@ -32,6 +32,7 @@ import {
   AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
 import { Edit, Trash2, ExternalLink, LayoutList, Globe, BookOpen, Palette, Map, BarChart3, FileText, Radar, Tag, DollarSign, Layers, Megaphone, Copy, TrendingUp } from "lucide-react";
+import { countScaleSignals } from "@/features/spy/components/spy-radar/constants";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { PageBreadcrumb } from "@/shared/components/ui/PageBreadcrumb";
 
@@ -46,11 +47,6 @@ const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   VAULT: { label: "Vault", className: "bg-[rgba(107,114,128,0.1)] text-[color:var(--text-muted)] border border-[rgba(107,114,128,0.2)]" },
   NEVER_SCALED: { label: "Never Scaled", className: "bg-[rgba(107,114,128,0.05)] text-[color:var(--text-muted)] border border-[rgba(107,114,128,0.15)]" },
 };
-
-function countScaleSignals(signals: Record<string, boolean> | null | undefined): number {
-  if (!signals || typeof signals !== "object") return 0;
-  return Object.values(signals).filter(Boolean).length;
-}
 
 function formatCurrency(value: number | null | undefined) {
   if (!value) return "—";

@@ -26,7 +26,7 @@ import {
   CollapsibleTrigger,
 } from "@/shared/components/ui/collapsible";
 import { ChevronDown, Loader2, Pencil, PlusCircle, LayoutList, Search, BarChart3, Network, FileText, Link, Banknote, Brain } from "lucide-react";
-import { VERTICAL_OPTIONS } from "@/features/spy/components/spy-radar/constants";
+import { VERTICAL_OPTIONS, FUNNEL_OPTIONS, ANGLE_OPTIONS } from "@/features/spy/components/spy-radar/constants";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 
 interface FullOfferFormModalProps {
@@ -58,6 +58,8 @@ export function FullOfferFormModal({ open, onClose, editData }: FullOfferFormMod
     if (payload.product_ticket) payload.product_ticket = parseFloat(payload.product_ticket);
     if (payload.estimated_monthly_traffic) payload.estimated_monthly_traffic = parseInt(payload.estimated_monthly_traffic);
     if (payload.estimated_monthly_revenue) payload.estimated_monthly_revenue = parseFloat(payload.estimated_monthly_revenue);
+    // relevance_score CHECK constraint is >= 1 AND <= 5; 0 means "not rated" → send null
+    if (!payload.relevance_score) payload.relevance_score = null;
 
     if (isEdit) {
       updateMutation.mutate({ id: editData.id, data: payload }, { onSuccess: onClose });
@@ -149,11 +151,9 @@ export function FullOfferFormModal({ open, onClose, editData }: FullOfferFormMod
                   <Select value={form.funnel_type || ""} onValueChange={(v) => set("funnel_type", v)}>
                     <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="vsl_direta">VSL Direta</SelectItem>
-                      <SelectItem value="preland_vsl">Preland + VSL</SelectItem>
-                      <SelectItem value="quiz_vsl">Quiz + VSL</SelectItem>
-                      <SelectItem value="webinar">Webinar</SelectItem>
-                      <SelectItem value="challenge">Challenge</SelectItem>
+                      {FUNNEL_OPTIONS.map((f) => (
+                        <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </Field>
@@ -161,12 +161,9 @@ export function FullOfferFormModal({ open, onClose, editData }: FullOfferFormMod
                   <Select value={form.creative_angle || ""} onValueChange={(v) => set("creative_angle", v)}>
                     <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="dor">Dor</SelectItem>
-                      <SelectItem value="desejo">Desejo</SelectItem>
-                      <SelectItem value="curiosidade">Curiosidade</SelectItem>
-                      <SelectItem value="autoridade">Autoridade</SelectItem>
-                      <SelectItem value="medo">Medo</SelectItem>
-                      <SelectItem value="prova_social">Prova Social</SelectItem>
+                      {ANGLE_OPTIONS.map((a) => (
+                        <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </Field>
