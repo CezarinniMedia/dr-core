@@ -83,9 +83,10 @@
 ### ~~BUG-011: Tooltips ausentes~~ (CORRIGIDO — Vision-6)
 - **Correcao:** Tooltips adicionados nos componentes principais via aria-label e Tooltip/TooltipContent do shadcn/ui
 
-### BUG-012: Trend sparkline nao acompanha periodo selecionado
-- **Onde:** Inteligencia de Trafego
-- **Comportamento:** Mini-grafico de trend sempre mostra periodo completo, mesmo com filtro ativo
+### ~~BUG-012: Trend sparkline exagerando variacoes de trafego~~ (CORRIGIDO)
+- **Onde:** Inteligencia de Trafego → coluna Trend
+- **Comportamento:** Normalizacao min→max fazia variacoes de 10% preencherem 100% da altura da sparkline, criando impressao visual incompativel com o grafico real
+- **Correcao:** Normalizacao proporcional — visual range minimo = 50% da media dos dados. Variacoes de 10% agora preenchem ~20% da altura (proporcional), spikes reais (>50%) preenchem naturalmente
 
 ---
 

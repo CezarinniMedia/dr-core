@@ -65,13 +65,21 @@ const Sparkline = memo(function Sparkline({ data, variation }: { data: number[];
   const h = 24;
   const w = 64;
   const padY = 2;
-  const max = Math.max(...data);
-  const min = Math.min(...data);
-  const range = max - min || 1;
+  const dataMax = Math.max(...data);
+  const dataMin = Math.min(...data);
+  const dataRange = dataMax - dataMin;
+  const mean = (dataMax + dataMin) / 2;
+
+  // Proportional normalization: use at least 50% of mean as visual range
+  // so a 10% variation fills ~20% of height instead of 100%.
+  // For real spikes (>50% variation), the data range naturally dominates.
+  const minVisualRange = mean > 0 ? mean * 0.5 : 1;
+  const visualRange = Math.max(dataRange, minVisualRange) || 1;
+  const visualMin = mean - visualRange / 2;
 
   const pts = data.map((v, i) => ({
     x: (i / (data.length - 1)) * w,
-    y: padY + (h - 2 * padY) - ((v - min) / range) * (h - 2 * padY),
+    y: padY + (h - 2 * padY) - ((v - visualMin) / visualRange) * (h - 2 * padY),
   }));
 
   const linePoints = pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
