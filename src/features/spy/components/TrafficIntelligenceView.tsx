@@ -28,7 +28,7 @@ export function TrafficIntelligenceView() {
           onClearStatusFilter={() => ti.setStatusFilter(new Set())}
           onAddAllToChart={ti.addAllToChart}
           trafficLoading={ti.trafficLoading}
-          trafficCount={ti.sortedRows?.length || 0}
+          trafficCount={ti.totalCount}
           selectedCount={ti.selectedIds.size}
           onBulkStatus={ti.handleBulkStatus}
           onAddSelectedToChart={ti.addSelectedToChart}
@@ -66,6 +66,7 @@ export function TrafficIntelligenceView() {
           isInfinite={ti.isInfinite}
           rangeFrom={ti.rangeFrom}
           rangeTo={ti.rangeTo}
+          totalCount={ti.totalCount}
         />
       </div>
     </TooltipProvider>

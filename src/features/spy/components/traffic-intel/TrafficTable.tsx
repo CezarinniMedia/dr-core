@@ -38,6 +38,7 @@ interface TrafficTableProps {
   isInfinite: boolean;
   rangeFrom: string | null;
   rangeTo: string | null;
+  totalCount?: number;
 }
 
 // --- Sparkline SVG (Feature Sagrada #2) - MEMOIZED ---
@@ -301,7 +302,7 @@ export function TrafficTable({
   selectedIds, onToggleSelect, allChecked, onSelectAll,
   chartIds, onToggleChart, sortedMonthCols, onInlineStatusChange,
   pageSize, onPageSizeChange, currentPage, onPageChange, totalPages, isInfinite,
-  rangeFrom, rangeTo,
+  rangeFrom, rangeTo, totalCount,
 }: TrafficTableProps) {
   const navigate = useNavigate();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -319,10 +320,10 @@ export function TrafficTable({
   const handleNavigate = useCallback((id: string) => navigate(`/spy/${id}`), [navigate]);
 
   // Pre-compute counts to avoid recalculating in PaginationControls
-  const rowCount = sortedRows.length;
+  const rowCount = totalCount ?? sortedRows.length;
   const hasTrafficCount = useMemo(
-    () => sortedRows.filter(r => r.hasTrafficData).length,
-    [sortedRows]
+    () => paginatedRows.filter(r => r.hasTrafficData).length,
+    [paginatedRows]
   );
 
   const renderRows = () => {
