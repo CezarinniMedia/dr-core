@@ -2115,7 +2115,7 @@ export type Database = {
     }
     Functions: {
       get_latest_traffic_per_offer: {
-        Args: { p_period_type?: string; p_workspace_id: string }
+        Args: { p_source: string; p_workspace_id: string }
         Returns: {
           period_date: string
           source: string
