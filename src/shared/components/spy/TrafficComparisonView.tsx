@@ -1,13 +1,13 @@
 import React, { useState, useMemo } from "react";
-import { useSpiedOffers } from "@/hooks/useSpiedOffers";
+import { useSpiedOffers } from "@/features/spy/hooks/useSpiedOffers";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { TrafficChart } from "@/components/spy/TrafficChart";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TrafficChart } from "@/shared/components/spy/TrafficChart";
+import { Button } from "@/shared/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
 import { X, TrendingUp, TrendingDown, Minus, Flame, Rocket } from "lucide-react";
 
 const STATUS_BADGE: Record<string, { label: React.ReactNode; className: string }> = {

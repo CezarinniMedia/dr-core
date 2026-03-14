@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { useAuth } from "@/shared/hooks/useAuth";
+import { SidebarProvider } from "@/shared/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { AppHeader } from "./AppHeader";
 import { Loader2 } from "lucide-react";

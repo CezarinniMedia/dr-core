@@ -1,11 +1,11 @@
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
 import { Edit, FlaskConical, Pause, Skull, Trash2, Zap } from "lucide-react";
 import { ReactNode } from "react";
 import { formatCurrency } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-import type { Oferta } from "@/hooks/useOfertas";
+import type { Oferta } from "@/features/offers/hooks/useOfertas";
 
 const statusConfig: Record<string, { label: string; icon: ReactNode; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   RESEARCH: { label: "Research", icon: <FlaskConical className="h-3 w-3" />, variant: "secondary" },

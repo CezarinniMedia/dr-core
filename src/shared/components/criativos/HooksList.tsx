@@ -1,9 +1,9 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { useHooks, useUpdateHookStatus, useDeleteHook } from "@/hooks/useCriativos";
+import { Badge } from "@/shared/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
+import { Card, CardContent } from "@/shared/components/ui/card";
+import { useHooks, useUpdateHookStatus, useDeleteHook } from "@/features/creatives/hooks/useCriativos";
 import { Check, Copy, Trash2, X } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/shared/hooks/use-toast";
 
 interface HooksListProps {
   ofertaId: string;

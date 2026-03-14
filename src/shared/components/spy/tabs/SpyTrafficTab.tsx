@@ -1,23 +1,23 @@
 import { useState } from "react";
-import { useOfferTrafficData, useBulkInsertTrafficData, useUpdateTrafficData, useDeleteTrafficData } from "@/hooks/useSpiedOffers";
-import { TrafficChart } from "@/components/spy/TrafficChart";
-import { MonthRangePicker } from "@/components/spy/MonthRangePicker";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useOfferTrafficData, useBulkInsertTrafficData, useUpdateTrafficData, useDeleteTrafficData } from "@/features/spy/hooks/useSpiedOffers";
+import { TrafficChart } from "@/shared/components/spy/TrafficChart";
+import { MonthRangePicker } from "@/shared/components/spy/MonthRangePicker";
+import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
+import { Label } from "@/shared/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/shared/components/ui/dialog";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
+} from "@/shared/components/ui/table";
 import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+} from "@/shared/components/ui/collapsible";
 import { BarChart3, Plus, Edit, Trash2, ChevronDown, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/shared/hooks/use-toast";
 
 interface SpyTrafficTabProps {
   offerId: string;

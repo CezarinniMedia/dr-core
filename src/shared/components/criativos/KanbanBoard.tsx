@@ -1,6 +1,6 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { useUpdateCriativoStatus } from "@/hooks/useCriativos";
+import { Card, CardContent } from "@/shared/components/ui/card";
+import { Badge } from "@/shared/components/ui/badge";
+import { useUpdateCriativoStatus } from "@/features/creatives/hooks/useCriativos";
 import { useNavigate } from "react-router-dom";
 import { FileText, Film, Skull, Zap } from "lucide-react";
 import { ReactNode, useState } from "react";

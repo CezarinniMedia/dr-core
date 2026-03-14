@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { useUpdateSpiedOffer } from "@/hooks/useSpiedOffers";
+import { useUpdateSpiedOffer } from "@/features/spy/hooks/useSpiedOffers";
 import ReactMarkdown from "react-markdown";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Textarea } from "@/shared/components/ui/textarea";
+import { Card, CardContent } from "@/shared/components/ui/card";
 import { Edit, Eye, Save, Loader2 } from "lucide-react";
 
 interface SpyNotesTabProps {

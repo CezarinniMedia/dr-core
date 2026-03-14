@@ -9,7 +9,7 @@ import {
   Zap,
   Settings,
 } from "lucide-react";
-import { NavLink } from "@/components/NavLink";
+import { NavLink } from "@/shared/components/NavLink";
 import {
   Sidebar,
   SidebarContent,
@@ -20,7 +20,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarFooter,
-} from "@/components/ui/sidebar";
+} from "@/shared/components/ui/sidebar";
 
 const mainNav = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },

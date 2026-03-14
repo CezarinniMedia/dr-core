@@ -1,11 +1,11 @@
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { Upload, X, Loader2, CheckCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/lib/utils";
 import { storage, type StorageBucket } from "@/lib/storage";
 import { logger } from "@/lib/logger";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/shared/hooks/use-toast";
 
 interface FileUploadProps {
   bucket: StorageBucket;

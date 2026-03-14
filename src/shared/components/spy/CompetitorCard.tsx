@@ -1,6 +1,6 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/shared/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { ExternalLink, Eye, Flame, Snowflake, Trash2, TrendingUp, Zap } from "lucide-react";
 import { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";

@@ -1,32 +1,32 @@
 import { useState, useEffect } from "react";
-import { useCreateSpiedOffer, useUpdateSpiedOffer } from "@/hooks/useSpiedOffers";
-import { useOfertas } from "@/hooks/useOfertas";
+import { useCreateSpiedOffer, useUpdateSpiedOffer } from "@/features/spy/hooks/useSpiedOffers";
+import { useOfertas } from "@/features/offers/hooks/useOfertas";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Slider } from "@/components/ui/slider";
+} from "@/shared/components/ui/dialog";
+import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
+import { Label } from "@/shared/components/ui/label";
+import { Textarea } from "@/shared/components/ui/textarea";
+import { Slider } from "@/shared/components/ui/slider";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/shared/components/ui/select";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+} from "@/shared/components/ui/collapsible";
 import { ChevronDown, Loader2, Pencil, PlusCircle, LayoutList, Search, BarChart3, Network, FileText, Link, Banknote } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@/shared/components/ui/scroll-area";
 
 interface FullOfferFormModalProps {
   open: boolean;

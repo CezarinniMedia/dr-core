@@ -6,19 +6,19 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+} from "@/shared/components/ui/dialog";
+import { Button } from "@/shared/components/ui/button";
+import { Label } from "@/shared/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { Textarea } from "@/components/ui/textarea";
-import { useGenerateHooks } from "@/hooks/useCriativos";
+} from "@/shared/components/ui/select";
+import { Slider } from "@/shared/components/ui/slider";
+import { Textarea } from "@/shared/components/ui/textarea";
+import { useGenerateHooks } from "@/features/creatives/hooks/useCriativos";
 import { Crown, Gem, HelpCircle, Loader2, Sparkles, Target, Users } from "lucide-react";
 
 interface HookGeneratorModalProps {

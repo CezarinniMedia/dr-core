@@ -1,19 +1,19 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Badge } from "@/shared/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
 import { ExternalLink, Copy, Eye, X, ZoomIn, ZoomOut, MoreHorizontal, Pencil } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/shared/components/ui/dropdown-menu";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useUpdateSpiedOffer } from "@/hooks/useSpiedOffers";
-import { useToast } from "@/hooks/use-toast";
+import { useUpdateSpiedOffer } from "@/features/spy/hooks/useSpiedOffers";
+import { useToast } from "@/shared/hooks/use-toast";
 
 interface SpyOverviewTabProps {
   offer: any;

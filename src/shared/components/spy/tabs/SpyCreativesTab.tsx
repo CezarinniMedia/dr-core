@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { AdCreativeGallery } from "@/components/spy/AdCreativeGallery";
-import { AdCreativeFormDialog } from "@/components/spy/AdCreativeFormDialog";
-import { Button } from "@/components/ui/button";
+import { AdCreativeGallery } from "@/shared/components/spy/AdCreativeGallery";
+import { AdCreativeFormDialog } from "@/shared/components/spy/AdCreativeFormDialog";
+import { Button } from "@/shared/components/ui/button";
 import { Plus } from "lucide-react";
 
 interface SpyCreativesTabProps {

@@ -1,19 +1,19 @@
 import { useState } from "react";
-import { useOfferDomains, useCreateOfferDomain, useDeleteOfferDomain, useUpdateOfferDomain } from "@/hooks/useSpiedOffers";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
+import { useOfferDomains, useCreateOfferDomain, useDeleteOfferDomain, useUpdateOfferDomain } from "@/features/spy/hooks/useSpiedOffers";
+import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
+import { Label } from "@/shared/components/ui/label";
+import { Badge } from "@/shared/components/ui/badge";
+import { Checkbox } from "@/shared/components/ui/checkbox";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/shared/components/ui/dialog";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+} from "@/shared/components/ui/select";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
+} from "@/shared/components/ui/table";
 import { Plus, Trash2, Star, ExternalLink, Loader2, Edit } from "lucide-react";
 import { format } from "date-fns";
 

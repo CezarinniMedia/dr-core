@@ -6,19 +6,19 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+} from "@/shared/components/ui/dialog";
+import { Button } from "@/shared/components/ui/button";
+import { Textarea } from "@/shared/components/ui/textarea";
+import { Label } from "@/shared/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { useExtractAvatar } from "@/hooks/useAvatares";
-import { useOfertas } from "@/hooks/useOfertas";
+} from "@/shared/components/ui/select";
+import { useExtractAvatar } from "@/features/avatar/hooks/useAvatares";
+import { useOfertas } from "@/features/offers/hooks/useOfertas";
 import { Loader2, Sparkles } from "lucide-react";
 
 interface AvatarExtractionModalProps {

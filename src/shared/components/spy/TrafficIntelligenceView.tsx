@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSpiedOffers } from "@/hooks/useSpiedOffers";
+import { useSpiedOffers } from "@/features/spy/hooks/useSpiedOffers";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -61,22 +61,22 @@ async function fetchAllTrafficRows(periodType: string) {
 
   return all;
 }
-import { TrafficChart } from "@/components/spy/TrafficChart";
-import { MonthRangePicker } from "@/components/spy/MonthRangePicker";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent } from "@/components/ui/card";
+import { TrafficChart } from "@/shared/components/spy/TrafficChart";
+import { MonthRangePicker } from "@/shared/components/spy/MonthRangePicker";
+import { Button } from "@/shared/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
+import { Checkbox } from "@/shared/components/ui/checkbox";
+import { Card, CardContent } from "@/shared/components/ui/card";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
+} from "@/shared/components/ui/table";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+} from "@/shared/components/ui/select";
 import {
   Popover, PopoverContent, PopoverTrigger,
-} from "@/components/ui/popover";
-import { Input } from "@/components/ui/input";
+} from "@/shared/components/ui/popover";
+import { Input } from "@/shared/components/ui/input";
 import {
   TrendingUp, TrendingDown, Minus, Search, Eye, ArrowUpDown, BarChart3, X, Loader2,
   Archive, ChevronLeft, ChevronRight, Columns,
@@ -86,14 +86,14 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/shared/components/ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { useToast } from "@/hooks/use-toast";
+} from "@/shared/components/ui/tooltip";
+import { useToast } from "@/shared/hooks/use-toast";
 
 const CHART_LINE_COLORS = [
   "hsl(217, 91%, 60%)", "hsl(0, 84%, 60%)", "hsl(142, 76%, 36%)",
