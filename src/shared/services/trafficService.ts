@@ -148,6 +148,12 @@ export function compareTraffic(
     const peakIdx = vals.indexOf(peak);
     const peakDate = filtered[peakIdx]?.[0] || "";
 
+    // Build monthlyData from filtered entries only (consistent with sparkline/lastMonth/variation)
+    const filteredMonthMap = new Map<string, number>();
+    for (const [date, visits] of filtered) {
+      filteredMonthMap.set(date, visits);
+    }
+
     return {
       id: o.id,
       nome: o.nome,
@@ -162,7 +168,7 @@ export function compareTraffic(
       peakDate,
       sparkline: vals,
       hasTrafficData,
-      monthlyData: monthMap,
+      monthlyData: filteredMonthMap,
     };
   });
 }

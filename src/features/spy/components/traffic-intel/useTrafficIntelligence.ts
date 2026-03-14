@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/shared/hooks/use-toast";
+import { useWorkspaceId } from "@/shared/hooks/useWorkspaceId";
 import { supabase } from "@/integrations/supabase/client";
 import {
   updateOfferStatus, bulkUpdateStatus,
@@ -19,19 +20,6 @@ const SORT_FIELD_MAP: Record<SortField, string> = {
   status: "status",
   discovered: "discovered",
 };
-
-/** Fetch the current user's workspace_id (cached by React Query) */
-async function fetchWorkspaceId(): Promise<string> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
-  const { data, error } = await supabase
-    .from("workspace_members")
-    .select("workspace_id")
-    .eq("user_id", user.id)
-    .single();
-  if (error || !data?.workspace_id) throw new Error("Workspace not found");
-  return data.workspace_id;
-}
 
 /** Map a single RPC row to the OfferTrafficRow shape expected by TrafficTable */
 function mapRpcRow(r: any): OfferTrafficRow {
@@ -59,12 +47,8 @@ export function useTrafficIntelligence() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Workspace ID — fetched once, cached
-  const { data: workspaceId } = useQuery({
-    queryKey: ["workspace-id"],
-    queryFn: fetchWorkspaceId,
-    staleTime: 30 * 60 * 1000,
-  });
+  // Workspace ID — shared hook, cached 30min across all consumers
+  const { data: workspaceId } = useWorkspaceId();
 
   // Traffic data source
   const [trafficDataSource, setTrafficDataSource] = useState<'similarweb' | 'semrush'>(() => {
