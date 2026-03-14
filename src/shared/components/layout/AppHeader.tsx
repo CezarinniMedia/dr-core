@@ -26,7 +26,7 @@ export function AppHeader() {
   };
 
   return (
-    <header className="h-14 bg-card border-b flex items-center justify-between px-4">
+    <header className="h-16 bg-card border-b flex items-center justify-between px-4">
       <div className="flex items-center gap-3">
         <SidebarTrigger />
       </div>

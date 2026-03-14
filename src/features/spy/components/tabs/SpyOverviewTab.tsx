@@ -476,14 +476,19 @@ function ScaleSignalsCard({ offer }: { offer: any }) {
       </div>
       <div className="px-4 pb-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
         {SCALE_SIGNAL_CONFIG.map(({ key, label, icon: Icon }) => (
-          <label key={key} className="flex items-center gap-2 cursor-pointer">
+          <div
+            key={key}
+            className="flex items-center gap-2 cursor-pointer select-none"
+            onClick={() => handleToggle(key, !signals[key])}
+          >
             <Switch
               checked={!!signals[key]}
               onCheckedChange={(checked) => handleToggle(key, checked)}
+              onClick={(e) => e.stopPropagation()}
             />
             <Icon className="h-3.5 w-3.5 text-[color:var(--text-muted)]" />
             <span className="text-xs text-[color:var(--text-body)]">{label}</span>
-          </label>
+          </div>
         ))}
       </div>
     </div>

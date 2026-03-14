@@ -35,11 +35,12 @@ import { Edit, Trash2, ExternalLink, LayoutList, Globe, BookOpen, Palette, Map, 
 import { countScaleSignals } from "@/features/spy/components/spy-radar/constants";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { PageBreadcrumb } from "@/shared/components/ui/PageBreadcrumb";
+import { formatStatus } from "@/shared/lib/utils";
 
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   RADAR: { label: "Radar", className: "bg-[rgba(107,114,128,0.1)] text-[color:var(--text-muted)] border border-[rgba(107,114,128,0.2)]" },
   ANALYZING: { label: "Analyzing", className: "bg-[rgba(59,130,246,0.1)] text-[color:var(--accent-blue)] border border-[rgba(59,130,246,0.2)]" },
-  HOT: { label: "HOT", className: "bg-[rgba(239,68,68,0.1)] text-[color:var(--semantic-hot)] border border-[rgba(239,68,68,0.2)] animate-glow-pulse" },
+  HOT: { label: "Hot", className: "bg-[rgba(239,68,68,0.1)] text-[color:var(--semantic-hot)] border border-[rgba(239,68,68,0.2)] animate-glow-pulse" },
   SCALING: { label: "Scaling", className: "bg-[rgba(34,197,94,0.1)] text-[color:var(--accent-green)] border border-[rgba(34,197,94,0.2)]" },
   DYING: { label: "Dying", className: "bg-[rgba(234,179,8,0.1)] text-[color:var(--semantic-warning)] border border-[rgba(234,179,8,0.2)]" },
   DEAD: { label: "Dead", className: "bg-[rgba(107,114,128,0.1)] text-[color:var(--text-muted)] border border-[rgba(107,114,128,0.2)] line-through" },
@@ -150,7 +151,7 @@ export default function SpyOfferDetail() {
             </SelectTrigger>
             <SelectContent>
               {["RADAR", "ANALYZING", "HOT", "SCALING", "DYING", "DEAD", "CLONED", "VAULT", "NEVER_SCALED"].map((s) => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
+                <SelectItem key={s} value={s}>{formatStatus(s)}</SelectItem>
               ))}
             </SelectContent>
           </Select>

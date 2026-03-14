@@ -23,7 +23,7 @@ CREATE MATERIALIZED VIEW mv_offer_traffic_summary AS
 SELECT
   spied_offer_id,
   COUNT(DISTINCT domain)                                        AS domain_count,
-  SUM(visits)                                                   AS total_visits,
+  SUM(visits::BIGINT)                                           AS total_visits,
   MAX(period_date)                                              AS latest_period,
   MIN(period_date)                                              AS earliest_period,
   MAX(CASE WHEN period_type = 'monthly_sw' THEN visits END)    AS latest_sw_visits,

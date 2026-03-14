@@ -1,7 +1,7 @@
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
-import { Edit, FlaskConical, Globe, Pause, Skull, Trash2, Zap } from "lucide-react";
+import { Edit, FlaskConical, Globe, Hammer, Pause, Skull, Trash2, Zap } from "lucide-react";
 import { ReactNode } from "react";
 import { formatCurrency } from "@/shared/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -9,6 +9,7 @@ import type { Oferta } from "@/features/offers/hooks/useOfertas";
 
 const statusConfig: Record<string, { label: string; icon: ReactNode; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   RESEARCH: { label: "Research", icon: <FlaskConical className="h-3 w-3" />, variant: "secondary" },
+  PRODUCING: { label: "Produzindo", icon: <Hammer className="h-3 w-3" />, variant: "outline" },
   TEST: { label: "Testando", icon: <FlaskConical className="h-3 w-3" />, variant: "outline" },
   ATIVA: { label: "Ativa", icon: <Zap className="h-3 w-3" />, variant: "default" },
   PAUSE: { label: "Pausada", icon: <Pause className="h-3 w-3" />, variant: "secondary" },
@@ -25,17 +26,14 @@ export function OfertaCard({ oferta, onDelete }: OfertaCardProps) {
   const status = statusConfig[oferta.status] || statusConfig.RESEARCH;
 
   return (
-    <Card className="group hover:border-primary/30 transition-colors">
+    <Card
+      className="group hover:border-primary/30 transition-colors cursor-pointer"
+      onClick={() => navigate(`/ofertas/${oferta.id}`)}
+    >
       <CardHeader className="flex flex-row items-start justify-between gap-2 pb-3 space-y-0">
         <div className="space-y-1 min-w-0">
           <h3 className="font-semibold truncate">
-            <button
-              type="button"
-              className="cursor-pointer hover:text-primary transition-colors text-left"
-              onClick={() => navigate(`/ofertas/${oferta.id}`)}
-            >
-              {oferta.nome}
-            </button>
+            {oferta.nome}
           </h3>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             {oferta.vertical && <span>{oferta.vertical}</span>}
@@ -69,7 +67,7 @@ export function OfertaCard({ oferta, onDelete }: OfertaCardProps) {
             <span className="font-medium">{oferta.roas_target ? `${oferta.roas_target}x` : "—"}</span>
           </div>
         </div>
-        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
           <Button variant="outline" size="sm" onClick={() => navigate(`/ofertas/${oferta.id}`)}>
             <Edit className="h-3.5 w-3.5 mr-1" /> Editar
           </Button>

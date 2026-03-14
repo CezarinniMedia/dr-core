@@ -1,6 +1,7 @@
 import { cn } from "@/shared/lib/utils";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { SparklineBadge } from "./SparklineBadge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { useState, type ReactNode } from "react";
 
 interface DataMetricCardProps {
@@ -63,13 +64,18 @@ export function DataMetricCard({
       </div>
 
       <div className="flex items-end justify-between gap-3">
-        <div>
-          <div
-            className="text-[length:var(--text-kpi)] [font-weight:var(--font-bold)] text-[color:var(--text-primary)] leading-none"
-            style={{ fontVariantNumeric: "tabular-nums" }}
-          >
-            {value}
-          </div>
+        <div className="min-w-0 flex-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div
+                className="text-[length:var(--text-kpi)] [font-weight:var(--font-bold)] text-[color:var(--text-primary)] leading-none truncate max-w-full"
+                style={{ fontVariantNumeric: "tabular-nums", fontSize: "clamp(0.875rem, var(--text-kpi), 1.5rem)" }}
+              >
+                {value}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">{label}: {value}</TooltipContent>
+          </Tooltip>
 
           {change !== undefined && (
             <div className="flex items-center gap-1 mt-2">

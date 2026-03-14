@@ -31,6 +31,7 @@ import { VERTICAL_OPTIONS } from "@/features/spy/components/spy-radar/constants"
 
 const OFERTA_STATUSES = [
   { value: "RESEARCH", label: "Research" },
+  { value: "PRODUCING", label: "Produzindo" },
   { value: "TEST", label: "Test" },
   { value: "ATIVA", label: "Ativa" },
   { value: "PAUSE", label: "Pause" },

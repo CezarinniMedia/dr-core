@@ -66,3 +66,14 @@ export function truncate(text: string, length: number): string {
   if (text.length <= length) return text;
   return text.substring(0, length) + "...";
 }
+
+/**
+ * Format status from ALL_CAPS/SNAKE_CASE to Title Case.
+ * Examples: "RADAR" → "Radar", "NEVER_SCALED" → "Never Scaled", "HOT" → "Hot"
+ */
+export function formatStatus(status: string): string {
+  return status
+    .split("_")
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
