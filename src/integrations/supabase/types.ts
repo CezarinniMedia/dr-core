@@ -2114,6 +2114,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_latest_traffic_per_offer: {
+        Args: { p_period_type?: string; p_workspace_id: string }
+        Returns: {
+          period_date: string
+          source: string
+          spied_offer_id: string
+          visits: number
+        }[]
+      }
       get_spied_offers_paginated: {
         Args: {
           p_discovery_source?: string
