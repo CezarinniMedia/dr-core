@@ -1,6 +1,6 @@
-import { useAuth } from "@/shared/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,11 +8,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
-import { SidebarTrigger } from "@/shared/components/ui/sidebar";
+} from "@/components/ui/dropdown-menu";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { LogOut, User, Settings } from "lucide-react";
-import { SpikeNotificationBell } from "./SpikeNotificationBell";
-import { DemoModeToggle } from "@/shared/components/DemoMode";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function AppHeader() {
   const { user, signOut } = useAuth();
@@ -26,14 +25,14 @@ export function AppHeader() {
   };
 
   return (
-    <header className="h-16 bg-card border-b flex items-center justify-between px-4">
+    <header className="h-14 bg-card border-b flex items-center justify-between px-4">
       <div className="flex items-center gap-3">
         <SidebarTrigger />
       </div>
 
       <div className="flex items-center gap-2">
-      <DemoModeToggle />
-      <SpikeNotificationBell />
+        <ThemeToggle />
+
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className="flex items-center gap-2.5 hover:opacity-80 transition-opacity outline-none">

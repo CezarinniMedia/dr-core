@@ -1,6 +1,6 @@
 import { Component, type ReactNode } from "react";
-import { logger } from "@/shared/lib/logger";
-import { Button } from "@/shared/components/ui/button";
+import { logger } from "@/lib/logger";
+import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
 
 interface Props {

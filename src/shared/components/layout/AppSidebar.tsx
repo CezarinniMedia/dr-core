@@ -1,17 +1,15 @@
 import {
   LayoutDashboard,
-  Newspaper,
   Package,
   Users,
   Search,
   Sparkles,
-  Crosshair,
   FileText,
   BarChart3,
   Zap,
   Settings,
 } from "lucide-react";
-import { NavLink } from "@/shared/components/NavLink";
+import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
   SidebarContent,
@@ -22,16 +20,14 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarFooter,
-} from "@/shared/components/ui/sidebar";
+} from "@/components/ui/sidebar";
 
 const mainNav = [
-  { title: "Briefing", href: "/briefing", icon: Newspaper },
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { title: "Ofertas", href: "/ofertas", icon: Package },
   { title: "Avatar & Research", href: "/avatar", icon: Users },
   { title: "Radar de Ofertas", href: "/spy", icon: Search },
   { title: "Criativos", href: "/criativos", icon: Sparkles },
-  { title: "Arsenal", href: "/arsenal", icon: Crosshair },
   { title: "Páginas", href: "/paginas", icon: FileText },
   { title: "Analytics", href: "/analytics", icon: BarChart3 },
   { title: "Prompts & Agents", href: "/prompts", icon: Zap },
