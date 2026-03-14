@@ -3,7 +3,7 @@ import {
   classifyCsv,
   processCsv,
   type ExtractedTrafficRecord,
-} from "@/lib/csvClassifier";
+} from "@/shared/lib/csvClassifier";
 
 // ─── Helper ───
 function buildCsv(headers: string[], rows: string[][], delimiter = ","): string {

@@ -1,5 +1,5 @@
 # Story BD-3.4: Add Breadcrumb Navigation
-**Epic:** EPIC-BD | **Sprint:** 3 | **Status:** InProgress | **Estimate:** 3h | **Priority:** BAIXO
+**Epic:** EPIC-BD | **Sprint:** 3 | **Status:** Done | **Estimate:** 3h | **Priority:** BAIXO
 
 ---
 

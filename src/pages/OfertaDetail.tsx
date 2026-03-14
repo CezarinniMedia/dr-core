@@ -1,22 +1,31 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useOferta, useUpdateOferta, useDeleteOferta } from "@/hooks/useOfertas";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { useOferta, useUpdateOferta, useDeleteOferta } from "@/features/offers/hooks/useOfertas";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
+import { Label } from "@/shared/components/ui/label";
+import { Textarea } from "@/shared/components/ui/textarea";
+import { Switch } from "@/shared/components/ui/switch";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/shared/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/shared/components/ui/alert-dialog";
 import { Save, Trash2, Loader2, FlaskConical, Zap, Pause, Skull, Package } from "lucide-react";
 import { useState, useEffect } from "react";
-import { formatCurrency } from "@/lib/utils";
-import { PageBreadcrumb } from "@/components/ui/PageBreadcrumb";
+import { PageBreadcrumb } from "@/shared/components/ui/PageBreadcrumb";
 
 const statusOptions: { value: string; label: React.ReactNode }[] = [
   { value: "RESEARCH", label: <><FlaskConical className="h-4 w-4 inline mr-1" />Research</> },
@@ -28,6 +37,8 @@ const statusOptions: { value: string; label: React.ReactNode }[] = [
 
 const verticais = ["Saúde", "Finanças", "Relacionamento", "Educação", "Negócios", "Outro"];
 const mercados = ["BR", "US", "EU", "LATAM", "Global"];
+const checkoutProviders = ["Hotmart", "Kiwify", "Eduzz", "Monetizze", "ClickBank", "Digistore24", "Outro"];
+const vslPlayers = ["Vturb", "Wistia", "YouTube", "Vimeo", "Custom", "Outro"];
 
 export default function OfertaDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -36,10 +47,12 @@ export default function OfertaDetailPage() {
   const updateMutation = useUpdateOferta();
   const deleteMutation = useDeleteOferta();
 
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [form, setForm] = useState({
     nome: "",
     vertical: "",
     mercado: "",
+    nicho: "",
     status: "RESEARCH",
     ticket_front: "",
     cpa_target: "",
@@ -47,6 +60,14 @@ export default function OfertaDetailPage() {
     roas_target: "",
     promessa_principal: "",
     mecanismo_unico: "",
+    dominio_principal: "",
+    checkout_provider: "",
+    vsl_player: "",
+    plataforma_quiz: "",
+    tem_cloaker: false,
+    tem_quiz: false,
+    data_lancamento: "",
+    notas: "",
   });
 
   useEffect(() => {
@@ -55,6 +76,7 @@ export default function OfertaDetailPage() {
         nome: oferta.nome,
         vertical: oferta.vertical || "",
         mercado: oferta.mercado || "",
+        nicho: oferta.nicho || "",
         status: oferta.status,
         ticket_front: oferta.ticket_front?.toString() || "",
         cpa_target: oferta.cpa_target?.toString() || "",
@@ -62,6 +84,14 @@ export default function OfertaDetailPage() {
         roas_target: oferta.roas_target?.toString() || "",
         promessa_principal: oferta.promessa_principal || "",
         mecanismo_unico: oferta.mecanismo_unico || "",
+        dominio_principal: oferta.dominio_principal || "",
+        checkout_provider: oferta.checkout_provider || "",
+        vsl_player: oferta.vsl_player || "",
+        plataforma_quiz: oferta.plataforma_quiz || "",
+        tem_cloaker: oferta.tem_cloaker || false,
+        tem_quiz: oferta.tem_quiz || false,
+        data_lancamento: oferta.data_lancamento || "",
+        notas: oferta.notas || "",
       });
     }
   }, [oferta]);
@@ -72,9 +102,9 @@ export default function OfertaDetailPage() {
       id,
       data: {
         nome: form.nome,
-        slug: "",
         vertical: form.vertical || null,
         mercado: form.mercado || null,
+        nicho: form.nicho || null,
         status: form.status,
         ticket_front: form.ticket_front ? Number(form.ticket_front) : null,
         cpa_target: form.cpa_target ? Number(form.cpa_target) : null,
@@ -82,7 +112,14 @@ export default function OfertaDetailPage() {
         roas_target: form.roas_target ? Number(form.roas_target) : null,
         promessa_principal: form.promessa_principal || null,
         mecanismo_unico: form.mecanismo_unico || null,
-        data_lancamento: null,
+        dominio_principal: form.dominio_principal || null,
+        checkout_provider: form.checkout_provider || null,
+        vsl_player: form.vsl_player || null,
+        plataforma_quiz: form.plataforma_quiz || null,
+        tem_cloaker: form.tem_cloaker,
+        tem_quiz: form.tem_quiz,
+        data_lancamento: form.data_lancamento || null,
+        notas: form.notas || null,
       },
     });
   };
@@ -92,7 +129,8 @@ export default function OfertaDetailPage() {
     deleteMutation.mutate(id, { onSuccess: () => navigate("/ofertas") });
   };
 
-  const update = (field: string, value: string) => setForm((f) => ({ ...f, [field]: value }));
+  const update = (field: string, value: string | boolean) =>
+    setForm((f) => ({ ...f, [field]: value }));
 
   if (isLoading) {
     return (
@@ -119,7 +157,6 @@ export default function OfertaDetailPage() {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      {/* Breadcrumb */}
       <PageBreadcrumb items={[
         { label: "Ofertas", href: "/ofertas", icon: Package },
         { label: oferta.nome },
@@ -134,7 +171,7 @@ export default function OfertaDetailPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="destructive" size="sm" onClick={handleDelete} disabled={deleteMutation.isPending}>
+          <Button variant="destructive" size="sm" onClick={() => setShowDeleteConfirm(true)} disabled={deleteMutation.isPending}>
             <Trash2 className="h-4 w-4 mr-1" /> Deletar
           </Button>
           <Button onClick={handleSave} disabled={updateMutation.isPending}>
@@ -144,8 +181,9 @@ export default function OfertaDetailPage() {
         </div>
       </div>
 
-      {/* Form */}
+      {/* Form sections */}
       <div className="grid gap-6 md:grid-cols-2">
+        {/* Basic info */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Informações Básicas</CardTitle>
@@ -190,9 +228,18 @@ export default function OfertaDetailPage() {
                 </Select>
               </div>
             </div>
+            <div className="space-y-2">
+              <Label>Nicho</Label>
+              <Input value={form.nicho} onChange={(e) => update("nicho", e.target.value)} placeholder="Ex: Emagrecimento 40+" />
+            </div>
+            <div className="space-y-2">
+              <Label>Data de Lançamento</Label>
+              <Input type="date" value={form.data_lancamento} onChange={(e) => update("data_lancamento", e.target.value)} />
+            </div>
           </CardContent>
         </Card>
 
+        {/* Metrics */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Métricas Target</CardTitle>
@@ -221,7 +268,59 @@ export default function OfertaDetailPage() {
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-2">
+        {/* Tech stack */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Stack Técnica</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Dominio Principal</Label>
+              <Input value={form.dominio_principal} onChange={(e) => update("dominio_principal", e.target.value)} placeholder="exemplo.com" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Checkout</Label>
+                <Select value={form.checkout_provider} onValueChange={(v) => update("checkout_provider", v)}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {checkoutProviders.map((c) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>VSL Player</Label>
+                <Select value={form.vsl_player} onValueChange={(v) => update("vsl_player", v)}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {vslPlayers.map((v) => (
+                      <SelectItem key={v} value={v}>{v}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Plataforma Quiz</Label>
+              <Input value={form.plataforma_quiz} onChange={(e) => update("plataforma_quiz", e.target.value)} placeholder="Ex: Typeform, Nativoo" />
+            </div>
+            <div className="flex items-center gap-6 pt-2">
+              <div className="flex items-center gap-2">
+                <Switch checked={form.tem_cloaker} onCheckedChange={(v) => update("tem_cloaker", v)} />
+                <Label className="cursor-pointer">Usa Cloaker</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={form.tem_quiz} onCheckedChange={(v) => update("tem_quiz", v)} />
+                <Label className="cursor-pointer">Tem Quiz</Label>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Strategy */}
+        <Card>
           <CardHeader>
             <CardTitle className="text-base">Estratégia</CardTitle>
           </CardHeader>
@@ -236,7 +335,43 @@ export default function OfertaDetailPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Notes */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-base">Notas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Textarea
+              value={form.notas}
+              onChange={(e) => update("notas", e.target.value)}
+              rows={5}
+              placeholder="Notas livres sobre a oferta... (suporta Markdown)"
+              className="font-mono text-sm"
+            />
+          </CardContent>
+        </Card>
       </div>
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Deletar oferta?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Todos os dados da oferta serão removidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Deletar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

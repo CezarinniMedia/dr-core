@@ -1,0 +1,114 @@
+import { cn } from "@/shared/lib/utils";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { SparklineBadge } from "./SparklineBadge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
+import { useState, type ReactNode } from "react";
+
+interface DataMetricCardProps {
+  value: string | number;
+  label: string;
+  change?: number;
+  trend?: "up" | "down" | "stable";
+  sparklineData?: number[];
+  icon?: ReactNode;
+  glowOnHover?: boolean;
+  className?: string;
+}
+
+export function DataMetricCard({
+  value,
+  label,
+  change,
+  trend,
+  sparklineData,
+  icon,
+  glowOnHover = false,
+  className,
+}: DataMetricCardProps) {
+  const [hovered, setHovered] = useState(false);
+
+  const isPositive = change !== undefined && change > 0;
+  const isNegative = change !== undefined && change < 0;
+  const isNeutral = change === undefined || change === 0;
+
+  const hoverGlowStyle: React.CSSProperties =
+    glowOnHover && hovered
+      ? {
+          borderColor: "var(--accent-primary)",
+          boxShadow: "0 1px 8px var(--accent-primary-10)",
+        }
+      : {};
+
+  return (
+    <div
+      className={cn(
+        "rounded-[var(--radius-lg)] border border-[var(--border-default)]",
+        "bg-[var(--bg-surface)] p-[var(--space-card-padding)]",
+        "transition-all duration-200",
+        "hover:border-[var(--border-interactive)]",
+        className
+      )}
+      style={hoverGlowStyle}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[length:var(--text-label)] text-[color:var(--text-secondary)] [font-weight:var(--font-regular)]">
+          {label}
+        </span>
+        {icon && (
+          <span className="text-[color:var(--text-muted)]" aria-hidden="true">
+            {icon}
+          </span>
+        )}
+      </div>
+
+      <div className="flex items-end justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div
+                className="text-[length:var(--text-kpi)] [font-weight:var(--font-bold)] text-[color:var(--text-primary)] leading-none truncate max-w-full"
+                style={{ fontVariantNumeric: "tabular-nums", fontSize: "clamp(0.875rem, var(--text-kpi), 1.5rem)" }}
+              >
+                {value}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">{label}: {value}</TooltipContent>
+          </Tooltip>
+
+          {change !== undefined && (
+            <div className="flex items-center gap-1 mt-2">
+              {isPositive && (
+                <TrendingUp className="w-3.5 h-3.5 text-[color:var(--accent-green)]" />
+              )}
+              {isNegative && (
+                <TrendingDown className="w-3.5 h-3.5 text-[color:var(--semantic-error)]" />
+              )}
+              {isNeutral && (
+                <Minus className="w-3.5 h-3.5 text-[color:var(--text-muted)]" />
+              )}
+              <span
+                className={cn(
+                  "text-[length:var(--text-label)] [font-weight:var(--font-medium)]",
+                  isPositive && "text-[color:var(--accent-green)]",
+                  isNegative && "text-[color:var(--semantic-error)]",
+                  isNeutral && "text-[color:var(--text-muted)]"
+                )}
+              >
+                {isPositive ? "+" : ""}
+                {change}%
+              </span>
+            </div>
+          )}
+        </div>
+
+        {sparklineData && sparklineData.length > 0 && (
+          <div className="flex-shrink-0">
+            <SparklineBadge data={sparklineData} trend={trend} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

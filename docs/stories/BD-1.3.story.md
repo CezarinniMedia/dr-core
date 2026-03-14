@@ -1,5 +1,5 @@
 # Story BD-1.3: Fix Sidebar Collapse + Dashboard + Charts
-**Epic:** EPIC-BD | **Sprint:** 1 | **Status:** InReview | **Estimate:** 6h | **Priority:** CRITICO
+**Epic:** EPIC-BD | **Sprint:** 1 | **Status:** Done | **Estimate:** 6h | **Priority:** CRITICO
 
 ---
 

@@ -1,5 +1,5 @@
 # Story BD-1.1: Replace All iOS Emojis with Lucide Icons
-**Epic:** EPIC-BD | **Sprint:** 1 | **Status:** InReview | **Estimate:** 2h | **Priority:** CRITICO
+**Epic:** EPIC-BD | **Sprint:** 1 | **Status:** Done | **Estimate:** 2h | **Priority:** CRITICO
 
 ---
 

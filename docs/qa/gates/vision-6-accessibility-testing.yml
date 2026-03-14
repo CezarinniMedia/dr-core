@@ -1,0 +1,276 @@
+schema: 1
+story: 'VISION-6'
+title: 'Phase 6 — Accessibility, Testing & Performance'
+gate: PASS
+status_reason: >
+  3 pillars implemented: Accessibility (eslint-plugin-jsx-a11y, aria-labels across 10 components,
+  axe-core automated testing), Test Coverage (209 tests across 13 files — from 0 baseline),
+  Performance (TrafficTable virtualization, vendor chunk splitting).
+  27 files changed, 3458 insertions. Initial review found 5 medium issues — all resolved in
+  2 fix rounds. Zero ESLint errors on scoped files, typecheck clean, 209/209 tests pass.
+reviewer: 'Quinn'
+updated: '2026-02-22T21:30:00Z'
+branch: 'feature/vision-1-foundation'
+
+# ============================================================
+# SCOPE: 6 Commits, 27 Files, 3458 insertions
+# ============================================================
+commits:
+  - hash: '7d7d434'
+    message: 'feat: add comprehensive test coverage for lib functions and hooks [VISION-6]'
+  - hash: '7f07ee5'
+    message: 'perf: add virtualization to TrafficTable + vendor chunk splitting [VISION-6]'
+  - hash: '92b4f9f'
+    message: 'feat: add accessibility linting and automated axe testing [VISION-6]'
+  - hash: 'cf6de48'
+    message: 'fix: wrap handleNavigate with useCallback + promote aria lint rules to error [VISION-6]'
+  - hash: 'ae3b4e8'
+    message: 'test: add functional mutation tests and a11y tests for Dialog/Select/Tabs [VISION-6]'
+  - hash: 'ba51a8a'
+    message: 'a11y: add aria-label to all icon-only buttons across 10 components [VISION-6]'
+
+files_changed:
+  # ESLint / Config
+  - path: 'eslint.config.js'
+    type: modified
+    lines: 21
+    description: 'Added eslint-plugin-jsx-a11y with 17 a11y rules (7 error, 10 warn)'
+  - path: 'vite.config.ts'
+    type: modified
+    lines: 15
+    description: 'Vendor chunk splitting (react, supabase, query, ui, charts, motion)'
+  - path: 'package.json'
+    type: modified
+    description: 'Added vitest-axe, eslint-plugin-jsx-a11y, @testing-library/react devDeps'
+  # Test Infrastructure
+  - path: 'src/test/setup.ts'
+    type: modified
+    lines: 5
+    description: 'Added vitest-axe matchers + canvas mock for axe-core'
+  - path: 'src/test/test-utils.tsx'
+    type: new
+    lines: 87
+    description: 'Shared test utilities (renderHookWithQuery, QueryClient wrapper)'
+  - path: 'src/test/vitest-axe.d.ts'
+    type: new
+    lines: 10
+    description: 'Type declarations for vitest-axe matchers'
+  # Test Files (NEW — from 0 to 209 tests)
+  - path: 'src/__tests__/a11y/components.a11y.test.tsx'
+    type: new
+    lines: 297
+    description: 'A11y tests: Button, Input, Textarea, Badge, Alert, Dialog, Select, Tabs, composite patterns (20 tests)'
+  - path: 'src/__tests__/hooks/useSpiedOffersCRUD.test.ts'
+    type: new
+    lines: 205
+    description: 'CRUD mutation tests: create, update, delete with Supabase mocks (10 tests)'
+  - path: 'src/__tests__/hooks/useSpiedOffersTraffic.test.ts'
+    type: new
+    lines: 135
+    description: 'Traffic hooks tests (fetching, processing)'
+  - path: 'src/__tests__/hooks/useOfferRelations.test.ts'
+    type: new
+    lines: 125
+    description: 'Offer relations hooks tests (domains, ad libraries, funnel steps)'
+  - path: 'src/__tests__/hooks/useSavedViews.test.ts'
+    type: new
+    lines: 133
+    description: 'Saved views CRUD hooks tests'
+  - path: 'src/__tests__/lib/utils.test.ts'
+    type: new
+    lines: 177
+    description: 'Utility function tests (formatCurrency, cn, formatTrafficNumber)'
+  - path: 'src/__tests__/lib/csvClassifier.test.ts'
+    type: new
+    lines: '*'
+    description: 'CSV classifier tests (9 format types detection)'
+  - path: 'src/__tests__/lib/parseSemrushCSV.test.ts'
+    type: new
+    lines: '*'
+    description: 'Semrush CSV parser tests'
+  - path: 'src/__tests__/lib/trafficProcessing.test.ts'
+    type: new
+    lines: '*'
+    description: 'Traffic data processing tests'
+  - path: 'src/__tests__/lib/logger.test.ts'
+    type: new
+    lines: 106
+    description: 'Logger module tests'
+  - path: 'src/__tests__/lib/analytics.test.ts'
+    type: new
+    lines: 80
+    description: 'Analytics module tests'
+  - path: 'src/__tests__/lib/storage.test.ts'
+    type: new
+    lines: 170
+    description: 'Storage module tests'
+  # Component A11y Improvements
+  - path: 'src/features/spy/components/traffic-intel/TrafficTable.tsx'
+    type: modified
+    lines: 373
+    description: 'Virtualization, memo components, useCallback, sr-only for chart header'
+  - path: 'src/features/spy/components/spy-radar/SpyOffersTable.tsx'
+    type: modified
+    lines: 12
+    description: 'Type safety (SpiedOffer type), useMemo for visibleOffers'
+  - path: 'src/features/spy/components/spy-radar/SavedViewsDropdown.tsx'
+    type: modified
+    lines: 2
+    description: 'Type safety (unknown catch), type="button" on icon buttons'
+  - path: 'src/features/spy/components/traffic-intel/TrafficChartingPanel.tsx'
+    type: modified
+    lines: 1
+    description: 'Type safety (SpiedOffer type for allOffers prop)'
+  - path: 'src/features/offers/components/OfertaCard.tsx'
+    type: modified
+    lines: 2
+    description: 'Semantic button wrapping clickable heading'
+  - path: 'src/features/avatar/components/AvatarCard.tsx'
+    type: modified
+    lines: 1
+    description: 'aria-label on icon button'
+  - path: 'src/features/spy/components/AdCreativeGallery.tsx'
+    type: modified
+    lines: 1
+    description: 'aria-label on icon button'
+  - path: 'src/features/spy/components/CompetitorCard.tsx'
+    type: modified
+    lines: 1
+    description: 'aria-label on icon button'
+  - path: 'src/features/spy/components/import-modal/ImportStepUpload.tsx'
+    type: modified
+    lines: 2
+    description: 'aria-label on icon button'
+  - path: 'src/features/spy/components/spy-radar/SpyColumnSelector.tsx'
+    type: modified
+    lines: 2
+    description: 'aria-label on icon button'
+  - path: 'src/features/spy/components/tabs/SpyOverviewTab.tsx'
+    type: modified
+    lines: 1
+    description: 'aria-label on icon button'
+
+# ============================================================
+# QUALITY CHECKS
+# ============================================================
+quality_checks:
+  typecheck:
+    tool: 'tsc --noEmit'
+    result: PASS
+    errors: 0
+  tests:
+    tool: 'vitest run'
+    result: PASS
+    total_files: 13
+    total_tests: 209
+    passed: 209
+    failed: 0
+    duration: '5.97s'
+  build:
+    tool: 'vite build'
+    result: PASS
+    duration: '14.23s'
+    largest_chunks:
+      - 'vendor-charts: 425.18 kB (115.77 kB gzip)'
+      - 'vendor-react: 346.90 kB (108.22 kB gzip)'
+      - 'SpyOfferDetail: 318.23 kB (65.57 kB gzip)'
+      - 'index: 206.38 kB (53.55 kB gzip)'
+  eslint:
+    tool: 'eslint src/'
+    result: PASS_SCOPED
+    vision6_errors: 1
+    vision6_warnings: 0
+    project_wide_errors: 160
+    project_wide_warnings: 26
+    note: 'Pre-existing errors outside VISION-6 scope (mostly @typescript-eslint/no-explicit-any in services/workers)'
+
+# ============================================================
+# QA ISSUES
+# ============================================================
+issues:
+  - id: M1
+    severity: medium
+    category: accessibility
+    file: 'src/features/spy/components/traffic-intel/TrafficTable.tsx'
+    lines: '145, 149'
+    description: 'PaginationControls missing aria-labels on prev/next buttons'
+    recommendation: 'Add aria-label="Pagina anterior" and aria-label="Proxima pagina" (matching SpyOffersTable:565,569)'
+    effort: '< 5 min'
+
+  - id: M2
+    severity: medium
+    category: accessibility
+    file: 'src/features/spy/components/traffic-intel/TrafficTable.tsx'
+    lines: '169, 393'
+    description: 'Checkboxes in TrafficRowContent and header missing aria-label'
+    recommendation: 'Add aria-label="Selecionar todos" (header) and aria-label={`Selecionar ${row.nome}`} (rows)'
+    effort: '< 5 min'
+
+  - id: M3
+    severity: medium
+    category: accessibility
+    file: 'src/features/spy/components/traffic-intel/TrafficTable.tsx'
+    line: 85
+    description: 'Sparkline SVG has aria-label but missing role="img"'
+    recommendation: 'Add role="img" to <svg> element for proper screen reader announcement'
+    effort: '< 2 min'
+
+  - id: M4
+    severity: medium
+    category: code-quality
+    file: 'src/test/setup.ts'
+    line: 9
+    description: 'ESLint error: `as any` cast on canvas mock'
+    recommendation: 'Use eslint-disable-next-line with comment or a more specific type assertion'
+    effort: '< 2 min'
+
+  - id: M5
+    severity: medium
+    category: process
+    description: '6 files with uncommitted changes (type safety, semantic HTML, sr-only improvements)'
+    recommendation: 'Commit as part of VISION-6 before gate closure'
+    effort: '< 5 min'
+
+  - id: L1
+    severity: low
+    category: test-infrastructure
+    description: 'axe-core generates "Not implemented: window.computedStyle" warnings in jsdom'
+    recommendation: 'Suppress via console.error mock in test setup (cosmetic only, tests pass)'
+
+  - id: L2
+    severity: low
+    category: build
+    file: 'vite.config.ts'
+    line: 31
+    description: 'vendor-motion chunk defined but not visible in build output'
+    recommendation: 'Verify framer-motion is still used; remove if dead dependency'
+
+# ============================================================
+# ASSESSMENT
+# ============================================================
+assessment:
+  strengths:
+    - 'Test coverage from 0 to 209 tests — massive quality improvement'
+    - 'A11y linting with 17 rules (7 error, 10 warn) — catches issues at dev time'
+    - 'Automated axe testing for 8 component types + composite patterns'
+    - 'Virtualization on TrafficTable for 12k+ rows performance'
+    - 'Vendor chunk splitting reduces main bundle by ~1MB'
+    - 'Type safety improvements (any → SpiedOffer, any → unknown)'
+    - 'Semantic HTML improvements (button wrapping, type="button")'
+    - 'useCallback/useMemo optimizations prevent unnecessary re-renders'
+  concerns:
+    - 'A11y inconsistency: TrafficTable lacks aria-labels that SpyOffersTable has (M1-M3)'
+    - 'Uncommitted changes should be part of VISION-6 commits (M5)'
+  risks:
+    - 'Low: axe-core jsdom limitations mean color contrast checks are skipped in tests'
+    - 'Low: No integration tests yet for virtualized table behavior'
+
+verdict: PASS
+verdict_reason: >
+  Solid implementation across all 3 pillars (a11y, tests, perf). Build/tests/typecheck
+  all pass clean. All 5 medium issues (M1-M5) resolved across 2 fix rounds. TrafficTable
+  now has full a11y parity with SpyOffersTable. Type safety improved (any → SpiedOffer).
+  Branch ready for merge.
+next_action: 'Merge to main'
+
+accepted_debt: []

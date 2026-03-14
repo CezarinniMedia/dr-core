@@ -1,28 +1,38 @@
-import { useState } from "react";
-import { useOfertas } from "@/hooks/useOfertas";
-import { useCriativos } from "@/hooks/useCriativos";
-import { KanbanBoard } from "@/components/criativos/KanbanBoard";
-import { HookGeneratorModal } from "@/components/criativos/HookGeneratorModal";
-import { CriativoFormDialog } from "@/components/criativos/CriativoFormDialog";
-import { HooksList } from "@/components/criativos/HooksList";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState, useCallback } from "react";
+import { useOfertas } from "@/features/offers/hooks/useOfertas";
+import { useCriativos } from "@/features/creatives/hooks/useCriativos";
+import { KanbanBoard, type Criativo } from "@/features/creatives/components/KanbanBoard";
+import { DecisionModal } from "@/features/creatives/components/DecisionModal";
+import { HookGeneratorModal } from "@/features/creatives/components/HookGeneratorModal";
+import { CriativoFormDialog } from "@/features/creatives/components/CriativoFormDialog";
+import { HooksList } from "@/features/creatives/components/HooksList";
+import { Button } from "@/shared/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/shared/components/ui/select";
 import { Plus, Sparkles, LayoutList, Target, Palette } from "lucide-react";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { EmptyState } from "@/shared/components/ui/EmptyState";
 
 export default function CriativosPage() {
   const [selectedOferta, setSelectedOferta] = useState<string>("");
   const [showHookGenerator, setShowHookGenerator] = useState(false);
   const [showCriativoForm, setShowCriativoForm] = useState(false);
+  const [decisionCriativo, setDecisionCriativo] = useState<Criativo | null>(null);
   const { data: ofertas } = useOfertas();
   const { data: criativos } = useCriativos(selectedOferta || undefined);
+
+  const handleRequestDecision = useCallback((criativo: Criativo) => {
+    setDecisionCriativo(criativo);
+  }, []);
+
+  const handleCloseDecision = useCallback(() => {
+    setDecisionCriativo(null);
+  }, []);
 
   return (
     <div className="max-w-6xl space-y-6">
@@ -74,12 +84,15 @@ export default function CriativosPage() {
 
           <TabsContent value="kanban" className="mt-4">
             {criativos && criativos.length > 0 ? (
-              <KanbanBoard criativos={criativos as any} />
+              <KanbanBoard
+                criativos={criativos as Criativo[]}
+                onRequestDecision={handleRequestDecision}
+              />
             ) : (
               <EmptyState
                 icon={Sparkles}
                 title="Nenhum criativo ainda"
-                description="Crie o primeiro criativo ou gere hooks para começar."
+                description="Crie o primeiro criativo ou gere hooks para comecar."
                 actionLabel="Novo Criativo"
                 onAction={() => setShowCriativoForm(true)}
                 secondaryActionLabel="Gerar Hooks"
@@ -114,6 +127,13 @@ export default function CriativosPage() {
           />
         </>
       )}
+
+      {/* Decision Modal */}
+      <DecisionModal
+        open={decisionCriativo !== null}
+        onClose={handleCloseDecision}
+        criativo={decisionCriativo}
+      />
     </div>
   );
 }

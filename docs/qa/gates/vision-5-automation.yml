@@ -1,0 +1,143 @@
+schema: 1
+story: 'VISION-5'
+title: 'Phase 5 — Automation (Import Tracking, Saved Views, Pipeline)'
+gate: PASS
+status_reason: >
+  3 features implemented: Import Job Tracking (history panel, retry),
+  Saved Views (filters, presets, Cmd+K, URL deep-linking),
+  Pipeline semi-automatizado (manual refresh, advisory lock, status indicators).
+  17 files changed, 1409 insertions. 9 QA issues found across 3 rounds
+  (2 blockers, 2 high, 5 medium) — all resolved. Typecheck clean, build success.
+reviewer: 'Quinn'
+updated: '2026-02-22T20:00:00Z'
+branch: 'feature/vision-1-foundation'
+
+# ============================================================
+# SCOPE: 6 Commits, 17 Files, 1409 insertions
+# ============================================================
+commits:
+  - hash: 'e28f1ce'
+    message: 'feat: add import job tracking with history panel [VISION-5]'
+  - hash: 'a782f00'
+    message: 'feat: add saved views with filters, presets, and Cmd+K access [VISION-5]'
+  - hash: 'cfac38e'
+    message: 'feat: add pipeline status with manual refresh and indicators [VISION-5]'
+  - hash: '3439619'
+    message: 'fix: apply 5 QA blocker fixes — sanitize SQL, delete confirmations, double query, loading state [VISION-5]'
+  - hash: '553b593'
+    message: 'docs: update QA gate files for Vision phases 2, 3, 4'
+  - hash: '8fcc7e1'
+    message: 'fix: resolve 3 QA medium issues — retry prefill, concurrent refresh fallback, status timestamps [VISION-5]'
+
+files_changed:
+  # SQL Migrations
+  - path: 'supabase/migrations/20260222000000_phase5_saved_views.sql'
+    type: new
+    lines: 49
+    description: 'saved_views table with RLS, unique default index, module CHECK constraint'
+  - path: 'supabase/migrations/20260222000100_phase5_pipeline_refresh.sql'
+    type: new
+    lines: 121
+    description: 'refresh_pipeline() and get_pipeline_status() RPCs with auth + advisory lock + CONCURRENTLY fallback'
+  - path: 'supabase/migrations/20260222000200_fix_import_batches_update_rls.sql'
+    type: new
+    lines: 20
+    description: 'UPDATE RLS policy for import_batches'
+  # Hooks
+  - path: 'src/features/spy/hooks/useImportHistory.ts'
+    type: new
+    lines: 118
+    description: 'CRUD hooks for import_batches (history, create, update job)'
+  - path: 'src/features/spy/hooks/useSavedViews.ts'
+    type: new
+    lines: 154
+    description: 'CRUD hooks for saved_views (list, create, update, delete)'
+  - path: 'src/features/spy/hooks/usePipelineStatus.ts'
+    type: new
+    lines: 44
+    description: 'Pipeline status polling + manual refresh mutation'
+  # Components
+  - path: 'src/features/spy/components/import-modal/ImportHistoryPanel.tsx'
+    type: new
+    lines: 174
+    description: 'Import history panel with collapsible job cards, status badges, retry'
+  - path: 'src/features/spy/components/spy-radar/SavedViewsDropdown.tsx'
+    type: new
+    lines: 238
+    description: 'Saved views dropdown with pin/delete (AlertDialog confirmation), save dialog'
+  - path: 'src/features/spy/components/spy-radar/PipelineStatusCard.tsx'
+    type: new
+    lines: 193
+    description: 'Pipeline status card + compact indicator with refresh button'
+  - path: 'src/features/spy/components/import-modal/useImportWorkflow.ts'
+    type: modified
+    description: 'Added import job tracking (create on start, update on complete/fail, linhas_processadas)'
+  - path: 'src/features/spy/components/UniversalImportModal.tsx'
+    type: modified
+    description: 'Added tabs (Import/History), connected onReImport with config prefill'
+  - path: 'src/features/spy/components/spy-radar/SpyFilterBar.tsx'
+    type: modified
+    description: 'Added savedViewsSlot render prop'
+  - path: 'src/features/spy/components/spy-radar/SpyRadarHeader.tsx'
+    type: modified
+    description: 'Added PipelineStatusIndicator inline'
+  - path: 'src/pages/SpyRadar.tsx'
+    type: modified
+    description: 'Added saved views integration, activeViewId, URL deep-linking, filter change clears view'
+  - path: 'src/pages/Dashboard.tsx'
+    type: modified
+    description: 'Added PipelineStatusCard in sidebar'
+  - path: 'src/shared/components/layout/command-palette/CommandPalette.tsx'
+    type: modified
+    description: 'Added saved views group in Cmd+K palette'
+  - path: 'src/integrations/supabase/types.ts'
+    type: modified
+    description: 'Added saved_views table types'
+
+# ============================================================
+# QA ROUNDS
+# ============================================================
+qa_rounds:
+  - round: 1
+    reviewer: Quinn
+    issues_found: 9
+    blockers: 2
+    high: 2
+    medium: 5
+    verdict: CONCERNS
+    details:
+      - 'B1: Missing UPDATE RLS on import_batches'
+      - 'B2: SECURITY DEFINER without auth check or advisory lock'
+      - 'H1: Delete saved view without confirmation dialog'
+      - 'H2: onReImport callback never connected'
+      - 'M1: p_workspace_id param unused'
+      - 'M2: linhas_processadas never tracked'
+      - 'M3: activeViewId not cleared on filter change'
+      - 'M4: handleReImport discards job config'
+      - 'M5: REFRESH CONCURRENTLY fails on never-populated views'
+      - 'M6: Only 1 of 3 views reports last_refreshed'
+
+  - round: 2
+    reviewer: Quinn
+    issues_found: 3
+    blockers: 0
+    high: 0
+    medium: 3
+    verdict: PASS_WITH_CONCERNS
+    details:
+      - 'B1-B2, H1-H2, M2-M3: All 6 fixed'
+      - 'M4, M5, M6: New medium issues identified'
+
+  - round: 3
+    reviewer: Quinn
+    issues_found: 0
+    blockers: 0
+    high: 0
+    medium: 0
+    verdict: PASS
+    details:
+      - 'M4: handleReImport now pre-populates footprintQuery from job.config'
+      - 'M5: REFRESH CONCURRENTLY wrapped in BEGIN/EXCEPTION with fallback'
+      - 'M6: get_pipeline_status uses common refreshed_at for all 3 views'
+
+accepted_debt: []

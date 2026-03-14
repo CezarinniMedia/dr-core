@@ -1,7 +1,7 @@
 # Story BD-0.3: Setup Branching Strategy
 **Epic:** EPIC-BD (Brownfield Debt)
 **Sprint:** 0 - Security Foundation
-**Status:** InProgress
+**Status:** Done
 **Estimate:** 2h
 **Priority:** BLOQUEANTE
 

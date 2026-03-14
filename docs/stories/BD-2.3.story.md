@@ -1,5 +1,5 @@
 # Story BD-2.3: Implement Code Splitting + Virtualization
-**Epic:** EPIC-BD | **Sprint:** 2 | **Status:** InReview | **Estimate:** 4h | **Priority:** MEDIO
+**Epic:** EPIC-BD | **Sprint:** 2 | **Status:** Done | **Estimate:** 4h | **Priority:** MEDIO
 
 ---
 

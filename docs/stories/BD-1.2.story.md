@@ -1,5 +1,5 @@
 # Story BD-1.2: Fix Table Sizing and Dimensioning
-**Epic:** EPIC-BD | **Sprint:** 1 | **Status:** InReview | **Estimate:** 4h | **Priority:** CRITICO
+**Epic:** EPIC-BD | **Sprint:** 1 | **Status:** Done | **Estimate:** 4h | **Priority:** CRITICO
 
 ---
 

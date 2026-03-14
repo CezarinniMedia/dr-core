@@ -1,5 +1,5 @@
 # Story BD-2.4: Deprecate Legacy Database Tables
-**Epic:** EPIC-BD | **Sprint:** 2 | **Status:** Ready for Review | **Estimate:** 4h | **Priority:** MEDIO
+**Epic:** EPIC-BD | **Sprint:** 2 | **Status:** Done | **Estimate:** 4h | **Priority:** MEDIO
 
 ---
 

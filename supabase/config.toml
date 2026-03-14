@@ -1,4 +1,4 @@
-project_id = "iaffbkzmckgvrfmlybsr"
+project_id = "inpynsabvtoafwvmgsbu"
 
 [functions.extract-avatar]
 verify_jwt = false

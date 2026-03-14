@@ -1,25 +1,26 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useSpiedOffer, useUpdateSpiedOffer, useDeleteSpiedOffer } from "@/hooks/useSpiedOffers";
-import { FullOfferFormModal } from "@/components/spy/FullOfferFormModal";
-import { SpyOverviewTab } from "@/components/spy/tabs/SpyOverviewTab";
-import { SpyDomainsTab } from "@/components/spy/tabs/SpyDomainsTab";
-import { SpyLibrariesTab } from "@/components/spy/tabs/SpyLibrariesTab";
-import { SpyCreativesTab } from "@/components/spy/tabs/SpyCreativesTab";
-import { SpyFunnelTab } from "@/components/spy/tabs/SpyFunnelTab";
-import { SpyNotesTab } from "@/components/spy/tabs/SpyNotesTab";
-import { SpyTrafficTab } from "@/components/spy/tabs/SpyTrafficTab";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSpiedOffer, useUpdateSpiedOffer, useDeleteSpiedOffer } from "@/features/spy/hooks/useSpiedOffers";
+import { FullOfferFormModal } from "@/features/spy/components/FullOfferFormModal";
+import { CloneToOwnOfferModal } from "@/features/spy/components/CloneToOwnOfferModal";
+import { SpyOverviewTab } from "@/features/spy/components/tabs/SpyOverviewTab";
+import { SpyDomainsTab } from "@/features/spy/components/tabs/SpyDomainsTab";
+import { SpyLibrariesTab } from "@/features/spy/components/tabs/SpyLibrariesTab";
+import { SpyCreativesTab } from "@/features/spy/components/tabs/SpyCreativesTab";
+import { SpyFunnelTab } from "@/features/spy/components/tabs/SpyFunnelTab";
+import { SpyNotesTab } from "@/features/spy/components/tabs/SpyNotesTab";
+import { SpyTrafficTab } from "@/features/spy/components/tabs/SpyTrafficTab";
+import { DataMetricCard } from "@/shared/design-system/components/DataMetricCard";
+import { Button } from "@/shared/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/shared/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,19 +30,23 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Edit, Trash2, ExternalLink, Flame, Rocket, LayoutList, Globe, BookOpen, Palette, Map, BarChart3, FileText, Radar } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { PageBreadcrumb } from "@/components/ui/PageBreadcrumb";
+} from "@/shared/components/ui/alert-dialog";
+import { Edit, Trash2, ExternalLink, LayoutList, Globe, BookOpen, Palette, Map, BarChart3, FileText, Radar, Tag, DollarSign, Layers, Megaphone, Copy, TrendingUp } from "lucide-react";
+import { countScaleSignals } from "@/features/spy/components/spy-radar/constants";
+import { Skeleton } from "@/shared/components/ui/skeleton";
+import { PageBreadcrumb } from "@/shared/components/ui/PageBreadcrumb";
+import { formatStatus } from "@/shared/lib/utils";
 
-const STATUS_BADGE: Record<string, { label: React.ReactNode; className: string }> = {
-  RADAR: { label: "Radar", className: "bg-muted text-muted-foreground" },
-  ANALYZING: { label: "Analyzing", className: "bg-warning/20 text-warning" },
-  HOT: { label: <><Flame className="h-3.5 w-3.5 inline" /> HOT</>, className: "bg-destructive/20 text-destructive" },
-  SCALING: { label: <><Rocket className="h-3.5 w-3.5 inline" /> Scaling</>, className: "bg-success/20 text-success animate-pulse" },
-  DYING: { label: "Dying", className: "bg-accent/20 text-accent" },
-  DEAD: { label: "Dead", className: "bg-muted text-muted-foreground line-through" },
-  CLONED: { label: "Cloned", className: "bg-primary/20 text-primary" },
+const STATUS_BADGE: Record<string, { label: string; className: string }> = {
+  RADAR: { label: "Radar", className: "bg-[rgba(107,114,128,0.1)] text-[color:var(--text-muted)] border border-[rgba(107,114,128,0.2)]" },
+  ANALYZING: { label: "Analyzing", className: "bg-[rgba(59,130,246,0.1)] text-[color:var(--accent-blue)] border border-[rgba(59,130,246,0.2)]" },
+  HOT: { label: "Hot", className: "bg-[rgba(239,68,68,0.1)] text-[color:var(--semantic-hot)] border border-[rgba(239,68,68,0.2)] animate-glow-pulse" },
+  SCALING: { label: "Scaling", className: "bg-[rgba(34,197,94,0.1)] text-[color:var(--accent-green)] border border-[rgba(34,197,94,0.2)]" },
+  DYING: { label: "Dying", className: "bg-[rgba(234,179,8,0.1)] text-[color:var(--semantic-warning)] border border-[rgba(234,179,8,0.2)]" },
+  DEAD: { label: "Dead", className: "bg-[rgba(107,114,128,0.1)] text-[color:var(--text-muted)] border border-[rgba(107,114,128,0.2)] line-through" },
+  CLONED: { label: "Cloned", className: "bg-[rgba(124,58,237,0.1)] text-[color:var(--accent-primary)] border border-[rgba(124,58,237,0.2)]" },
+  VAULT: { label: "Vault", className: "bg-[rgba(107,114,128,0.1)] text-[color:var(--text-muted)] border border-[rgba(107,114,128,0.2)]" },
+  NEVER_SCALED: { label: "Never Scaled", className: "bg-[rgba(107,114,128,0.05)] text-[color:var(--text-muted)] border border-[rgba(107,114,128,0.15)]" },
 };
 
 function formatCurrency(value: number | null | undefined) {
@@ -57,6 +62,7 @@ export default function SpyOfferDetail() {
   const deleteMutation = useDeleteSpiedOffer();
   const [showEdit, setShowEdit] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
+  const [showClone, setShowClone] = useState(false);
 
   if (isLoading) return (
     <div className="p-6 space-y-6">
@@ -73,14 +79,12 @@ export default function SpyOfferDetail() {
           <Skeleton key={i} className="h-9 w-24 rounded-md" />
         ))}
       </div>
-      <Card>
-        <CardContent className="p-6 space-y-4">
+      <div className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] p-6 space-y-4">
           <Skeleton className="h-5 w-32" />
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-3/4" />
           <Skeleton className="h-4 w-1/2" />
-        </CardContent>
-      </Card>
+      </div>
     </div>
   );
   if (!offer) {
@@ -118,55 +122,65 @@ export default function SpyOfferDetail() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight">{offer.nome}</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-[length:var(--text-page-title)] [font-weight:var(--font-semibold)] text-[color:var(--text-primary)] tracking-tight">{offer.nome}</h1>
             <Badge variant="outline" className={sb.className}>{sb.label}</Badge>
           </div>
-            <div className="flex items-center gap-3">
-              {offer.main_domain && (
-                <a
-                  href={`https://${offer.main_domain}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary hover:underline flex items-center gap-1"
-                >
-                  {offer.main_domain} <ExternalLink className="h-3 w-3" />
-                </a>
-              )}
-              {(offer as any).domain_created_at && (
-                <span className="text-xs text-muted-foreground">
-                  Domínio criado em: {new Date((offer as any).domain_created_at).toLocaleDateString("pt-BR")}
-                </span>
-              )}
-            </div>
+          <div className="flex items-center gap-3 mt-1">
+            {offer.main_domain && (
+              <a
+                href={`https://${offer.main_domain}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-[color:var(--accent-teal)] hover:underline flex items-center gap-1"
+              >
+                {offer.main_domain} <ExternalLink className="h-3 w-3" />
+              </a>
+            )}
+            {(offer as any).domain_created_at && (
+              <span className="text-[length:var(--text-caption)] text-[color:var(--text-muted)]">
+                Dominio criado em: {new Date((offer as any).domain_created_at).toLocaleDateString("pt-BR")}
+              </span>
+            )}
           </div>
+        </div>
         <div className="flex items-center gap-2">
           <Select value={offer.status || "RADAR"} onValueChange={handleStatusChange}>
-            <SelectTrigger className="w-36">
+            <SelectTrigger className="w-36 border-[var(--border-default)] bg-[var(--bg-surface)]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {["RADAR", "ANALYZING", "HOT", "SCALING", "DYING", "DEAD", "CLONED"].map((s) => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
+              {["RADAR", "ANALYZING", "HOT", "SCALING", "DYING", "DEAD", "CLONED", "VAULT", "NEVER_SCALED"].map((s) => (
+                <SelectItem key={s} value={s}>{formatStatus(s)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm" onClick={() => setShowEdit(true)}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-[var(--border-interactive)] hover:border-[var(--accent-amber)] hover:shadow-[0_0_12px_rgba(212,165,116,0.2)]"
+            onClick={() => setShowClone(true)}
+            title="Criar oferta propria a partir desta oferta espionada"
+          >
+            <Copy className="h-3.5 w-3.5 mr-1" /> Clonar
+          </Button>
+          <Button variant="outline" size="sm" className="border-[var(--border-default)]" onClick={() => setShowEdit(true)}>
             <Edit className="h-3.5 w-3.5 mr-1" /> Editar
           </Button>
-          <Button variant="outline" size="sm" className="text-destructive" onClick={() => setShowDelete(true)}>
+          <Button variant="outline" size="sm" className="text-[color:var(--semantic-error)] border-[var(--border-default)]" onClick={() => setShowDelete(true)}>
             <Trash2 className="h-3.5 w-3.5 mr-1" /> Deletar
           </Button>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <StatCard label="Vertical" value={offer.vertical || "—"} />
-        <StatCard label="Ticket" value={formatCurrency(offer.product_ticket)} />
-        <StatCard label="Domínios" value={String(domainsCount)} />
-        <StatCard label="Ads Salvos" value={String(adsCount)} />
-        <StatCard label="Steps Funil" value={String(funnelCount)} />
+      {/* KPI Stats — DataMetricCards from design system */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <DataMetricCard label="Vertical" value={offer.vertical || "—"} icon={<Tag className="h-4 w-4" />} />
+        <DataMetricCard label="Ticket" value={formatCurrency(offer.product_ticket)} icon={<DollarSign className="h-4 w-4" />} />
+        <DataMetricCard label="Dominios" value={String(domainsCount)} icon={<Globe className="h-4 w-4" />} />
+        <DataMetricCard label="Ads Salvos" value={String(adsCount)} icon={<Megaphone className="h-4 w-4" />} />
+        <DataMetricCard label="Steps Funil" value={String(funnelCount)} icon={<Layers className="h-4 w-4" />} />
+        <DataMetricCard label="Scale Score" value={`${countScaleSignals(offer.scale_signals)}/7`} icon={<TrendingUp className="h-4 w-4" />} />
       </div>
 
       {/* Tabs */}
@@ -208,6 +222,9 @@ export default function SpyOfferDetail() {
         </TabsContent>
       </Tabs>
 
+      {/* Clone Modal */}
+      <CloneToOwnOfferModal open={showClone} onOpenChange={setShowClone} offer={offer} />
+
       {/* Edit Modal */}
       <FullOfferFormModal open={showEdit} onClose={() => setShowEdit(false)} editData={offer} />
 
@@ -233,16 +250,5 @@ export default function SpyOfferDetail() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <Card>
-      <CardContent className="p-3 text-center">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-sm font-semibold">{value}</p>
-      </CardContent>
-    </Card>
   );
 }

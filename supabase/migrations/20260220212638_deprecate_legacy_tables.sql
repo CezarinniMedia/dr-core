@@ -3,37 +3,48 @@
 -- Sprint 2 | EPIC-BD Brownfield Debt
 --
 -- Estrategia:
---   1. Backup dados legacy em tabelas _backup
+--   1. Backup dados legacy em tabelas _backup (IF EXISTS)
 --   2. Adicionar campos uteis nas tabelas modernas
---   3. Migrar dados das tabelas legacy para modernas
---   4. DROP das tabelas legacy
+--   3. Migrar dados das tabelas legacy para modernas (IF EXISTS)
+--   4. DROP das tabelas legacy (IF EXISTS — safe)
 --
 -- DOWN: Restaurar tabelas legacy dos backups
 -- ============================================================
 
 -- ============================================================
 -- STEP 1: BACKUP das tabelas legacy antes de qualquer DROP
+-- (Condicional — tabelas podem nao existir no remote)
 -- ============================================================
 
--- Backup: ad_bibliotecas
-CREATE TABLE IF NOT EXISTS _backup_ad_bibliotecas AS
-  SELECT * FROM ad_bibliotecas;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'ad_bibliotecas') THEN
+    CREATE TABLE IF NOT EXISTS _backup_ad_bibliotecas AS SELECT * FROM ad_bibliotecas;
+  END IF;
+END $$;
 
--- Backup: oferta_dominios
-CREATE TABLE IF NOT EXISTS _backup_oferta_dominios AS
-  SELECT * FROM oferta_dominios;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'oferta_dominios') THEN
+    CREATE TABLE IF NOT EXISTS _backup_oferta_dominios AS SELECT * FROM oferta_dominios;
+  END IF;
+END $$;
 
--- Backup: funil_paginas
-CREATE TABLE IF NOT EXISTS _backup_funil_paginas AS
-  SELECT * FROM funil_paginas;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'funil_paginas') THEN
+    CREATE TABLE IF NOT EXISTS _backup_funil_paginas AS SELECT * FROM funil_paginas;
+  END IF;
+END $$;
 
--- Backup: fontes_captura
-CREATE TABLE IF NOT EXISTS _backup_fontes_captura AS
-  SELECT * FROM fontes_captura;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'fontes_captura') THEN
+    CREATE TABLE IF NOT EXISTS _backup_fontes_captura AS SELECT * FROM fontes_captura;
+  END IF;
+END $$;
 
--- Backup: trafego_historico
-CREATE TABLE IF NOT EXISTS _backup_trafego_historico AS
-  SELECT * FROM trafego_historico;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'trafego_historico') THEN
+    CREATE TABLE IF NOT EXISTS _backup_trafego_historico AS SELECT * FROM trafego_historico;
+  END IF;
+END $$;
 
 -- ============================================================
 -- STEP 2: Adicionar campos uteis em offer_ad_libraries
@@ -56,58 +67,50 @@ ALTER TABLE offer_domains
 
 -- ============================================================
 -- STEP 4: Migrar dados de ad_bibliotecas → offer_ad_libraries
---
--- Mapeamento:
---   ad_bibliotecas.pagina_url  → offer_ad_libraries.page_url
---
--- Obs: oferta_id em ad_bibliotecas referencia 'ofertas' (offers),
--- NAO 'spied_offers'. Migrar apenas registros que possam ser
--- linkados via JOIN (match por pagina_url/biblioteca_url).
--- Registros sem match sao preservados no backup.
+-- (Condicional — tabela pode nao existir)
 -- ============================================================
 
--- Atualiza page_url onde pagina_url esta preenchido
--- Match via library_url / biblioteca_url para encontrar a linha moderna
-UPDATE offer_ad_libraries oal
-SET    page_url = ab.pagina_url
-FROM   ad_bibliotecas ab
-WHERE  ab.pagina_url IS NOT NULL
-  AND  ab.pagina_url != ''
-  AND  (
-    oal.library_url = ab.biblioteca_url
-    OR oal.page_name = ab.pagina_nome
-  );
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'ad_bibliotecas') THEN
+    UPDATE offer_ad_libraries oal
+    SET    page_url = ab.pagina_url
+    FROM   ad_bibliotecas ab
+    WHERE  ab.pagina_url IS NOT NULL
+      AND  ab.pagina_url != ''
+      AND  (
+        oal.library_url = ab.biblioteca_url
+        OR oal.page_name = ab.pagina_nome
+      );
+  END IF;
+END $$;
 
 -- ============================================================
 -- STEP 5: Migrar dados de oferta_dominios → offer_domains
---
--- Mapeamento:
---   oferta_dominios.whois_registrant → offer_domains.whois_registrar
---   oferta_dominios.whois_expira_em  → offer_domains.whois_expiry
---   oferta_dominios.hosting_provider → offer_domains.hosting_provider
---   oferta_dominios.ip_address       → offer_domains.ip_address
---
--- Match via dominio = domain
+-- (Condicional — tabela pode nao existir)
 -- ============================================================
 
-UPDATE offer_domains od
-SET
-  whois_registrar  = COALESCE(od.whois_registrar,  odo.whois_registrant),
-  whois_expiry     = COALESCE(od.whois_expiry,      odo.whois_expira_em::DATE),
-  hosting_provider = COALESCE(od.hosting_provider,  odo.hosting_provider),
-  ip_address       = COALESCE(od.ip_address,        odo.ip_address)
-FROM oferta_dominios odo
-WHERE od.domain = odo.dominio
-  AND (
-    odo.whois_registrant IS NOT NULL
-    OR odo.whois_expira_em IS NOT NULL
-    OR odo.hosting_provider IS NOT NULL
-    OR odo.ip_address IS NOT NULL
-  );
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'oferta_dominios') THEN
+    UPDATE offer_domains od
+    SET
+      whois_registrar  = COALESCE(od.whois_registrar,  odo.whois_registrant),
+      whois_expiry     = COALESCE(od.whois_expiry,      odo.whois_expira_em::DATE),
+      hosting_provider = COALESCE(od.hosting_provider,  odo.hosting_provider),
+      ip_address       = COALESCE(od.ip_address,        odo.ip_address)
+    FROM oferta_dominios odo
+    WHERE od.domain = odo.dominio
+      AND (
+        odo.whois_registrant IS NOT NULL
+        OR odo.whois_expira_em IS NOT NULL
+        OR odo.hosting_provider IS NOT NULL
+        OR odo.ip_address IS NOT NULL
+      );
+  END IF;
+END $$;
 
 -- ============================================================
 -- STEP 6: DROP tabelas legacy
--- (dados salvos nos backups acima)
+-- (dados salvos nos backups acima — DROP IF EXISTS e seguro)
 -- ============================================================
 
 DROP TABLE IF EXISTS ad_bibliotecas CASCADE;
@@ -117,23 +120,38 @@ DROP TABLE IF EXISTS fontes_captura CASCADE;
 DROP TABLE IF EXISTS trafego_historico CASCADE;
 
 -- ============================================================
--- STEP 7: Comentarios de contexto nos backups
+-- STEP 7: Comentarios de contexto nos backups (condicional)
 -- ============================================================
 
-COMMENT ON TABLE _backup_ad_bibliotecas IS
-  'Backup de ad_bibliotecas antes da deprecacao BD-2.4 (2026-02-20). Pode ser removido apos 30 dias.';
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = '_backup_ad_bibliotecas') THEN
+    COMMENT ON TABLE _backup_ad_bibliotecas IS 'Backup de ad_bibliotecas antes da deprecacao BD-2.4 (2026-02-20). Pode ser removido apos 30 dias.';
+  END IF;
+END $$;
 
-COMMENT ON TABLE _backup_oferta_dominios IS
-  'Backup de oferta_dominios antes da deprecacao BD-2.4 (2026-02-20). Pode ser removido apos 30 dias.';
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = '_backup_oferta_dominios') THEN
+    COMMENT ON TABLE _backup_oferta_dominios IS 'Backup de oferta_dominios antes da deprecacao BD-2.4 (2026-02-20). Pode ser removido apos 30 dias.';
+  END IF;
+END $$;
 
-COMMENT ON TABLE _backup_funil_paginas IS
-  'Backup de funil_paginas antes da deprecacao BD-2.4 (2026-02-20). Pode ser removido apos 30 dias.';
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = '_backup_funil_paginas') THEN
+    COMMENT ON TABLE _backup_funil_paginas IS 'Backup de funil_paginas antes da deprecacao BD-2.4 (2026-02-20). Pode ser removido apos 30 dias.';
+  END IF;
+END $$;
 
-COMMENT ON TABLE _backup_fontes_captura IS
-  'Backup de fontes_captura antes da deprecacao BD-2.4 (2026-02-20). Pode ser removido apos 30 dias.';
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = '_backup_fontes_captura') THEN
+    COMMENT ON TABLE _backup_fontes_captura IS 'Backup de fontes_captura antes da deprecacao BD-2.4 (2026-02-20). Pode ser removido apos 30 dias.';
+  END IF;
+END $$;
 
-COMMENT ON TABLE _backup_trafego_historico IS
-  'Backup de trafego_historico antes da deprecacao BD-2.4 (2026-02-20). Pode ser removido apos 30 dias.';
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = '_backup_trafego_historico') THEN
+    COMMENT ON TABLE _backup_trafego_historico IS 'Backup de trafego_historico antes da deprecacao BD-2.4 (2026-02-20). Pode ser removido apos 30 dias.';
+  END IF;
+END $$;
 
 -- ============================================================
 -- DOWN MIGRATION (referencia para rollback manual)

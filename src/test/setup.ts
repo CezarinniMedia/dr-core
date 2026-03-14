@@ -1,4 +1,13 @@
 import "@testing-library/jest-dom";
+import { expect } from "vitest";
+import * as matchers from "vitest-axe/matchers";
+
+// Register vitest-axe matchers (toHaveNoViolations)
+expect.extend(matchers);
+
+// Mock canvas for axe-core icon ligature detection (jsdom lacks canvas support)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+HTMLCanvasElement.prototype.getContext = (() => null) as any;
 
 Object.defineProperty(window, "matchMedia", {
   writable: true,

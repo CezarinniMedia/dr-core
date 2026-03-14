@@ -1,5 +1,5 @@
 # Story BD-1.4: Fix Popups, Tooltips, Sparkline, Graph Badges
-**Epic:** EPIC-BD | **Sprint:** 1 | **Status:** InReview | **Estimate:** 8h | **Priority:** CRITICO
+**Epic:** EPIC-BD | **Sprint:** 1 | **Status:** Done | **Estimate:** 8h | **Priority:** CRITICO
 
 ---
 

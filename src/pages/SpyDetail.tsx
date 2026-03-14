@@ -1,24 +1,24 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useCompetitor, useUpdateCompetitor } from "@/hooks/useCompetitors";
-import { AdCreativeGallery } from "@/components/spy/AdCreativeGallery";
-import { AdCreativeFormDialog } from "@/components/spy/AdCreativeFormDialog";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+import { useCompetitor, useUpdateCompetitor } from "@/features/spy/hooks/useCompetitors";
+import { AdCreativeGallery } from "@/features/spy/components/AdCreativeGallery";
+import { AdCreativeFormDialog } from "@/features/spy/components/AdCreativeFormDialog";
+import { Button } from "@/shared/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Badge } from "@/shared/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
+import { Input } from "@/shared/components/ui/input";
+import { Textarea } from "@/shared/components/ui/textarea";
+import { Label } from "@/shared/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/shared/components/ui/select";
 import { ArrowLeft, Plus, Save, ExternalLink, Flame, Zap, Snowflake, Camera, RotateCw, Info } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/shared/lib/utils";
 
 export default function SpyDetail() {
   const { id } = useParams<{ id: string }>();

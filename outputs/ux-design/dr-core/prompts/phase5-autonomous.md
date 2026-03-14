@@ -1,0 +1,181 @@
+# Phase 5 — Build All Components Autonomously
+
+CONTEXTO PERSISTENTE anti-compact:
+Voce e Uma @ux-design-expert, executando Phase 5 do workflow Brownfield+.
+Documentos ON DISK -- leia ANTES de comecar:
+1. outputs/ux-design/dr-core/reports/adhd-design-principles.md -- 15 regras ADHD-UX
+2. docs/vision/aesthetic-profile.md -- sec 6 componentes, sec 9.2 tiers, sec 9.5 LED strip
+3. src/shared/design-system/tokens.css -- atualizado na Fase 4 com opacity tokens
+4. src/shared/design-system/tokens.yaml -- source of truth, 96 tokens
+5. outputs/ux-design/dr-core/wireframes/ -- 5 wireframes que usam estes componentes
+
+---
+
+## Instrucoes Gerais
+
+Construa TODOS os 7 componentes em sequencia SEM parar para aprovacao.
+Para cada componente:
+1. Leia a versao existente em shared/design-system/ -- se ja existe, AJUSTE ao inves de reescrever
+2. Siga as specs abaixo + aesthetic-profile.md
+3. Use APENAS tokens CSS -- ZERO valores hardcoded
+4. Valide contra adhd-design-principles.md -- os principios aplicaveis estao listados em cada spec
+5. Rode npx tsc --noEmit apos CADA componente para garantir zero errors
+
+---
+
+## PARTE 1: ATOMS -- 5 componentes
+
+### 5.1 — LEDGlowBorder
+
+- Path: src/shared/design-system/primitives/LEDGlowBorder.tsx
+- CSS utility component que adiciona thin border com glow sutil
+- Variantes: glow-primary -- purple, glow-amber -- warm, glow-teal, glow-success, glow-error, glow-spike -- orange
+- Implementacao: border 1px + box-shadow com cor de accent
+- Ref: aesthetic-profile sec 9.5 item 1 -- "LED Strip = Thin accent borders com glow"
+- Props: variant, intensity -- subtle/medium/strong, animated -- boolean para pulse, position -- left/bottom/top/right
+- DEVE usar os tokens de opacidade -- ex: --accent-primary-10 para subtle
+- Wireframes que usam: TODOS os 5 wireframes usam LED strip
+
+### 5.2 — AmbientGlow
+
+- Path: src/shared/design-system/primitives/AmbientGlow.tsx
+- CSS wrapper que adiciona box-shadow colorido atras de elementos elevados
+- Configuravel por cor: primary, amber, teal, success, error, spike
+- Ref: aesthetic-profile sec 9.5 item 2 -- "Warm Glow = Ambient light atras de cards"
+- Props: color -- primary/amber/teal/success/error/spike, intensity -- subtle/medium/strong, children, className
+- CSS: box-shadow multi-layer conforme tokens --glow-primary, --glow-amber, etc.
+- Wireframes que usam: Clone to Own -- amber glow, Spike Notification -- orange glow
+
+### 5.3 — GlassmorphismCard
+
+- Path: src/shared/design-system/primitives/GlassmorphismCard.tsx
+- Frosted glass card com blur configuravel, border sutil, background semi-transparente
+- Usar para: modais, popovers, tooltips, Command Palette
+- NAO usar para: content cards regulares -- performance com 14k+ registros
+- Ref: aesthetic-profile sec 3.3 -- "Glassmorphism card sobre backdrop escurecido"
+- Props: blur -- 4 a 16px, opacity -- 'solid' ou 'interactive' ou 'light', children, className
+- Use tokens --glass-solid, --glass-interactive, --border-glass, --overlay-dark, --overlay-light
+- Rounded corners: --radius-xl = 16px
+- Wireframes que usam: Command Palette -- blur 4px, Clone to Own -- blur 8px, Creative Lifecycle Decision Modal
+
+### 5.4 — StatusBadge
+
+- Path: src/shared/design-system/components/StatusBadge.tsx
+- Color-coded badges para offer status
+- Mapping EXATO:
+  - RADAR: --text-secondary
+  - ANALYZING: --accent-blue
+  - HOT: --semantic-hot + glow pulse animation
+  - SCALING: --accent-green
+  - CLONED: --accent-primary -- purple
+  - DYING: --semantic-warning -- yellow
+  - DEAD: --text-muted -- gray
+  - VAULT: --accent-amber
+  - NEVER_SCALED: --border-subtle
+  - WINNER: --accent-gold + glow
+  - KILLED: --semantic-error, opacity 0.65
+  - TESTING: --accent-primary
+  - DRAFT: --text-muted
+- Ref: aesthetic-profile sec 9.2 Tier 2 item 8
+- Props: status -- union type de todos os status, size -- sm/md, animated -- boolean para HOT/WINNER pulse
+- ADHD-UX-03: badges DEVEM ter texto legivel, nao depender APENAS de cor -- acessibilidade daltonicos
+- Use opacity tokens para backgrounds -- ex: --accent-blue-10 para bg do ANALYZING badge
+
+### 5.5 — SparklineBadge
+
+- Path: src/shared/design-system/components/SparklineBadge.tsx
+- Mini chart inline -- 30-50px wide -- para embedding em tabelas e cards
+- Cores: teal para neutro, green para positivo, red para negativo
+- Ref: aesthetic-profile sec 6.5 + sec 9.2 Tier 1 item 4
+- Props: data -- number array, trend -- 'up' ou 'down' ou 'stable', width?, height?, color? -- auto por trend
+- Dot marker no ultimo ponto com glow -- ref: sec 9.5 item 3 "data-point-active"
+- Use SVG com animacao sparkline-draw -- keyframe ja em tokens.css
+- ADHD-UX-02: visual > texto — sparkline substitui numero quando possivel
+
+---
+
+## CHECKPOINT ATOMS
+
+Apos construir os 5 atoms:
+1. Rode npx tsc --noEmit -- deve passar com zero errors
+2. Faca commit:
+
+git add src/shared/design-system/primitives/ src/shared/design-system/components/StatusBadge.tsx src/shared/design-system/components/SparklineBadge.tsx
+
+Mensagem de commit:
+
+feat -- design-system: build atomic components — LED, Glow, Glass, Badge, Sparkline
+
+- LEDGlowBorder: 6 color variants, 3 intensities, animated pulse, 4 positions
+- AmbientGlow: wrapper with multi-layer box-shadow, 6 colors
+- GlassmorphismCard: frosted glass with configurable blur + opacity tokens
+- StatusBadge: 13 statuses color-coded with text labels for a11y
+- SparklineBadge: inline SVG mini-chart with trend coloring + draw animation
+
+All components use Vision tokens with zero hardcoded values.
+Follow ADHD Design Principles checklist.
+
+Co-Authored-By: Claude Opus 4.6 noreply@anthropic.com
+
+---
+
+## PARTE 2: MOLECULES -- 2 componentes
+
+### 5.7 — DataMetricCard
+
+- Path: src/shared/design-system/components/DataMetricCard.tsx
+- Large number display -- KPI -- + label + trend indicator -- seta + percentual -- + optional SparklineBadge
+- 4 variantes: simple, with-sparkline, with-comparison, with-chart
+- Ref: aesthetic-profile sec 6.1 -- 18+ aparicoes nas refs, componente mais frequente
+- Props: value -- string ou number, label, change? -- number delta percentual, trend?, sparklineData?, icon? -- LucideIcon, glowOnHover? -- boolean
+- Tipografia: value em --text-kpi = 48px Bold, label em --text-label = 12px --text-secondary
+- Change badge: --accent-green com TrendingUp / --semantic-error com TrendingDown
+- Usa LEDGlowBorder no hover -- subtle intensity
+- Background: --bg-surface, border --border-default, radius --radius-lg
+- font-variant-numeric: tabular-nums -- ADHD-UX-02: numeros alinhados
+- Wireframes que usam: Daily Briefing KPI row -- 4 cards
+
+### 5.8 — SpikeAlertCard
+
+- Path: src/shared/design-system/components/SpikeAlertCard.tsx
+- Card de alerta de spike com orange glow pulse animation
+- Compoe: AmbientGlow -- spike/orange + LEDGlowBorder -- left, animated + StatusBadge
+- Ref: aesthetic-profile sec 9.4 -- glow pulse 2s infinite -- + sec 9.2 Tier 1 item 3
+- Props: offerName, domain, changePercent, visitsBefore?, visitsAfter?, detectedAt -- timestamp relativo "ha Xh", onClick, isNew? -- boolean glow pulse se true
+- Visual: --semantic-spike background sutil -- --semantic-spike-10, border-left 3px solid --semantic-spike
+- Change percent em destaque -- bold, --semantic-spike color
+- GlowDot pulsante a esquerda -- 8px circle com box-shadow
+- ADHD-UX-06: detectedAt como "ha 6h" -- timestamp relativo
+- ADHD-UX-10: click navega direto — cursor pointer
+- Wireframes que usam: Daily Briefing spike section, Spike Notification dropdown
+
+---
+
+## CHECKPOINT MOLECULES
+
+Apos construir as 2 molecules:
+1. Rode npx tsc --noEmit -- deve passar com zero errors
+2. Faca commit:
+
+git add src/shared/design-system/components/DataMetricCard.tsx src/shared/design-system/components/SpikeAlertCard.tsx
+
+Mensagem de commit:
+
+feat -- design-system: build molecule components — DataMetricCard, SpikeAlertCard
+
+- DataMetricCard: 4 variants -- simple, sparkline, comparison, chart, tabular-nums
+- SpikeAlertCard: orange glow pulse, composes AmbientGlow + LEDGlowBorder + GlowDot
+
+Molecules compose atoms from previous commit.
+Follow ADHD Design Principles for visual hierarchy.
+
+Co-Authored-By: Claude Opus 4.6 noreply@anthropic.com
+
+---
+
+## FINALIZACAO
+
+Apos ambos os commits, diga "Fase 5 concluida" e liste:
+- Componentes construidos vs ajustados
+- Arquivos criados/modificados
+- Resultado do tsc --noEmit

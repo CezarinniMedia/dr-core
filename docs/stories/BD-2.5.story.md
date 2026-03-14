@@ -1,5 +1,5 @@
 # Story BD-2.5: Add Materialized Views for Dashboard Performance
-**Epic:** EPIC-BD | **Sprint:** 2 | **Status:** Ready | **Estimate:** 2h | **Priority:** MEDIO
+**Epic:** EPIC-BD | **Sprint:** 2 | **Status:** Done | **Estimate:** 2h | **Priority:** MEDIO
 
 ---
 

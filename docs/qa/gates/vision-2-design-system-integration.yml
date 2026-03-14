@@ -1,0 +1,228 @@
+# ============================================================
+# QA GATE: VISION-2 — Design System Integration
+# Agent: Quinn (QA) | Date: 2026-02-22
+# Branch: feature/vision-1-foundation
+# Commits: f58d4e5, c7ba54d, c4280a7, 6b0c98d
+# ============================================================
+
+storyId: VISION-2
+phase: "Phase 2 — Design System Integration"
+verdict: PASS
+reviewer: "@qa (Quinn)"
+date: "2026-02-22"
+branch: "feature/vision-1-foundation"
+commits:
+  - hash: "f58d4e5"
+    message: "feat: add Web Worker for CSV processing — main thread never blocks [VISION-2.1]"
+  - hash: "c7ba54d"
+    message: "feat: apply design system tokens to SPY Radar + add Vault toggle [VISION-2.2]"
+  - hash: "c4280a7"
+    message: "feat: apply design system tokens to Offer Detail + all 7 tabs [VISION-2.3]"
+  - hash: "6b0c98d"
+    message: "fix: apply QA review fixes — stale closure + design token remnants [VISION-2]"
+
+# ============================================================
+# SCOPE: 14 source files, ~500 LOC changed
+# ============================================================
+files_changed:
+  # VISION-2.1: Web Worker
+  - path: "src/workers/csv-processor.worker.ts"
+    type: new
+    lines: 145
+    description: "Web Worker for CSV classify/reprocess/filter — offloads heavy parsing from main thread"
+  - path: "src/workers/useCSVWorker.ts"
+    type: new
+    lines: 154
+    description: "React hook with promise-based API for worker communication"
+  - path: "src/features/spy/components/import-modal/useImportWorkflow.ts"
+    type: modified
+    description: "Integrated worker for all CSV ops (classify, reprocess, filter) with main-thread fallback"
+
+  # VISION-2.2: SPY Radar design tokens
+  - path: "src/features/spy/components/spy-radar/constants.ts"
+    type: modified
+    description: "STATUS_BADGE updated from shadcn semantics to design-token rgba/var patterns"
+  - path: "src/features/spy/components/spy-radar/SpyFilterBar.tsx"
+    type: modified
+    description: "Filter bar, traffic source toggle, search, badges — all design tokens + Vault toggle"
+  - path: "src/features/spy/components/spy-radar/SpyBulkActionsBar.tsx"
+    type: modified
+    description: "Bulk actions bar design tokens + onBulkTag prop prep"
+  - path: "src/features/spy/components/spy-radar/SpyOffersTable.tsx"
+    type: modified
+    description: "Table container, empty state, row hover — design tokens"
+  - path: "src/pages/SpyRadar.tsx"
+    type: modified
+    description: "Vault toggle state + VAULT filter logic"
+
+  # VISION-2.3: Offer Detail + 7 tabs
+  - path: "src/pages/SpyOfferDetail.tsx"
+    type: modified
+    description: "Header, KPI DataMetricCards, status select, skeleton — design tokens"
+  - path: "src/features/spy/components/tabs/SpyOverviewTab.tsx"
+    type: modified
+    description: "6 cards → design-token divs, InfoRow tokens, link color"
+  - path: "src/features/spy/components/tabs/SpyDomainsTab.tsx"
+    type: modified
+    description: "TYPE_BADGE tokens, table container, links"
+  - path: "src/features/spy/components/tabs/SpyFunnelTab.tsx"
+    type: modified
+    description: "STEP_TYPE_COLOR tokens, Card→div, funnel circle, ArrowDown"
+  - path: "src/features/spy/components/tabs/SpyLibrariesTab.tsx"
+    type: modified
+    description: "Table/empty state tokens, scaled badge, links"
+  - path: "src/features/spy/components/tabs/SpyTrafficTab.tsx"
+    type: modified
+    description: "3 cards→divs, chart legend CSS vars, empty state"
+  - path: "src/features/spy/components/tabs/SpyNotesTab.tsx"
+    type: modified
+    description: "Card→div for markdown preview, empty state text"
+
+# ============================================================
+# 7 QUALITY CHECKS
+# ============================================================
+checks:
+  code_review:
+    status: PASS
+    rounds: 2
+    details: |
+      Round 1: 1 HIGH, 8 LOW found
+        - H1: Race condition in updateFileType — stale closure read after setState
+        - L1-L8: Partial token conversions, comment breadcrumbs, duplicate STATUS_BADGE, unused onBulkTag prop
+      Round 2: PASS — H1 fixed, L7/L9 fixed, remaining LOW accepted as tech debt
+      Pattern consistency: design-token conversion follows consistent pattern across all files
+      Worker architecture: clean separation of concerns, typed messages, proper cleanup on unmount
+
+  unit_tests:
+    status: PASS
+    total: 93
+    passed: 93
+    failed: 0
+    files: 4
+    details: "csvClassifier (48), parseSemrushCSV (27), trafficProcessing (17), example (1)"
+
+  acceptance_criteria:
+    status: PASS
+    criteria:
+      - name: "Web Worker offloads CSV processing"
+        met: true
+        details: "csv-processor.worker.ts handles classify/reprocess/filter with progress callbacks"
+      - name: "Main-thread fallback"
+        met: true
+        details: "try/catch in all worker calls falls back to synchronous processing"
+      - name: "SPY Radar design tokens"
+        met: true
+        details: "Filter bar, status badges, bulk actions, table container, empty state converted"
+      - name: "Vault toggle"
+        met: true
+        details: "VAULT offers hidden by default, toggle shows them, persists in filter state"
+      - name: "Offer Detail design tokens"
+        met: true
+        details: "Header, KPI cards (DataMetricCard), skeleton, status select converted"
+      - name: "7 tabs design tokens"
+        met: true
+        details: "All 7 tabs: Card→div, badge maps, empty states, links, muted text converted"
+      - name: "Race condition fixed"
+        met: true
+        details: "updateFileType reads files[idx] before setState, uses local variable for reprocess"
+
+  no_regressions:
+    status: PASS
+    details: |
+      - 93 tests pass unchanged
+      - Build clean (vite, no errors)
+      - TypeScript typecheck clean (0 errors)
+      - Existing CSV import workflow preserved (worker + fallback)
+      - Existing filter/sort/pagination unchanged
+
+  performance:
+    status: PASS
+    details: |
+      - Web Worker: CSV parsing no longer blocks main thread (14k+ rows)
+      - Worker created once per hook mount, terminated on unmount
+      - Promise-based API with unique IDs prevents message collision
+      - Parallel reprocessing in applyTypeToAll/applyPeriodToAll via Promise.all
+
+  security:
+    status: PASS
+    details: |
+      - No new API endpoints or data exposure
+      - Worker runs in sandboxed context (module type)
+      - No user input passed to eval/innerHTML
+      - All external links maintain target="_blank" rel="noopener noreferrer"
+      - No new Supabase queries or RLS changes
+
+  documentation:
+    status: PASS
+    details: "Worker files self-documented with JSDoc. No public API changes requiring docs."
+
+# ============================================================
+# ISSUES TRACKER
+# ============================================================
+issues:
+  resolved:
+    - id: "H1"
+      severity: HIGH
+      description: "Race condition in updateFileType — reads files[idx] after setState gets stale data"
+      resolution: "Moved files[idx] read and reclassified computation before setState call"
+    - id: "L7"
+      severity: LOW
+      description: "ArrowDown separator in SpyFunnelTab still uses text-muted-foreground"
+      resolution: "Changed to text-[color:var(--text-muted)]"
+    - id: "L9"
+      severity: LOW
+      description: "Verbose comment breadcrumbs '// Design system: uses inline token classes instead of Card'"
+      resolution: "Shortened to '// Card replaced by design-token divs'"
+
+  accepted_debt:
+    - id: "L1"
+      severity: LOW
+      description: "~45 instances of text-muted-foreground remain in table cells, loading states across tabs and SpyOffersTable"
+      impact: "Visual — still works correctly, just not using design tokens"
+      priority: LOW
+      note: "Incremental conversion expected — structural elements (cards, containers, badges) were prioritized"
+    - id: "L2"
+      severity: LOW
+      description: "onBulkTag prop added to SpyBulkActionsBar but not wired from SpyRadar.tsx"
+      impact: "None — prop is optional, UI element only renders when prop provided"
+      priority: LOW
+      note: "Preparation for future bulk tagging feature"
+    - id: "L3"
+      severity: LOW
+      description: "STATUS_BADGE duplicated in constants.ts and SpyOfferDetail.tsx"
+      impact: "Maintenance — two places to update when adding/changing statuses"
+      priority: LOW
+      note: "Will be consolidated in future refactor"
+    - id: "L4"
+      severity: LOW
+      description: "Cloaker badge in SpyFunnelTab still uses bg-destructive/20 text-destructive"
+      impact: "Single instance, visual only"
+      priority: LOW
+    - id: "L5"
+      severity: LOW
+      description: "VERTICAL_BADGE and TREND_ICON in constants.ts still use legacy Tailwind classes"
+      impact: "Visual — SpyOffersTable table cells"
+      priority: LOW
+    - id: "L6"
+      severity: LOW
+      description: "ScreenshotLightbox and ScreenshotField internal components use legacy classes"
+      impact: "Internal to SpyOverviewTab, isolated scope"
+      priority: LOW
+
+# ============================================================
+# VALIDATION RESULTS
+# ============================================================
+validation:
+  typecheck: PASS
+  build: PASS
+  tests: "93/93 PASS"
+  working_tree: "Clean (VISION-2 files committed)"
+
+# ============================================================
+# VERDICT
+# ============================================================
+# PASS — All 7 quality checks satisfied.
+# 1 HIGH issue found and resolved. 6 LOW accepted as incremental tech debt.
+# Web Worker architecture is clean with proper fallback.
+# Design token conversion covers all structural elements consistently.
+# Ready for push to remote.

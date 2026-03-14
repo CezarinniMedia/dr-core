@@ -1,5 +1,5 @@
 # Story BD-3.5: Write Critical Integration Tests
-**Epic:** EPIC-BD | **Sprint:** 3 | **Status:** InProgress | **Estimate:** 5h | **Priority:** ALTO
+**Epic:** EPIC-BD | **Sprint:** 3 | **Status:** Done | **Estimate:** 5h | **Priority:** ALTO
 
 ---
 
