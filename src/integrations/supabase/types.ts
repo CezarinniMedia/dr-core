@@ -2160,6 +2160,43 @@ export type Database = {
           vsl_player: string
         }[]
       }
+      get_traffic_intel_available_months: {
+        Args: { p_source?: string; p_workspace_id: string }
+        Returns: {
+          month: string
+        }[]
+      }
+      get_traffic_intel_rows: {
+        Args: {
+          p_date_from?: string
+          p_date_to?: string
+          p_page?: number
+          p_page_size?: number
+          p_search?: string
+          p_sort_dir?: string
+          p_sort_field?: string
+          p_source?: string
+          p_statuses?: string[]
+          p_workspace_id: string
+        }
+        Returns: {
+          discovered_at: string
+          has_traffic: boolean
+          id: string
+          last_month: number
+          main_domain: string
+          nome: string
+          peak: number
+          peak_date: string
+          prev_month: number
+          sparkline: number[]
+          sparkline_months: string[]
+          status: string
+          total_count: number
+          variation: number
+          vertical: string
+        }[]
+      }
       is_oferta_workspace_member: {
         Args: { _oferta_id: string; _user_id: string }
         Returns: boolean
@@ -2168,6 +2205,8 @@ export type Database = {
         Args: { _user_id: string; _workspace_id: string }
         Returns: boolean
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       unaccent: { Args: { "": string }; Returns: string }
     }
     Enums: {
